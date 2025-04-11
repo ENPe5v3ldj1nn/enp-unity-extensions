@@ -28,7 +28,7 @@ namespace enp_unity_extensions.Scripts.Language
 
 
 
-        private void UpdateText()
+        public void UpdateText()
         {
             if (string.IsNullOrEmpty(_key))
             {

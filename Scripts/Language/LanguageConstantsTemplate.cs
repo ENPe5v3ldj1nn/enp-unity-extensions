@@ -1,6 +1,6 @@
 namespace enp_unity_extensions.Scripts.Language
 {
-    public static class LanguageConstants
+    public static class LanguageConstantsTemplate
     {
         // --- MENU ---
         public const string MenuPlay = "menu.play";
