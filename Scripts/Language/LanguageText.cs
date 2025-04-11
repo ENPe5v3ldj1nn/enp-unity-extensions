@@ -50,7 +50,8 @@ namespace enp_unity_extensions.Scripts.Language
         {
             if (string.IsNullOrEmpty(_key))
             {
-                throw new Exception("Key is empty");
+                _text.text = $"<missing:key>";
+                return;
             }
 
             if (LanguageController.LanguageDictionary.TryGetValue(_key, out string value))
