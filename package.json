@@ -1,10 +1,13 @@
 {
   "name": "com.enope.unityextensions",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "displayName": "Unity Extensions",
   "description": "A set of useful scripts for Unity projects",
   "author": {
     "name": "ENPe5v3ldj1nn",
     "url": "https://github.com/ENPe5v3ldj1nn"
+  },
+  "dependencies": {
+
   }
 }
