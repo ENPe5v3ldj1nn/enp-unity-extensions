@@ -8,9 +8,8 @@ public class AnimatedButton : MonoBehaviour, IPointerDownHandler, IPointerUpHand
 {
     public CanvasGroup _canvasGroup;
     public RectTransform _rectTransform;
-    public bool InverseInput;
-    public bool interactable = true;
-    public bool IsUseAnimation;
+    public bool Interactable = true;
+    public bool IsUseAnimation = true;
 
     private readonly UnityEvent _onClick = new();
     private bool _blockInput;
@@ -69,12 +68,7 @@ public class AnimatedButton : MonoBehaviour, IPointerDownHandler, IPointerUpHand
 
     private bool CanClick(PointerEventData eventData)
     {
-        if (eventData.button != PointerEventData.InputButton.Left || !interactable)
-        {
-            return false;
-        }
-
-        if (!InverseInput) //  && !InputManager.CanInput
+        if (eventData.button != PointerEventData.InputButton.Left || !Interactable)
         {
             return false;
         }
