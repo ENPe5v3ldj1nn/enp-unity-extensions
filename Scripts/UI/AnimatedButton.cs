@@ -1,5 +1,5 @@
 using System.Collections;
-// using DG.Tweening;
+using DG.Tweening;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
@@ -10,6 +10,7 @@ public class AnimatedButton : MonoBehaviour, IPointerDownHandler, IPointerUpHand
     public RectTransform _rectTransform;
     public bool InverseInput;
     public bool interactable = true;
+    public bool IsUseAnimation;
 
     private readonly UnityEvent _onClick = new();
     private bool _blockInput;
@@ -90,7 +91,15 @@ public class AnimatedButton : MonoBehaviour, IPointerDownHandler, IPointerUpHand
     {
         if (!CanClick(eventData)) return;
 
-        // transform.DOScale(Vector3.one * 0.95f, 0.2f);
+        if (IsUseAnimation)
+        {
+            transform.DOScale(Vector3.one * 0.95f, 0.2f);
+        }
+        else
+        {
+            transform.localScale = Vector3.one * 0.95f;
+        }
+
     }
 
     public void OnPointerClick(PointerEventData eventData)
@@ -103,6 +112,14 @@ public class AnimatedButton : MonoBehaviour, IPointerDownHandler, IPointerUpHand
 
     public void OnPointerUp(PointerEventData eventData)
     {
-        // transform.DOScale(Vector3.one, 0.2f);
+        if (IsUseAnimation)
+        {
+            transform.DOScale(Vector3.one, 0.2f);
+        }
+        else
+        {
+            transform.localScale = Vector3.one;
+        }
+
     }
 }
