@@ -10,9 +10,9 @@ namespace enp_unity_extensions.Scripts.Language
 
         private string _key;
         private object[] _formatArgs;
-        
 
-        public void SetKeyWithParams(string key)
+
+        public void SetKey(string key)
         {
             _key = key;
             _formatArgs = null;
@@ -23,10 +23,8 @@ namespace enp_unity_extensions.Scripts.Language
         {
             _key = key;
             _formatArgs = args;
-            UpdateText();
+            UpdateText(_formatArgs);
         }
-
-
 
         public void UpdateText()
         {
@@ -40,6 +38,23 @@ namespace enp_unity_extensions.Scripts.Language
                 _text.text = _formatArgs != null && _formatArgs.Length > 0
                     ? string.Format(value, _formatArgs)
                     : value;
+            }
+            else
+            {
+                _text.text = $"<missing:{_key}>";
+            }
+        }
+        
+        public void UpdateText(params object[] args)
+        {
+            if (string.IsNullOrEmpty(_key))
+            {
+                throw new Exception("Key is empty");
+            }
+
+            if (LanguageController.LanguageDictionary.TryGetValue(_key, out string value))
+            {
+                _text.text = string.Format(value, args);
             }
             else
             {
