@@ -43,7 +43,7 @@ namespace enp_unity_extensions.Scripts.UI.Popup
         {
             Instance.gameObject.SetActive(true);
             Instance._canvas.gameObject.SetActive(true);
-            Instance._background.DOFade(1, AnimSpeed);
+            // Instance._background.DOFade(1, AnimSpeed);
             
             if (Instance._activeWindow != null)
             {
@@ -65,8 +65,8 @@ namespace enp_unity_extensions.Scripts.UI.Popup
             }
     
             Instance._activeWindow.Close(closeAnim.ToString(), OnComplete);
-            Instance._background.DOFade(0, AnimSpeed)
-                .OnComplete(() => Instance.gameObject.SetActive(false));
+            // Instance._background.DOFade(0, AnimSpeed)
+            //     .OnComplete(() => Instance.gameObject.SetActive(false));
         }
     
         private static T SetPopup<T>(string name, AnimatedWindowConstant openAnim) where T : PopupWindow
