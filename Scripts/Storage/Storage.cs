@@ -22,7 +22,7 @@ namespace enp_unity_extensions.Scripts.Storage
 
         public static T Load<T>(string path, string fileName)
         {
-            var directory = Path.Combine(PersistencePath, path);
+            var directory = PersistencePath + path;
             if (!Directory.Exists(directory))
                 Directory.CreateDirectory(directory);
 
@@ -36,7 +36,7 @@ namespace enp_unity_extensions.Scripts.Storage
 
         public static void Save<T>(string path, string fileName, T data)
         {
-            var directory = Path.Combine(PersistencePath, path);
+            var directory = PersistencePath + path;
             if (!Directory.Exists(directory))
                 Directory.CreateDirectory(directory);
 
