@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace enp_unity_extensions.Scripts.Storage
 {
-    public static class StorageController
+    public static class Storage
     {
         private static string _persistencePath;
         private static string PersistencePath

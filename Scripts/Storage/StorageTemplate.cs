@@ -9,12 +9,12 @@ namespace enp_unity_extensions.Scripts.Storage
         
         public static void SaveFile(Object file)
         {
-            StorageController.Save(FILE_PATH, FILENAME, file);
+            Storage.Save(FILE_PATH, FILENAME, file);
         }
         
         public static Object LoadFile()
         {
-            return StorageController.Load<Object>(FILE_PATH, FILENAME);
+            return Storage.Load<Object>(FILE_PATH, FILENAME);
         }
     }
 }
