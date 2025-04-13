@@ -6,6 +6,7 @@ namespace enp_unity_extensions.Scripts.Language
 {
     public class LanguageText : MonoBehaviour
     {
+        public TMP_Text Text => _text;
         [SerializeField] private TMP_Text _text;
 
         private string _key;
