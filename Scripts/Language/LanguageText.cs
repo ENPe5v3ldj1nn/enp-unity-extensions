@@ -11,8 +11,7 @@ namespace enp_unity_extensions.Scripts.Language
 
         private string _key;
         private object[] _formatArgs;
-
-
+        
         public void SetKey(string key)
         {
             _key = key;
@@ -55,6 +54,7 @@ namespace enp_unity_extensions.Scripts.Language
                 return;
             }
 
+            _formatArgs = args;
             if (LanguageController.LanguageDictionary.TryGetValue(_key, out string value))
             {
                 _text.text = string.Format(value, args);
@@ -68,7 +68,10 @@ namespace enp_unity_extensions.Scripts.Language
         private void OnEnable()
         {
             LanguageController.OnLanguageChanged += LanguageControllerOnLanguageChanged;
-            UpdateText();
+            if (_formatArgs != null && _formatArgs.Length > 0)
+                UpdateText(_formatArgs);
+            else
+                UpdateText();
         }
 
         private void OnDisable()
@@ -78,7 +81,10 @@ namespace enp_unity_extensions.Scripts.Language
 
         private void LanguageControllerOnLanguageChanged(SystemLanguage language)
         {
-            UpdateText();
+            if (_formatArgs != null && _formatArgs.Length > 0)
+                UpdateText(_formatArgs);
+            else
+                UpdateText();
         }
     }
 }

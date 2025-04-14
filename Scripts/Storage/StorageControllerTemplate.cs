@@ -7,13 +7,6 @@
         // public static void Initialize()
         // {
         //     StoragePressOnCircle.Value = Storage.StoragePressOnCircle.LoadFile();
-        //
-        //     Subscribe();
-        // }
-        //
-        // private static void Subscribe()
-        // {
-        //     StoragePressOnCircle.Subscribe(Storage.StoragePressOnCircle.SaveFile);
         // }
     }
 }
