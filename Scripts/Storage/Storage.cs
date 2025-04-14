@@ -1,5 +1,5 @@
 using System.IO;
-using Unity.Plastic.Newtonsoft.Json;
+using Newtonsoft.Json;
 using UnityEngine;
 
 namespace enp_unity_extensions.Scripts.Storage
