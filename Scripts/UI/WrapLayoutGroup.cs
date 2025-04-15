@@ -14,6 +14,13 @@ public class WrapLayoutGroup : LayoutGroup
     private readonly List<int> _rowStartIndexes = new();
 
     private float _totalContentHeight;
+    
+    protected override void OnEnable()
+    {
+        base.OnEnable();
+        LayoutRebuilder.MarkLayoutForRebuild(rectTransform);
+    }
+
 
     public override void CalculateLayoutInputVertical()
     {
