@@ -29,6 +29,11 @@ public static class CoroutineExtension
     {
         CoroutineController.Instance.StartCoroutine(method);
     }
+    
+    public static void Start(this IEnumerator method, MonoBehaviour behaviour)
+    {
+        behaviour.StartCoroutine(method);
+    }
 
     public static void Start(this IEnumerator method, out Coroutine coroutine)
     {
@@ -43,6 +48,11 @@ public static class CoroutineExtension
     public static void Stop(this IEnumerator method)
     {
         CoroutineController.Instance.StopCoroutine(method);
+    }
+    
+    public static void Stop(this IEnumerator method, MonoBehaviour behaviour)
+    {
+        behaviour.StopCoroutine(method);
     }
 
     public static void Stop(this IEnumerator method, Coroutine coroutine)
