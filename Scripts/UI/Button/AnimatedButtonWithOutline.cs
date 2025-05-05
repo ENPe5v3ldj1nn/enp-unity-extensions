@@ -9,10 +9,11 @@ namespace enp_unity_extensions.Scripts.UI.Button
         [SerializeField] private Image _background;
         [SerializeField] private Image _backgroundOutline;
 
+        [Header("Active colors")]
         [SerializeField] private Color _activeColorMain;
-        [SerializeField] private Color _deActiveColorMain;
-
         [SerializeField] private Color _activeColorOutline;
+        [Header("InActive colors")]
+        [SerializeField] private Color _deActiveColorMain;
         [SerializeField] private Color _deActiveColorOutline;
         
         private bool _isActive;
