@@ -6,20 +6,20 @@ namespace enp_unity_extensions.Scripts.UI.Windows
     {
         public static AnimatedWindow ActiveWindow { get; private set; }
         
-        public static void Open(this AnimatedWindow window, string animName)
+        public static void Open(this AnimatedWindow window, AnimatedWindowConstant animName)
         {
             ActiveWindow = window;
-            window.Open(animName);
+            window.Open(animName.ToString());
         }
 
-        public static void Close(this AnimatedWindow window, string animName, UnityAction onComplete)
+        public static void Close(this AnimatedWindow window, AnimatedWindowConstant animName, UnityAction onComplete)
         {
-            window.Close(animName, onComplete);
+            window.Close(animName.ToString(), onComplete);
         }
 
-        public static void CloseFast(this AnimatedWindow window, string animName, UnityAction onComplete)
+        public static void CloseFast(this AnimatedWindow window, AnimatedWindowConstant animName, UnityAction onComplete)
         {
-            window.Close(animName, null);
+            window.Close(animName.ToString(), null);
             onComplete?.Invoke();
         }
     }
