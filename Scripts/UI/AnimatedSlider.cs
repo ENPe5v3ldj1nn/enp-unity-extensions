@@ -1,4 +1,5 @@
 ﻿using DG.Tweening;
+using UniRx;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -24,30 +25,26 @@ namespace enp_unity_extensions.Scripts.UI
         private float _duration = 0.3f;
         private bool _isFast = false;
         
-        public void OnClickSetAction(bool onClick, float duration = 0.3f, bool isFast = false)
+        public void Initialize(ReactiveProperty<bool> onClick, float duration = 0.3f, bool isFast = false)
         {
             _onClick.onClick.AddListener(() =>
             {
-                if (isFast)
-                {
-                    SetSliderFast(onClick);
-                }
-                else
-                {
-                    SetSlider(onClick);
-                }
+                onClick.Value = !onClick.Value;
             });
+            
+            OnValueChanged(onClick.Value);
+            onClick.Subscribe(OnValueChanged).AddTo(this);
             
             _duration = duration;
             _isFast = isFast;
         }
-
+        
         public void SetFast(bool isFast)
         {
             _isFast = isFast;
         }
         
-        public void SetSlider(bool isActive)
+        private void SetSlider(bool isActive)
         {
             if (isActive)
             {
@@ -64,7 +61,7 @@ namespace enp_unity_extensions.Scripts.UI
             }
         }
 
-        public void SetSliderFast(bool isActive)
+        private void SetSliderFast(bool isActive)
         {
             if (isActive)
             {
@@ -78,6 +75,18 @@ namespace enp_unity_extensions.Scripts.UI
                 _background.color = _deActiveColorBackground;
                 _handle.color = _deActiveColorHandle;
                 _slider.value = 0;
+            }
+        }
+
+        private void OnValueChanged(bool isActive)
+        {
+            if (_isFast)
+            {
+                SetFast(isActive);
+            }
+            else
+            {
+                SetSlider(isActive);
             }
         }
     }
