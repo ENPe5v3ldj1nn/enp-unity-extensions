@@ -1,4 +1,5 @@
 ﻿using UnityEngine.Events;
+using static enp_unity_extensions.Scripts.UI.Windows.AnimatedWindowConstant;
 
 namespace enp_unity_extensions.Scripts.UI.Windows
 {
@@ -21,6 +22,15 @@ namespace enp_unity_extensions.Scripts.UI.Windows
         {
             window.Close(animName.ToString(), null);
             onComplete?.Invoke();
+        }
+        
+        public static void OpenNext(AnimatedWindow window, AnimatedWindowConstant close = CloseMiddle, AnimatedWindowConstant open = OpenMiddle, UnityAction onClose = null)
+        {
+            ActiveWindow.Close(close, () =>
+            {
+                onClose?.Invoke();
+                window.Open(open);
+            });
         }
     }
 }

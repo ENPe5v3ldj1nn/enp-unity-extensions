@@ -8,12 +8,10 @@ namespace enp_unity_extensions.Scripts.Language
     public static class LanguageController
     {
         public static event UnityAction<SystemLanguage> OnLanguageChanged;
-
         public static Dictionary<string, string> LanguageDictionary { get; private set; } = new();
-
         public static SystemLanguage CurrentLanguage { get; private set; }
 
-        private const string ResourcesPath = "Languages/";
+        private static string _resourcesPath = "Languages/";
 
         public static void SetLanguage(SystemLanguage language)
         {
@@ -21,7 +19,7 @@ namespace enp_unity_extensions.Scripts.Language
 
             string fileName = GetLanguageFileName(CurrentLanguage);
 
-            TextAsset jsonFile = Resources.Load<TextAsset>(ResourcesPath + fileName);
+            TextAsset jsonFile = Resources.Load<TextAsset>(_resourcesPath + fileName);
             if (jsonFile == null)
             {
                 Debug.LogError($"Localization file not found: {fileName}.json");
@@ -30,6 +28,11 @@ namespace enp_unity_extensions.Scripts.Language
 
             LanguageDictionary = JsonConvert.DeserializeObject<Dictionary<string, string>>(jsonFile.text);
             OnLanguageChanged?.Invoke(language);
+        }
+
+        public static void SetResourcesPath(string path)
+        {
+            _resourcesPath = path;
         }
 
         private static string GetLanguageFileName(SystemLanguage language)
@@ -79,7 +82,7 @@ namespace enp_unity_extensions.Scripts.Language
                 SystemLanguage.Ukrainian => "ukrainian",
                 SystemLanguage.Vietnamese => "vietnamese",
                 SystemLanguage.Hindi => "hindi",
-                _ => "english" // fallback
+                _ => "english"
             };
         }
     }

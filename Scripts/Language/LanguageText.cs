@@ -1,63 +1,51 @@
 using System;
-using UnityEngine;
 using TMPro;
+using UnityEngine;
 
 namespace enp_unity_extensions.Scripts.Language
 {
+    [DisallowMultipleComponent]
+    [RequireComponent(typeof(TMP_Text))]
     public class LanguageText : MonoBehaviour
     {
-        public TMP_Text Text => _text;
-        [SerializeField] private TMP_Text _text;
-
+        private TMP_Text _text;
         private string _key;
         private object[] _formatArgs;
-        
+
         public void SetKey(string key)
         {
             _key = key;
             _formatArgs = null;
-            UpdateText();
+            Apply();
         }
 
         public void SetKeyWithParams(string key, params object[] args)
         {
             _key = key;
             _formatArgs = args;
-            UpdateText(_formatArgs);
+            Apply();
         }
 
-        public void UpdateText()
+        public void Refresh()
+        {
+            Apply();
+        }
+
+        private void Apply()
         {
             if (string.IsNullOrEmpty(_key))
             {
-                _text.text = $"<missing:key>";
+                _text.text = "<missing:key>";
                 return;
             }
 
-            if (LanguageController.LanguageDictionary.TryGetValue(_key, out string value))
+            if (LanguageController.LanguageDictionary != null &&
+                LanguageController.LanguageDictionary.TryGetValue(_key, out var value))
             {
-                _text.text = _formatArgs != null && _formatArgs.Length > 0
-                    ? string.Format(value, _formatArgs)
-                    : value;
-            }
-            else
-            {
-                _text.text = $"<missing:{_key}>";
-            }
-        }
-        
-        public void UpdateText(params object[] args)
-        {
-            if (string.IsNullOrEmpty(_key))
-            {
-                _text.text = $"<missing:key>";
-                return;
-            }
-
-            _formatArgs = args;
-            if (LanguageController.LanguageDictionary.TryGetValue(_key, out string value))
-            {
-                _text.text = string.Format(value, args);
+                if (_formatArgs != null && _formatArgs.Length > 0)
+                    _text.text = string.Format(value, _formatArgs);
+                else
+                    _text.text = value;
             }
             else
             {
@@ -67,24 +55,18 @@ namespace enp_unity_extensions.Scripts.Language
 
         private void OnEnable()
         {
-            LanguageController.OnLanguageChanged += LanguageControllerOnLanguageChanged;
-            if (_formatArgs != null && _formatArgs.Length > 0)
-                UpdateText(_formatArgs);
-            else
-                UpdateText();
+            LanguageController.OnLanguageChanged += OnLanguageChanged;
+            Apply();
         }
 
         private void OnDisable()
         {
-            LanguageController.OnLanguageChanged -= LanguageControllerOnLanguageChanged;
+            LanguageController.OnLanguageChanged -= OnLanguageChanged;
         }
 
-        private void LanguageControllerOnLanguageChanged(SystemLanguage language)
+        private void OnLanguageChanged(SystemLanguage _)
         {
-            if (_formatArgs != null && _formatArgs.Length > 0)
-                UpdateText(_formatArgs);
-            else
-                UpdateText();
+            Apply();
         }
     }
 }
