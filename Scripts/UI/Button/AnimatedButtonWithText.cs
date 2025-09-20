@@ -19,12 +19,7 @@ namespace enp_unity_extensions.Scripts.UI.Button
 
         public void UpdateText()
         {
-            _languageText.UpdateText();
-        }
-        
-        public void UpdateText(params object[] args)
-        {
-            _languageText.UpdateText(args);
+            _languageText.Refresh();
         }
     }
 }
