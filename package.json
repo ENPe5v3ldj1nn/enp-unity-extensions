@@ -17,8 +17,11 @@
     "dotween",
     "enp",
     "extensions",
+    "language",
     "localization",
     "runtime",
+    "storage",
+    "tmp",
     "ui",
     "unirx",
     "utilities"
