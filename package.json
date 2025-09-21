@@ -8,5 +8,20 @@
     "url": "https://github.com/ENPe5v3ldj1nn"
   },
   "dependencies": {
-  }
+    "com.unity.textmeshpro": "3.0.6"
+  },
+  "documentationUrl": "https://github.com/ENPe5v3ldj1nn/enp-unity-extensions#readme",
+  "changelogUrl": "https://github.com/ENPe5v3ldj1nn/enp-unity-extensions/blob/main/CHANGELOG.md",
+  "licensesUrl": "https://github.com/ENPe5v3ldj1nn/enp-unity-extensions/blob/main/LICENSE",
+  "keywords": [
+    "dotween",
+    "enp",
+    "extensions",
+    "localization",
+    "runtime",
+    "ui",
+    "unirx",
+    "utilities"
+  ],
+  "unity": "2021.3"
 }
