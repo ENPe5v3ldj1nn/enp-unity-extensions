@@ -3,16 +3,16 @@
     "rootNamespace": "",
     "references": [
         "Unity.TextMeshPro",
-        "DOTween",
-        "DOTween.Modules",
-        "Newtonsoft.Json"
+        "UniRx",
+        "DOTween.Modules"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
-    "overrideReferences": false,
+    "overrideReferences": true,
     "precompiledReferences": [
-        "DOTween.dll"
+        "DOTween.dll",
+        "Newtonsoft.Json.dll"
     ],
     "autoReferenced": true,
     "defineConstraints": [],
