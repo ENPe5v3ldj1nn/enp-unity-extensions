@@ -3,7 +3,6 @@
     "rootNamespace": "",
     "references": [
         "Unity.TextMeshPro",
-        "DOTween.Modules",
         "UniRx"
     ],
     "includePlatforms": [],
@@ -12,7 +11,9 @@
     "overrideReferences": false,
     "precompiledReferences": [],
     "autoReferenced": true,
-    "defineConstraints": [],
+    "defineConstraints": [
+        "DOTween"
+    ],
     "versionDefines": [],
     "noEngineReferences": false
 }
