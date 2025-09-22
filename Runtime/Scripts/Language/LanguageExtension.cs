@@ -27,11 +27,8 @@ namespace enp_unity_extensions.Scripts.Language
             if (targetTMP == null)
                 throw new System.ArgumentNullException(nameof(targetTMP));
 
-            if (!targetTMP.TryGetComponent(out LanguageText languageText))
-            {
+            if (!targetTMP.gameObject.TryGetComponent(out LanguageText languageText))
                 languageText = targetTMP.gameObject.AddComponent<LanguageText>();
-                languageText.SetTmpText(targetTMP);
-            }
 
             return languageText;
         }
