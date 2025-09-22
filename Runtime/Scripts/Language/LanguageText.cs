@@ -12,6 +12,11 @@ namespace enp_unity_extensions.Scripts.Language
         private string _key;
         private object[] _formatArgs;
 
+        private void Awake()
+        {
+            _text = GetComponent<TMP_Text>();
+        }
+
         public void SetKey(string key)
         {
             _key = key;
@@ -33,6 +38,9 @@ namespace enp_unity_extensions.Scripts.Language
 
         private void Apply()
         {
+            if (_text == null)
+                return;
+
             if (string.IsNullOrEmpty(_key))
             {
                 _text.text = "<missing:key>";
