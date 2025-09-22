@@ -24,9 +24,15 @@ namespace enp_unity_extensions.Scripts.Language
 
         private static LanguageText GetOrSetLanguageText(TMP_Text targetTMP)
         {
-            if (targetTMP == null) throw new System.ArgumentNullException(nameof(targetTMP));
+            if (targetTMP == null)
+                throw new System.ArgumentNullException(nameof(targetTMP));
+
             if (!targetTMP.TryGetComponent(out LanguageText languageText))
+            {
                 languageText = targetTMP.gameObject.AddComponent<LanguageText>();
+                languageText.SetTmpText(targetTMP);
+            }
+
             return languageText;
         }
     }

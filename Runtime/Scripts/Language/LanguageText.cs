@@ -12,6 +12,11 @@ namespace enp_unity_extensions.Scripts.Language
         private string _key;
         private object[] _formatArgs;
 
+        public void SetTmpText(TMP_Text target)
+        {
+            _text = target;
+        }
+
         public void SetKey(string key)
         {
             _key = key;
