@@ -1,7 +1,8 @@
+using System;
 using System.Collections.Generic;
 using Newtonsoft.Json;
-using UnityEngine.Events;
 using UnityEngine;
+using UnityEngine.Events;
 
 namespace enp_unity_extensions.Scripts.Language
 {
@@ -11,31 +12,63 @@ namespace enp_unity_extensions.Scripts.Language
         public static Dictionary<string, string> LanguageDictionary { get; private set; } = new();
         public static SystemLanguage CurrentLanguage { get; private set; }
 
-        private static string _resourcesPath = "Languages/";
+        private static string _resourcesBasePath = "Languages";
 
         public static void SetLanguage(SystemLanguage language)
         {
             CurrentLanguage = language;
+            var folderName = GetLanguageFolderName(language);
+            var fullPath = string.IsNullOrEmpty(_resourcesBasePath) ? folderName : $"{_resourcesBasePath}/{folderName}";
 
-            string fileName = GetLanguageFileName(CurrentLanguage);
-
-            TextAsset jsonFile = Resources.Load<TextAsset>(_resourcesPath + fileName);
-            if (jsonFile == null)
+            var assets = Resources.LoadAll<TextAsset>(fullPath);
+            if (assets == null || assets.Length == 0)
             {
-                Debug.LogError($"Localization file not found: {fileName}.json");
+                Debug.LogError($"No localization files found in Resources/{fullPath}");
+                LanguageDictionary = new Dictionary<string, string>();
+                OnLanguageChanged?.Invoke(language);
                 return;
             }
 
-            LanguageDictionary = JsonConvert.DeserializeObject<Dictionary<string, string>>(jsonFile.text);
+            var merged = new Dictionary<string, string>();
+            var owners = new Dictionary<string, string>();
+
+            foreach (var ta in assets)
+            {
+                Dictionary<string, string> fileData = null;
+                try
+                {
+                    fileData = JsonConvert.DeserializeObject<Dictionary<string, string>>(ta.text);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogError($"Failed to parse localization file {ta.name} in {fullPath}: {e.Message}");
+                }
+
+                if (fileData == null) continue;
+
+                foreach (var kv in fileData)
+                {
+                    if (merged.ContainsKey(kv.Key))
+                    {
+                        var prevOwner = owners[kv.Key];
+                        Debug.LogWarning($"Duplicate localization key '{kv.Key}' in files: {prevOwner} and {ta.name}");
+                    }
+
+                    merged[kv.Key] = kv.Value;
+                    owners[kv.Key] = ta.name;
+                }
+            }
+
+            LanguageDictionary = merged;
             OnLanguageChanged?.Invoke(language);
         }
 
         public static void SetResourcesPath(string path)
         {
-            _resourcesPath = path;
+            _resourcesBasePath = string.IsNullOrEmpty(path) ? "" : path.TrimEnd('/');
         }
-
-        private static string GetLanguageFileName(SystemLanguage language)
+        
+        private static string GetLanguageFolderName(SystemLanguage language)
         {
             return language switch
             {
