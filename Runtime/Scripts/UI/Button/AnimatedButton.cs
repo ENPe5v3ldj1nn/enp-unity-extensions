@@ -1,5 +1,6 @@
 using System.Collections;
 using DG.Tweening;
+using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
@@ -8,6 +9,7 @@ namespace enp_unity_extensions.Scripts.UI.Button
 {
     public class AnimatedButton : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IPointerClickHandler
     {
+        public TMP_Text text;
         public CanvasGroup _canvasGroup;
         public RectTransform _rectTransform;
         public bool Interactable = true;
