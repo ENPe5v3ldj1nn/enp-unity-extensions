@@ -1,6 +1,5 @@
 using System.Collections;
 using DG.Tweening;
-using TMPro;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
@@ -9,12 +8,12 @@ namespace enp_unity_extensions.Scripts.UI.Button
 {
     public class AnimatedButton : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IPointerClickHandler
     {
+        [SerializeField] private float _animValue = 0.95f;
         public TMP_Text text;
         public CanvasGroup _canvasGroup;
         public RectTransform _rectTransform;
         public bool Interactable = true;
         public bool IsUseAnimation = true;
-
         private readonly UnityEvent _onClick = new();
         private bool _blockInput;
         private static WaitForSeconds _blockInputDelay = new WaitForSeconds(0.25f);
@@ -91,13 +90,12 @@ namespace enp_unity_extensions.Scripts.UI.Button
 
             if (IsUseAnimation)
             {
-                transform.DOScale(Vector3.one * 0.95f, 0.2f);
+                transform.DOScale(Vector3.one * _animValue, 0.2f);
             }
             else
             {
-                transform.localScale = Vector3.one * 0.95f;
+                transform.localScale = Vector3.one * _animValue;
             }
-
         }
 
         public void OnPointerClick(PointerEventData eventData)
