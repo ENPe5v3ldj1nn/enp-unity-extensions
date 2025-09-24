@@ -15,11 +15,8 @@
 3. Paste:
 
 ```
-https://github.com/ENPe5v3ldj1nn/enp-unity-extensions.git#v0.1.0
+https://github.com/ENPe5v3ldj1nn/enp-unity-extensions.git
 ```
-
-> `#v0.1.0` refers to the version tag. It is recommended to specify a tag for stability.  
-> If omitted, Unity will pull the latest `main` branch.
 
 ### As classic Assets
 You can also copy the needed scripts directly into `Assets/ENP/...` (no UPM management).
