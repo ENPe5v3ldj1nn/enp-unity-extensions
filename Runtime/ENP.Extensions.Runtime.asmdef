@@ -16,6 +16,12 @@
     ],
     "autoReferenced": true,
     "defineConstraints": [],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.google.play.review",
+            "expression": "1.0.0",
+            "define": "PLAY_REVIEW"
+        }
+    ],
     "noEngineReferences": false
 }

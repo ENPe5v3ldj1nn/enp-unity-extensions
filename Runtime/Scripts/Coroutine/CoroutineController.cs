@@ -25,11 +25,13 @@ public class CoroutineController : MonoBehaviour
 
 public static class CoroutineExtension
 {
+    // --- START ---
+
     public static void Start(this IEnumerator method)
     {
         CoroutineController.Instance.StartCoroutine(method);
     }
-    
+
     public static void Start(this IEnumerator method, MonoBehaviour behaviour)
     {
         behaviour.StartCoroutine(method);
@@ -45,21 +47,29 @@ public static class CoroutineExtension
         coroutine = behaviour.StartCoroutine(method);
     }
 
+    // --- STOP BY IENUMERATOR ---
+
     public static void Stop(this IEnumerator method)
     {
-        CoroutineController.Instance.StopCoroutine(method);
+        if (method != null)
+        {
+            CoroutineController.Instance.StopCoroutine(method);
+        }
     }
-    
+
     public static void Stop(this IEnumerator method, MonoBehaviour behaviour)
     {
-        behaviour.StopCoroutine(method);
+        if (method != null)
+        {
+            behaviour.StopCoroutine(method);
+        }
     }
 
     public static void Stop(this IEnumerator method, Coroutine coroutine)
     {
         if (coroutine != null)
         {
-            CoroutineController.Instance.StopCoroutine(method);
+            CoroutineController.Instance.StopCoroutine(coroutine);
         }
     }
 
@@ -67,7 +77,25 @@ public static class CoroutineExtension
     {
         if (coroutine != null)
         {
-            behaviour.StopCoroutine(method);
+            behaviour.StopCoroutine(coroutine);
+        }
+    }
+
+    // --- STOP BY COROUTINE (зручно для s_coroutine.Stop();) ---
+
+    public static void Stop(this Coroutine coroutine)
+    {
+        if (coroutine != null)
+        {
+            CoroutineController.Instance.StopCoroutine(coroutine);
+        }
+    }
+
+    public static void Stop(this Coroutine coroutine, MonoBehaviour behaviour)
+    {
+        if (coroutine != null)
+        {
+            behaviour.StopCoroutine(coroutine);
         }
     }
 }
