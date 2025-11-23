@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using System.Collections;
 using System.Collections.Generic;
 
 [AddComponentMenu("Layout/Wrap Layout Group")]
@@ -14,13 +15,67 @@ public class WrapLayoutGroup : LayoutGroup
     private readonly List<int> _rowStartIndexes = new();
 
     private float _totalContentHeight;
-    
+
+    private bool _pendingRebuild;
+    private bool _rebuildInProgress;
+
     protected override void OnEnable()
     {
         base.OnEnable();
-        LayoutRebuilder.MarkLayoutForRebuild(rectTransform);
+
+        if (_pendingRebuild)
+        {
+            _pendingRebuild = false;
+            StartRebuild();
+        }
+        else
+        {
+            LayoutRebuilder.MarkLayoutForRebuild(rectTransform);
+        }
     }
 
+    protected override void OnDisable()
+    {
+        base.OnDisable();
+        _rebuildInProgress = false;
+    }
+
+    public void RequestRebuild()
+    {
+        if (!isActiveAndEnabled)
+        {
+            _pendingRebuild = true;
+            return;
+        }
+
+        StartRebuild();
+    }
+
+    private void StartRebuild()
+    {
+        if (_rebuildInProgress)
+            return;
+
+        StartCoroutine(RebuildCoroutine());
+    }
+
+    private IEnumerator RebuildCoroutine()
+    {
+        _rebuildInProgress = true;
+        yield return null;
+
+        if (this != null && isActiveAndEnabled)
+        {
+            LayoutRebuilder.ForceRebuildLayoutImmediate(rectTransform);
+        }
+
+        _rebuildInProgress = false;
+    }
+
+    public override void CalculateLayoutInputHorizontal()
+    {
+        base.CalculateLayoutInputHorizontal();
+    }
 
     public override void CalculateLayoutInputVertical()
     {
@@ -68,7 +123,6 @@ public class WrapLayoutGroup : LayoutGroup
             maxHeight = Mathf.Max(maxHeight, height);
         }
 
-        // Last row
         _rowHeights.Add(maxHeight);
         _rowStartIndexes.Add(startIndex);
         _totalContentHeight = y + maxHeight + padding.vertical;
@@ -86,14 +140,11 @@ public class WrapLayoutGroup : LayoutGroup
             case TextAnchor.MiddleRight:
                 verticalOffset = (containerHeight - _totalContentHeight) / 2f;
                 break;
-
             case TextAnchor.LowerLeft:
             case TextAnchor.LowerCenter:
             case TextAnchor.LowerRight:
                 verticalOffset = containerHeight - _totalContentHeight - padding.bottom;
                 break;
-
-            // Upper — default
         }
 
         for (int row = 0; row < _rowHeights.Count; row++)
@@ -120,7 +171,6 @@ public class WrapLayoutGroup : LayoutGroup
                 case TextAnchor.LowerCenter:
                     offsetX += (AvailableWidth - totalRowWidth) / 2f;
                     break;
-
                 case TextAnchor.UpperRight:
                 case TextAnchor.MiddleRight:
                 case TextAnchor.LowerRight:
@@ -144,14 +194,11 @@ public class WrapLayoutGroup : LayoutGroup
                     case TextAnchor.MiddleRight:
                         finalY += (_rowHeights[row] - height) / 2f;
                         break;
-
                     case TextAnchor.LowerLeft:
                     case TextAnchor.LowerCenter:
                     case TextAnchor.LowerRight:
                         finalY += (_rowHeights[row] - height);
                         break;
-
-                    // Upper — default
                 }
 
                 finalY += verticalOffset + padding.top;
