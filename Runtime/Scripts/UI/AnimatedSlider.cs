@@ -30,6 +30,7 @@ namespace enp_unity_extensions.Scripts.UI
             _onClick.onClick.AddListener(() =>
             {
                 onClick.Value = !onClick.Value;
+                onClickOut?.Invoke(onClick.Value);
             });
             
             OnValueChanged(onClick.Value);
@@ -37,8 +38,6 @@ namespace enp_unity_extensions.Scripts.UI
             
             _duration = duration;
             _isFast = isFast;
-            
-            onClickOut?.Invoke(_isFast);
         }
         
         public void SetFast(bool isFast)
