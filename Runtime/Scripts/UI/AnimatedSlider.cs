@@ -45,7 +45,7 @@ namespace enp_unity_extensions.Scripts.UI
             _isFast = isFast;
         }
         
-        private void SetSlider(bool isActive)
+        public void SetSlider(bool isActive)
         {
             if (isActive)
             {
@@ -62,7 +62,7 @@ namespace enp_unity_extensions.Scripts.UI
             }
         }
 
-        private void SetSliderFast(bool isActive)
+        public void SetSliderFast(bool isActive)
         {
             if (isActive)
             {
