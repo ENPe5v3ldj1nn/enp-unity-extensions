@@ -25,7 +25,7 @@ namespace enp_unity_extensions.Scripts.UI
         private float _duration = 0.3f;
         private bool _isFast = false;
         
-        public void Initialize(ReactiveProperty<bool> onClick, float duration = 0.3f, bool isFast = false)
+        public void Initialize(ReactiveProperty<bool> onClick, UnityAction<bool> onClickOut, float duration = 0.3f, bool isFast = false)
         {
             _onClick.onClick.AddListener(() =>
             {
@@ -37,6 +37,8 @@ namespace enp_unity_extensions.Scripts.UI
             
             _duration = duration;
             _isFast = isFast;
+            
+            onClickOut?.Invoke(_isFast);
         }
         
         public void SetFast(bool isFast)
