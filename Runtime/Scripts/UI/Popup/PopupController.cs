@@ -54,13 +54,8 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Popup
                 Instance._background.DOKill();
                 Instance._background.DOFade(1, AnimSpeed);
             }
-    
-            return SetPopup<T>(typeof(T).Name, openAnim);
-        }
-    
-        public static void Close(AnimatedWindowConstant closeAnim = CloseMiddle, UnityAction onClose = null)
-        {
-            Close(null, closeAnim, onClose);
+
+            return SetPopup<T>(typeof(T).Name, openAnim);;
         }
 
         public static void Close(PopupWindow popup, AnimatedWindowConstant closeAnim = CloseMiddle, UnityAction onClose = null)
@@ -121,6 +116,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Popup
             Instance._windowStack.Push(popup);
             popup.transform.SetAsLastSibling();
             popup.Open(openAnim.ToString());
+            popup.OnOpen();
             return popup;
         }
     }

@@ -1,10 +1,11 @@
-﻿using enp_unity_extensions.Scripts.UI.Windows;
+﻿using System;
+using enp_unity_extensions.Scripts.UI.Windows;
 using UnityEngine;
 using static enp_unity_extensions.Scripts.UI.Windows.AnimatedWindowConstant;
 
 namespace enp_unity_extensions.Runtime.Scripts.UI.Popup
 {
-    public class PopupWindow : AnimatedWindow
+    public abstract class PopupWindow : AnimatedWindow
     {
         private void OnValidate()
         {
@@ -20,5 +21,8 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Popup
         {
             PopupController.Close(this, closeAnim);
         }
+
+        public abstract void OnOpen();
+        
     }
 }
