@@ -9,7 +9,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Popup
     {
         private void OnValidate()
         {
-            var className = nameof(PopupWindow);
+            var className = GetType().Name;
 
             if (gameObject.name != className)
             {
