@@ -18,6 +18,8 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Popup
     
         private readonly Stack<PopupWindow> _windowStack = new Stack<PopupWindow>();
         private static float AnimSpeed = 0.45f;
+        private static float BackgroundFadeMin = 1;
+        private static float BackgroundFadeMax = 0;
         private static readonly string PopupPath = "Popups/";
     
         private static PopupController _instance;
@@ -39,7 +41,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Popup
             }
         }
 
-        public static void SetAnimSpeed(float animSpeed)
+        public static void Setup(float animSpeed)
         {
             AnimSpeed = animSpeed;
         }
@@ -52,7 +54,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Popup
             if (Instance._windowStack.Count == 0)
             {
                 Instance._background.DOKill();
-                Instance._background.DOFade(1, AnimSpeed);
+                Instance._background.DOFade(BackgroundFadeMax, AnimSpeed);
             }
 
             return SetPopup<T>(typeof(T).Name, openAnim);;
@@ -85,7 +87,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Popup
             if (Instance._windowStack.Count == 1)
             {
                 Instance._background.DOKill();
-                Instance._background.DOFade(0, AnimSpeed)
+                Instance._background.DOFade(BackgroundFadeMin, AnimSpeed)
                     .OnComplete(() => Instance.gameObject.SetActive(false));
             }
 
