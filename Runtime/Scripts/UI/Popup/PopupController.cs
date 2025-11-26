@@ -41,9 +41,11 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Popup
             }
         }
 
-        public static void Setup(float animSpeed)
+        public static void Setup(float animSpeed, float fadeMin, float fadeMax)
         {
             AnimSpeed = animSpeed;
+            BackgroundFadeMin = fadeMin;
+            BackgroundFadeMax = fadeMax;
         }
     
         public static T Open<T>(AnimatedWindowConstant openAnim = OpenMiddle) where T : PopupWindow
