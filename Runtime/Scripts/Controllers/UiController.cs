@@ -92,11 +92,11 @@ namespace enp_unity_extensions.Runtime.Scripts.Controllers
         {
             return direction switch
             {
-                WindowDirection.Left => (CloseLeft, OpenLeft),
-                WindowDirection.Right => (CloseRight, OpenRight),
+                WindowDirection.Left => (CloseRight, OpenLeft),
+                WindowDirection.Right => (CloseLeft, OpenRight),
                 WindowDirection.Middle => (CloseMiddle, OpenMiddle),
-                WindowDirection.SmoothLeft => (CloseSmoothLeft, OpenSmoothLeft),
-                WindowDirection.SmoothRight => (CloseSmoothRight, OpenSmoothRight),
+                WindowDirection.SmoothLeft => (CloseSmoothRight, OpenSmoothLeft),
+                WindowDirection.SmoothRight => (CloseSmoothLeft, OpenSmoothRight),
                 WindowDirection.PopupCard => (ClosePopupCard, OpenPopupCard),
                 _ => (CloseMiddle, OpenMiddle)
             };
