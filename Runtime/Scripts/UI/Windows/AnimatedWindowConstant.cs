@@ -5,9 +5,13 @@
         OpenLeft,
         OpenRight,
         OpenMiddle,
+        OpenSmoothRight,
+        OpenSmoothLeft,
         
         CloseLeft,
         CloseRight,
-        CloseMiddle
+        CloseMiddle,
+        CloseSmoothRight,
+        CloseSmoothLeft
     }
 }
