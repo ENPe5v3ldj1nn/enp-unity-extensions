@@ -7,11 +7,13 @@
         OpenMiddle,
         OpenSmoothRight,
         OpenSmoothLeft,
+        OpenPopupCard,
         
         CloseLeft,
         CloseRight,
         CloseMiddle,
         CloseSmoothRight,
-        CloseSmoothLeft
+        CloseSmoothLeft,
+        ClosePopupCard
     }
 }
