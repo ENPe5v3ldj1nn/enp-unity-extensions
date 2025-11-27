@@ -1,4 +1,4 @@
-﻿namespace enp_unity_extensions.Scripts.UI.Windows
+﻿namespace enp_unity_extensions.Runtime.Scripts.UI.Windows
 {
     public enum AnimatedWindowConstant
     {

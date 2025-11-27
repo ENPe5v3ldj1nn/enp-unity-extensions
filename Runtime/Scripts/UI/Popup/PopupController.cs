@@ -1,10 +1,10 @@
 ﻿using System.Collections.Generic;
 using DG.Tweening;
-using enp_unity_extensions.Scripts.UI.Windows;
+using enp_unity_extensions.Runtime.Scripts.UI.Windows;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
-using static enp_unity_extensions.Scripts.UI.Windows.AnimatedWindowConstant;
+using static enp_unity_extensions.Runtime.Scripts.UI.Windows.AnimatedWindowConstant;
 
 namespace enp_unity_extensions.Runtime.Scripts.UI.Popup
 {
