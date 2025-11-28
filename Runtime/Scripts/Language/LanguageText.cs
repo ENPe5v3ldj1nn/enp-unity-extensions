@@ -1,6 +1,10 @@
+using System;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Text;
 using TMPro;
 using UnityEngine;
+using Random = UnityEngine.Random;
 
 namespace enp_unity_extensions.Scripts.Language
 {
@@ -19,37 +23,46 @@ namespace enp_unity_extensions.Scripts.Language
         [SerializeField] private LanguageTextSource _source = LanguageTextSource.Auto;
         [SerializeField] private string _key;
         [SerializeField] private int _arrayIndex;
+        private bool _initialized;
+        [ThreadStatic] private static StringBuilder _formatBuilder;
         private TMP_Text _text;
         private Queue<string> _bag;
 
         private void Awake()
         {
             _text = GetComponent<TMP_Text>();
+            Initialize();
         }
 
-        private void OnEnable()
+        private void OnDestroy()
         {
+            if (_initialized)
+            {
+                LanguageController.OnLanguageChanged -= OnLanguageChanged;
+            }
+        }
+
+        private void Initialize()
+        {
+            if (_initialized) return;
+            if (_text == null)
+            {
+                _text = GetComponent<TMP_Text>();
+            }
             LanguageController.OnLanguageChanged += OnLanguageChanged;
-            Refresh();
-        }
-
-        private void OnDisable()
-        {
-            LanguageController.OnLanguageChanged -= OnLanguageChanged;
+            _initialized = true;
         }
 
         public void SetKey(string key)
         {
             _key = key;
             _source = LanguageTextSource.String;
-            Refresh();
         }
 
         public void SetArrayKey(string key, bool noRepeat = false)
         {
             _key = key;
             _source = noRepeat ? LanguageTextSource.ArrayNoRepeat : LanguageTextSource.ArrayRandom;
-            Refresh();
         }
 
         public void SetArrayKey(string key, int index)
@@ -57,24 +70,47 @@ namespace enp_unity_extensions.Scripts.Language
             _key = key;
             _arrayIndex = index;
             _source = LanguageTextSource.ArrayByIndex;
-            Refresh();
         }
 
         public void SetAuto(string key)
         {
             _key = key;
             _source = LanguageTextSource.Auto;
-            Refresh();
+        }
+
+        public void SetKeyAndRefresh(string key, params object[] formatArgs)
+        {
+            SetKey(key);
+            Refresh(formatArgs);
+        }
+
+        public void SetArrayKeyAndRefresh(string key, bool noRepeat = false, params object[] formatArgs)
+        {
+            SetArrayKey(key, noRepeat);
+            Refresh(formatArgs);
+        }
+
+        public void SetArrayKeyAndRefresh(string key, int index, params object[] formatArgs)
+        {
+            SetArrayKey(key, index);
+            Refresh(formatArgs);
+        }
+
+        public void SetAutoAndRefresh(string key, params object[] formatArgs)
+        {
+            SetAuto(key);
+            Refresh(formatArgs);
         }
 
         public void Refresh(params object[] formatArgs)
         {
+            if (!_initialized) Initialize();
             if (_text == null || string.IsNullOrEmpty(_key)) return;
 
             if (_source == LanguageTextSource.String)
             {
                 var v = LanguageController.Get(_key);
-                _text.text = string.IsNullOrEmpty(v) ? $"<{_key}>" : (formatArgs is { Length: > 0 } ? string.Format(v, formatArgs) : v);
+                _text.text = string.IsNullOrEmpty(v) ? $"<{_key}>" : FormatValue(v, formatArgs);
                 return;
             }
 
@@ -87,7 +123,7 @@ namespace enp_unity_extensions.Scripts.Language
                     return;
                 }
                 var pick = arr[_arrayIndex];
-                _text.text = formatArgs is { Length: > 0 } ? string.Format(pick, formatArgs) : pick;
+                _text.text = FormatValue(pick, formatArgs);
                 return;
             }
 
@@ -97,7 +133,7 @@ namespace enp_unity_extensions.Scripts.Language
                 if (_source == LanguageTextSource.Auto && arr.Length == 0)
                 {
                     var v = LanguageController.Get(_key);
-                    _text.text = string.IsNullOrEmpty(v) ? $"<{_key}>" : (formatArgs is { Length: > 0 } ? string.Format(v, formatArgs) : v);
+                    _text.text = string.IsNullOrEmpty(v) ? $"<{_key}>" : FormatValue(v, formatArgs);
                     return;
                 }
 
@@ -116,9 +152,7 @@ namespace enp_unity_extensions.Scripts.Language
                         for (int i = 0; i < shuffled.Count; i++)
                         {
                             var j = Random.Range(i, shuffled.Count);
-                            var tmp = shuffled[i];
-                            shuffled[i] = shuffled[j];
-                            shuffled[j] = tmp;
+                            (shuffled[i], shuffled[j]) = (shuffled[j], shuffled[i]);
                         }
                         _bag = new Queue<string>(shuffled);
                     }
@@ -129,7 +163,7 @@ namespace enp_unity_extensions.Scripts.Language
                     pick = arr[Random.Range(0, arr.Length)];
                 }
 
-                _text.text = formatArgs is { Length: > 0 } ? string.Format(pick, formatArgs) : pick;
+                _text.text = FormatValue(pick, formatArgs);
             }
         }
 
@@ -137,6 +171,16 @@ namespace enp_unity_extensions.Scripts.Language
         {
             _bag = null;
             Refresh();
+        }
+
+        private static string FormatValue(string value, object[] formatArgs)
+        {
+            if (string.IsNullOrEmpty(value)) return value;
+            if (formatArgs == null || formatArgs.Length == 0) return value;
+            var sb = _formatBuilder ??= new StringBuilder(value.Length + 16);
+            sb.Clear();
+            sb.AppendFormat(CultureInfo.InvariantCulture, value, formatArgs);
+            return sb.ToString();
         }
     }
 }

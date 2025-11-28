@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
 
@@ -62,19 +61,33 @@ namespace enp_unity_extensions.Scripts.Language
                     {
                         var key = prop.Name;
                         var token = prop.Value;
-                        if (token.Type == JTokenType.String)
+                    if (token.Type == JTokenType.String)
+                    {
+                        Data[key] = token.Value<string>() ?? string.Empty;
+                    }
+                    else if (token.Type == JTokenType.Array)
+                    {
+                        if (token is JArray arrayToken)
                         {
-                            Data[key] = token.Value<string>() ?? string.Empty;
-                        }
-                        else if (token.Type == JTokenType.Array)
-                        {
-                            var arr = token.Values<string>().Where(s => !string.IsNullOrWhiteSpace(s)).Select(s => s.Trim()).ToArray();
-                            Arrays[key] = arr;
+                            var list = new List<string>(arrayToken.Count);
+                            foreach (var item in arrayToken)
+                            {
+                                if (item.Type != JTokenType.String) continue;
+                                var value = item.Value<string>();
+                                if (string.IsNullOrWhiteSpace(value)) continue;
+                                list.Add(value.Trim());
+                            }
+
+                            if (list.Count > 0)
+                            {
+                                Arrays[key] = list.ToArray();
+                            }
                         }
                     }
                 }
-                catch {}
             }
+            catch {}
+        }
         }
 
         private static string GetLanguageFolderName(SystemLanguage language)
