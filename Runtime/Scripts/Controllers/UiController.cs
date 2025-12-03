@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using enp_unity_extensions.Runtime.Scripts.UI.Windows;
 using UnityEngine;
+using UnityEngine.Events;
 using static enp_unity_extensions.Runtime.Scripts.UI.Windows.AnimatedWindowConstant;
 
 namespace enp_unity_extensions.Runtime.Scripts.Controllers
@@ -21,23 +22,22 @@ namespace enp_unity_extensions.Runtime.Scripts.Controllers
 
         protected abstract void SetupMap(Dictionary<TWindowId, AnimatedWindow> windowsMap);
         
-        public static void ShowExclusiveById(TWindowId id)
+        public static void ShowExclusiveById(TWindowId id, UnityAction onClose = null)
         {
             var target = _instance._windowsMap[id];
-            OpenNext(target);
+            OpenNext(target, WindowDirection.Middle, onClose);
         }
 
-        public static void ShowExclusiveById(TWindowId id, WindowDirection direction)
+        public static void ShowExclusiveById(TWindowId id, WindowDirection direction, UnityAction onClose = null)
         {
             var target = _instance._windowsMap[id];
-            var (close, open) = ResolveDirection(direction);
-            OpenNext(target, close, open);
+            OpenNext(target, direction, onClose);
         }
 
-        public static T ShowExclusiveByType<T>(TWindowId id) where T : Component
+        public static T ShowExclusiveByType<T>(TWindowId id, UnityAction onClose = null) where T : Component
         {
             var target = _instance._windowsMap[id];
-            OpenNext(target);
+            OpenNext(target, WindowDirection.Middle, onClose);
 
             if (target is T typed)
                 return typed;
@@ -45,11 +45,10 @@ namespace enp_unity_extensions.Runtime.Scripts.Controllers
             throw new InvalidOperationException($"WindowId {id} → {target.GetType().Name}, очікували {typeof(T).Name}");
         }
 
-        public static T ShowExclusiveByType<T>(TWindowId id, WindowDirection direction) where T : Component
+        public static T ShowExclusiveByType<T>(TWindowId id, WindowDirection direction, UnityAction onClose = null) where T : Component
         {
             var target = _instance._windowsMap[id];
-            var (close, open) = ResolveDirection(direction);
-            OpenNext(target, close, open);
+            OpenNext(target, direction, onClose);
 
             if (target is T typed)
                 return typed;
