@@ -56,38 +56,78 @@ namespace enp_unity_extensions.Scripts.Language
             {
                 try
                 {
+                    if (ta == null)
+                    {
+                        Debug.LogWarning($"[Language] Null TextAsset found in '{path}', skipping.");
+                        continue;
+                    }
+
                     var root = JObject.Parse(ta.text);
                     foreach (var prop in root.Properties())
                     {
                         var key = prop.Name;
+                        if (string.IsNullOrWhiteSpace(key))
+                        {
+                            Debug.LogWarning($"[Language] Empty key in '{ta.name}' ({path}), skipping.");
+                            continue;
+                        }
+
                         var token = prop.Value;
-                    if (token.Type == JTokenType.String)
-                    {
-                        Data[key] = token.Value<string>() ?? string.Empty;
-                    }
-                    else if (token.Type == JTokenType.Array)
-                    {
-                        if (token is JArray arrayToken)
+                        if (token.Type == JTokenType.String)
+                        {
+                            if (Data.ContainsKey(key))
+                            {
+                                Debug.LogWarning($"[Language] Key '{key}' overwritten by '{ta.name}' in '{path}'.");
+                            }
+
+                            Data[key] = token.Value<string>() ?? string.Empty;
+                        }
+                        else if (token.Type == JTokenType.Array && token is JArray arrayToken)
                         {
                             var list = new List<string>(arrayToken.Count);
                             foreach (var item in arrayToken)
                             {
-                                if (item.Type != JTokenType.String) continue;
+                                if (item.Type != JTokenType.String)
+                                {
+                                    Debug.LogWarning($"[Language] Key '{key}' in '{ta.name}' ({path}) has non-string array item, skipping.");
+                                    continue;
+                                }
+
                                 var value = item.Value<string>();
-                                if (string.IsNullOrWhiteSpace(value)) continue;
+                                if (string.IsNullOrWhiteSpace(value))
+                                {
+                                    Debug.LogWarning($"[Language] Key '{key}' in '{ta.name}' ({path}) has empty array item, skipping.");
+                                    continue;
+                                }
+
                                 list.Add(value.Trim());
                             }
 
                             if (list.Count > 0)
                             {
+                                if (Arrays.ContainsKey(key))
+                                {
+                                    Debug.LogWarning($"[Language] Array key '{key}' overwritten by '{ta.name}' in '{path}'.");
+                                }
+
                                 Arrays[key] = list.ToArray();
                             }
+                            else
+                            {
+                                Debug.LogWarning($"[Language] Array key '{key}' in '{ta.name}' ({path}) has no valid items, skipping.");
+                            }
+                        }
+                        else
+                        {
+                            Debug.LogWarning($"[Language] Key '{key}' in '{ta.name}' ({path}) has unsupported token type '{token.Type}', skipping.");
                         }
                     }
                 }
+                catch (Exception ex)
+                {
+                    Debug.LogError($"[Language] Failed to parse '{ta?.name ?? "<null>"}' in '{path}': {ex.Message}");
+                }
             }
-            catch {}
-        }
         }
 
         private static string GetLanguageFolderName(SystemLanguage language)
