@@ -38,7 +38,7 @@ namespace enp_unity_extensions.Scripts.Language
         {
             if (_initialized)
             {
-                LanguageController.OnLanguageChanged -= OnLanguageChanged;
+                LanguageController.LanguageChanged -= LanguageChanged;
             }
         }
 
@@ -49,7 +49,7 @@ namespace enp_unity_extensions.Scripts.Language
             {
                 _text = GetComponent<TMP_Text>();
             }
-            LanguageController.OnLanguageChanged += OnLanguageChanged;
+            LanguageController.LanguageChanged += LanguageChanged;
             _initialized = true;
         }
 
@@ -167,7 +167,7 @@ namespace enp_unity_extensions.Scripts.Language
             }
         }
 
-        private void OnLanguageChanged(SystemLanguage _)
+        private void LanguageChanged(SystemLanguage _)
         {
             _bag = null;
             Refresh();

@@ -7,7 +7,7 @@ namespace enp_unity_extensions.Scripts.Language
 {
     public static class LanguageController
     {
-        public static event Action<SystemLanguage> OnLanguageChanged;
+        public static event Action<SystemLanguage> LanguageChanged;
         public static SystemLanguage CurrentLanguage { get; private set; }
         public static readonly Dictionary<string, string> Data = new Dictionary<string, string>();
         public static readonly Dictionary<string, string[]> Arrays = new Dictionary<string, string[]>();
@@ -24,7 +24,7 @@ namespace enp_unity_extensions.Scripts.Language
         {
             CurrentLanguage = language;
             Reload();
-            OnLanguageChanged?.Invoke(CurrentLanguage);
+            LanguageChanged?.Invoke(CurrentLanguage);
         }
 
         public static string Get(string key)
