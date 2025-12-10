@@ -32,9 +32,9 @@ namespace enp_unity_extensions.Editor.LanguageSettings
 
         public void OnGUI()
         {
-            EditorGUILayout.LabelField("Base translations path (inside Assets/Resources)", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Base translations path (inside a Resources folder)", EditorStyles.boldLabel);
             EditorGUI.BeginChangeCheck();
-            var absolutePath = EditorGUILayout.TextField("Absolute path", _host.GetAbsoluteResourcesPath()).Trim().Replace('\\', '/');
+            var absolutePath = LanguageSettingsPathUtility.Sanitize(EditorGUILayout.TextField("Absolute path", _host.GetAbsoluteResourcesPath()));
             if (EditorGUI.EndChangeCheck())
             {
                 if (TrySetAbsolutePath(absolutePath))
@@ -252,25 +252,22 @@ namespace enp_unity_extensions.Editor.LanguageSettings
 
         private bool TrySetAbsolutePath(string absolutePath)
         {
-            const string resourcesRoot = "Assets/Resources";
             if (string.IsNullOrWhiteSpace(absolutePath))
             {
                 _host.SetResourcesPath(string.Empty);
                 return true;
             }
 
-            var normalized = absolutePath.Replace('\\', '/').Trim().TrimEnd('/');
-            if (!normalized.StartsWith(resourcesRoot, StringComparison.OrdinalIgnoreCase))
+            var assetPath = LanguageSettingsPathUtility.ToAssetPath(absolutePath);
+            var isAssetPath = assetPath.StartsWith("Assets", StringComparison.OrdinalIgnoreCase);
+            var insideResources = LanguageSettingsPathUtility.IsAssetPathInsideResources(assetPath);
+            if (isAssetPath && !insideResources)
             {
-                _host.SetStatus($"Path must be inside {resourcesRoot}.", MessageType.Error);
+                _host.SetStatus("Path must be inside a Resources folder (e.g. Assets/.../Resources/...)", MessageType.Error);
                 return false;
             }
 
-            var relative = normalized.Length > resourcesRoot.Length
-                ? normalized.Substring(resourcesRoot.Length).Trim().TrimStart('/')
-                : string.Empty;
-
-            _host.SetResourcesPath(relative);
+            _host.SetResourcesPath(assetPath);
             return true;
         }
 
@@ -369,8 +366,8 @@ namespace enp_unity_extensions.Editor.LanguageSettings
         {
             try
             {
-                var trimmedPath = string.IsNullOrWhiteSpace(_host.ResourcesPath) ? string.Empty : _host.ResourcesPath.Trim().Trim('/', '\\');
-                LanguageController.SetResourcesPath(trimmedPath);
+                var relativePath = _host.GetResourcesRelativePath();
+                LanguageController.SetResourcesPath(relativePath);
                 LanguageController.SetLanguage(language);
                 _host.SetStatus($"Language set to {language}.", MessageType.Info);
             }

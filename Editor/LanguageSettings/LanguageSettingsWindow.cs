@@ -31,7 +31,7 @@ namespace enp_unity_extensions.Editor.LanguageSettings
 
         private void OnEnable()
         {
-            ResourcesPath = EditorPrefs.GetString(PrefsBasePathKey, DefaultResourcesPath);
+            ResourcesPath = LanguageSettingsPathUtility.Sanitize(EditorPrefs.GetString(PrefsBasePathKey, DefaultResourcesPath));
 
             _tabs.Clear();
             _tabs.Add(_foldersTab);
@@ -84,16 +84,20 @@ namespace enp_unity_extensions.Editor.LanguageSettings
 
         internal string GetAbsoluteResourcesPath()
         {
-            var relative = string.IsNullOrWhiteSpace(ResourcesPath) ? string.Empty : ResourcesPath.Trim().Trim('/', '\\');
-            return string.IsNullOrEmpty(relative) ? "Assets/Resources" : $"Assets/Resources/{relative}";
+            return LanguageSettingsPathUtility.ToAssetPath(ResourcesPath);
+        }
+
+        internal string GetResourcesRelativePath()
+        {
+            return LanguageSettingsPathUtility.ToResourcesRelativePath(ResourcesPath);
         }
 
         internal void SetResourcesPath(string path)
         {
-            var trimmed = string.IsNullOrWhiteSpace(path) ? string.Empty : path.Trim().Trim('/', '\\');
-            if (string.Equals(trimmed, ResourcesPath, StringComparison.Ordinal)) return;
+            var sanitized = LanguageSettingsPathUtility.Sanitize(path);
+            if (string.Equals(sanitized, ResourcesPath, StringComparison.Ordinal)) return;
 
-            ResourcesPath = trimmed;
+            ResourcesPath = sanitized;
             EditorPrefs.SetString(PrefsBasePathKey, ResourcesPath);
             Repaint();
         }

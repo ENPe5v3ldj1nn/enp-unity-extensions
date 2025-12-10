@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using enp_unity_extensions.Editor.LanguageSettings;
 using Newtonsoft.Json.Linq;
 using UnityEditor;
 using UnityEngine;
@@ -49,7 +50,7 @@ namespace enp_unity_extensions.Editor.Language
         public void OnEnable(EditorWindow host)
         {
             _host = host;
-            _resourcesPath = EditorPrefs.GetString(PrefsBasePathKey, DefaultResourcesPath);
+            _resourcesPath = LanguageSettingsPathUtility.Sanitize(EditorPrefs.GetString(PrefsBasePathKey, DefaultResourcesPath));
             RefreshLanguages();
         }
 
@@ -59,22 +60,22 @@ namespace enp_unity_extensions.Editor.Language
 
         public void SyncResourcesPath(string path)
         {
-            var trimmed = string.IsNullOrWhiteSpace(path) ? string.Empty : path.Trim().Trim('/', '\\');
-            if (string.Equals(trimmed, _resourcesPath, StringComparison.Ordinal))
+            var sanitized = LanguageSettingsPathUtility.Sanitize(path);
+            if (string.Equals(sanitized, _resourcesPath, StringComparison.Ordinal))
             {
                 return;
             }
 
-            _resourcesPath = trimmed;
+            _resourcesPath = sanitized;
             EditorPrefs.SetString(PrefsBasePathKey, _resourcesPath);
             RefreshLanguages();
         }
 
         public void OnGUI()
         {
-            EditorGUILayout.LabelField("Base translations path (relative to Assets/Resources)", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Base translations path (asset path under a Resources folder)", EditorStyles.boldLabel);
             EditorGUI.BeginChangeCheck();
-            var trimmed = EditorGUILayout.TextField("Resources Path", _resourcesPath).Trim().Trim('/', '\\');
+            var trimmed = LanguageSettingsPathUtility.Sanitize(EditorGUILayout.TextField("Resources Path", _resourcesPath));
             if (EditorGUI.EndChangeCheck())
             {
                 _resourcesPath = trimmed;
@@ -730,8 +731,7 @@ namespace enp_unity_extensions.Editor.Language
 
         private string GetAbsoluteResourcesPath()
         {
-            var relative = string.IsNullOrWhiteSpace(_resourcesPath) ? string.Empty : _resourcesPath.Trim().Trim('/', '\\');
-            return string.IsNullOrEmpty(relative) ? "Assets/Resources" : $"Assets/Resources/{relative}";
+            return LanguageSettingsPathUtility.ToAssetPath(_resourcesPath);
         }
 
         private static bool TryGetLanguageForFolder(string folderName, out SystemLanguage language)
