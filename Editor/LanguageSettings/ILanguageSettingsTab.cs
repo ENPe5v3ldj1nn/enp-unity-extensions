@@ -1,4 +1,6 @@
-namespace enp_unity_extensions.Editor.Language
+using enp_unity_extensions.Editor.Language;
+
+namespace enp_unity_extensions.Editor.LanguageSettings
 {
     internal interface ILanguageSettingsTab
     {

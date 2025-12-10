@@ -1,6 +1,6 @@
-using UnityEditor;
+using enp_unity_extensions.Editor.Language;
 
-namespace enp_unity_extensions.Editor.Language
+namespace enp_unity_extensions.Editor.LanguageSettings
 {
     internal class LanguageSettingsTranslationTab : ILanguageSettingsTab
     {

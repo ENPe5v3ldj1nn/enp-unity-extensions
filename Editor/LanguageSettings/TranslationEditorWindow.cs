@@ -807,32 +807,4 @@ namespace enp_unity_extensions.Editor.Language
             _host?.Repaint();
         }
     }
-
-    public class TranslationEditorWindow : EditorWindow
-    {
-        private TranslationEditorView _view = new TranslationEditorView();
-
-        [MenuItem("Tools/Translation Editor")]
-        public static void ShowWindow()
-        {
-            var window = GetWindow<TranslationEditorWindow>(false, "TranslationEditorView", true);
-            window.minSize = new Vector2(420f, 320f);
-            window.Show();
-        }
-
-        private void OnEnable()
-        {
-            _view.OnEnable(this);
-        }
-
-        private void OnDisable()
-        {
-            _view.OnDisable();
-        }
-
-        private void OnGUI()
-        {
-            _view.OnGUI();
-        }
-    }
 }
