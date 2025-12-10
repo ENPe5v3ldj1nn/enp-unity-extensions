@@ -32,19 +32,15 @@ namespace enp_unity_extensions.Editor.LanguageSettings
 
         public void OnGUI()
         {
-            EditorGUILayout.LabelField("Base translations path (relative to Assets/Resources)", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Base translations path (inside Assets/Resources)", EditorStyles.boldLabel);
             EditorGUI.BeginChangeCheck();
-            var trimmed = EditorGUILayout.TextField("Resources Path", _host.ResourcesPath).Trim().Trim('/', '\\');
+            var absolutePath = EditorGUILayout.TextField("Absolute path", _host.GetAbsoluteResourcesPath()).Trim().Replace('\\', '/');
             if (EditorGUI.EndChangeCheck())
             {
-                _host.SetResourcesPath(trimmed);
-                RefreshFolders();
-            }
-
-            using (new EditorGUILayout.HorizontalScope())
-            {
-                EditorGUILayout.PrefixLabel("Absolute path");
-                EditorGUILayout.SelectableLabel(_host.GetAbsoluteResourcesPath(), EditorStyles.textField, GUILayout.Height(EditorGUIUtility.singleLineHeight));
+                if (TrySetAbsolutePath(absolutePath))
+                {
+                    RefreshFolders();
+                }
             }
 
             using (new EditorGUILayout.HorizontalScope())
@@ -252,6 +248,30 @@ namespace enp_unity_extensions.Editor.LanguageSettings
             }
 
             return AssetDatabase.IsValidFolder(basePath);
+        }
+
+        private bool TrySetAbsolutePath(string absolutePath)
+        {
+            const string resourcesRoot = "Assets/Resources";
+            if (string.IsNullOrWhiteSpace(absolutePath))
+            {
+                _host.SetResourcesPath(string.Empty);
+                return true;
+            }
+
+            var normalized = absolutePath.Replace('\\', '/').Trim().TrimEnd('/');
+            if (!normalized.StartsWith(resourcesRoot, StringComparison.OrdinalIgnoreCase))
+            {
+                _host.SetStatus($"Path must be inside {resourcesRoot}.", MessageType.Error);
+                return false;
+            }
+
+            var relative = normalized.Length > resourcesRoot.Length
+                ? normalized.Substring(resourcesRoot.Length).Trim().TrimStart('/')
+                : string.Empty;
+
+            _host.SetResourcesPath(relative);
+            return true;
         }
 
         private IEnumerable<SystemLanguage> GetAvailableLanguages()
