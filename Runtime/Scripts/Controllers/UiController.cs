@@ -7,6 +7,7 @@ using static enp_unity_extensions.Runtime.Scripts.UI.Windows.AnimatedWindowConst
 
 namespace enp_unity_extensions.Runtime.Scripts.Controllers
 {
+    [AddComponentMenu("")]
     public abstract class UiController<TWindowId> : MonoBehaviour
         where TWindowId : struct, Enum
     {
