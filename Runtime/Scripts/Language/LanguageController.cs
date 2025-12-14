@@ -11,6 +11,7 @@ namespace enp_unity_extensions.Scripts.Language
         public static SystemLanguage CurrentLanguage { get; private set; }
         public static readonly Dictionary<string, string> Data = new Dictionary<string, string>();
         public static readonly Dictionary<string, string[]> Arrays = new Dictionary<string, string[]>();
+        public static bool IsCanLog { get; set; } = true;
 
         private static string _resourcesBasePath = "Languages";
         private const string FallbackLangFolder = "english";
@@ -58,7 +59,7 @@ namespace enp_unity_extensions.Scripts.Language
                 {
                     if (ta == null)
                     {
-                        Debug.LogWarning($"[Language] Null TextAsset found in '{path}', skipping.");
+                        LogWarning($"[Language] Null TextAsset found in '{path}', skipping.");
                         continue;
                     }
 
@@ -68,7 +69,7 @@ namespace enp_unity_extensions.Scripts.Language
                         var key = prop.Name;
                         if (string.IsNullOrWhiteSpace(key))
                         {
-                            Debug.LogWarning($"[Language] Empty key in '{ta.name}' ({path}), skipping.");
+                            LogWarning($"[Language] Empty key in '{ta.name}' ({path}), skipping.");
                             continue;
                         }
 
@@ -77,7 +78,7 @@ namespace enp_unity_extensions.Scripts.Language
                         {
                             if (Data.ContainsKey(key))
                             {
-                                Debug.LogWarning($"[Language] Key '{key}' overwritten by '{ta.name}' in '{path}'.");
+                                LogWarning($"[Language] Key '{key}' overwritten by '{ta.name}' in '{path}'.");
                             }
 
                             Data[key] = token.Value<string>() ?? string.Empty;
@@ -89,14 +90,14 @@ namespace enp_unity_extensions.Scripts.Language
                             {
                                 if (item.Type != JTokenType.String)
                                 {
-                                    Debug.LogWarning($"[Language] Key '{key}' in '{ta.name}' ({path}) has non-string array item, skipping.");
+                                    LogWarning($"[Language] Key '{key}' in '{ta.name}' ({path}) has non-string array item, skipping.");
                                     continue;
                                 }
 
                                 var value = item.Value<string>();
                                 if (string.IsNullOrWhiteSpace(value))
                                 {
-                                    Debug.LogWarning($"[Language] Key '{key}' in '{ta.name}' ({path}) has empty array item, skipping.");
+                                    LogWarning($"[Language] Key '{key}' in '{ta.name}' ({path}) has empty array item, skipping.");
                                     continue;
                                 }
 
@@ -107,25 +108,25 @@ namespace enp_unity_extensions.Scripts.Language
                             {
                                 if (Arrays.ContainsKey(key))
                                 {
-                                    Debug.LogWarning($"[Language] Array key '{key}' overwritten by '{ta.name}' in '{path}'.");
+                                    LogWarning($"[Language] Array key '{key}' overwritten by '{ta.name}' in '{path}'.");
                                 }
 
                                 Arrays[key] = list.ToArray();
                             }
                             else
                             {
-                                Debug.LogWarning($"[Language] Array key '{key}' in '{ta.name}' ({path}) has no valid items, skipping.");
+                                LogWarning($"[Language] Array key '{key}' in '{ta.name}' ({path}) has no valid items, skipping.");
                             }
                         }
                         else
                         {
-                            Debug.LogWarning($"[Language] Key '{key}' in '{ta.name}' ({path}) has unsupported token type '{token.Type}', skipping.");
+                            LogWarning($"[Language] Key '{key}' in '{ta.name}' ({path}) has unsupported token type '{token.Type}', skipping.");
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogError($"[Language] Failed to parse '{ta?.name ?? "<null>"}' in '{path}': {ex.Message}");
+                    LogError($"[Language] Failed to parse '{ta?.name ?? "<null>"}' in '{path}': {ex.Message}");
                 }
             }
         }
@@ -179,6 +180,18 @@ namespace enp_unity_extensions.Scripts.Language
                 case SystemLanguage.Hindi: return "hindi";
                 default: return "english";
             }
+        }
+
+        private static void LogWarning(string message)
+        {
+            if (!IsCanLog) return;
+            Debug.LogWarning(message);
+        }
+
+        private static void LogError(string message)
+        {
+            if (!IsCanLog) return;
+            Debug.LogError(message);
         }
     }
 }
