@@ -178,7 +178,14 @@ Each JSON file is a simple dictionary of keys and strings:
 
 ```csharp
 tmpText.SetKey("menu.play");
-tmpText.SetKeyWithParams("score", points);
+tmpText.SetKey("score", points);
+```
+
+- If you frequently update only the formatting parameters (e.g. `"Round: {0}/{1}"`), you can bind the key once and then update only values without re-fetching the localized string:
+
+```csharp
+tmpText.SetKey("round.label", currentRound, maxRounds); // caches resolved value internally
+tmpText.UpdateValue(currentRound, maxRounds);            // only re-formats cached value
 ```
 
 - The component subscribes to `LanguageController.OnLanguageChanged` and updates automatically when you switch languages.

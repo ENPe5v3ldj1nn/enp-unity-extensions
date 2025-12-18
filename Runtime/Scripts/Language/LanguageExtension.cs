@@ -1,21 +1,34 @@
-﻿using TMPro;
-using UnityEngine;
+﻿using System.Runtime.CompilerServices;
+using enp_unity_extensions.Scripts.Language;
+using TMPro;
 
-namespace enp_unity_extensions.Scripts.Language
+namespace enp_unity_extensions.Runtime.Scripts.Language
 {
     public static class LanguageExtension
     {
-        public static void SetKey(this TMP_Text text, string key)
+        private sealed class KeyCacheEntry
         {
-            if (text == null) return;
-            var v = LanguageController.Get(key);
-            text.text = string.IsNullOrEmpty(v) ? $"<{key}>" : v;
+            public string Key;
+            public string Value;
+            public int Version;
         }
 
-        public static void SetKeyWithParams(this TMP_Text text, string key, params object[] args)
+        private static readonly ConditionalWeakTable<TMP_Text, KeyCacheEntry> KeyCache = new();
+
+        public static void SetKey(this TMP_Text text, string key, params object[] args)
         {
-            if (text == null) return;
-            var v = LanguageController.Get(key);
+            if (!text) 
+                return;
+            
+            var cache = KeyCache.GetOrCreateValue(text);
+            if (cache.Key != key || cache.Version != LanguageController.Version)
+            {
+                cache.Key = key;
+                cache.Version = LanguageController.Version;
+                cache.Value = LanguageController.Get(key);
+            }
+
+            var v = cache.Value;
             if (string.IsNullOrEmpty(v))
             {
                 text.text = $"<{key}>";
@@ -24,31 +37,30 @@ namespace enp_unity_extensions.Scripts.Language
             text.text = args is { Length: > 0 } ? string.Format(v, args) : v;
         }
 
-        public static void SetArrayKey(this TMP_Text text, string key)
+        public static void UpdateValue(this TMP_Text text, params object[] args)
         {
-            if (text == null) return;
-            var arr = LanguageController.GetArray(key);
-            if (arr.Length == 0)
+            if (!text)
+                return;
+            if (!KeyCache.TryGetValue(text, out var cache) || string.IsNullOrEmpty(cache.Key))
+                return;
+
+            if (cache.Version != LanguageController.Version)
             {
-                text.text = $"<{key}>";
+                cache.Version = LanguageController.Version;
+                cache.Value = LanguageController.Get(cache.Key);
+            }
+
+            var v = cache.Value;
+            if (string.IsNullOrEmpty(v))
+            {
+                text.text = $"<{cache.Key}>";
                 return;
             }
-            text.text = arr[RandomIndex(arr.Length)];
+
+            text.text = args is { Length: > 0 } ? string.Format(v, args) : v;
         }
 
-        public static void SetArrayKey(this TMP_Text text, string key, int index)
-        {
-            if (text == null) return;
-            var arr = LanguageController.GetArray(key);
-            if (arr.Length == 0 || index < 0 || index >= arr.Length)
-            {
-                text.text = $"<{key}[{index}]>";
-                return;
-            }
-            text.text = arr[index];
-        }
-
-        public static void SetArrayKeyWithParams(this TMP_Text text, string key, params object[] args)
+        public static void SetArrayKey(this TMP_Text text, string key, params object[] args)
         {
             if (text == null) return;
             var arr = LanguageController.GetArray(key);
@@ -61,7 +73,7 @@ namespace enp_unity_extensions.Scripts.Language
             text.text = args is { Length: > 0 } ? string.Format(pick, args) : pick;
         }
 
-        public static void SetArrayKeyWithParams(this TMP_Text text, string key, int index, params object[] args)
+        public static void SetArrayKey(this TMP_Text text, string key, int index, params object[] args)
         {
             if (text == null) return;
             var arr = LanguageController.GetArray(key);

@@ -9,6 +9,7 @@ namespace enp_unity_extensions.Scripts.Language
     {
         public static event Action<SystemLanguage> LanguageChanged;
         public static SystemLanguage CurrentLanguage { get; private set; }
+        public static int Version { get; private set; }
         public static readonly Dictionary<string, string> Data = new Dictionary<string, string>();
         public static readonly Dictionary<string, string[]> Arrays = new Dictionary<string, string[]>();
         public static bool IsCanLog { get; set; } = true;
@@ -46,6 +47,7 @@ namespace enp_unity_extensions.Scripts.Language
             Arrays.Clear();
             LoadFolder(FallbackLangFolder);
             LoadFolder(GetLanguageFolderName(CurrentLanguage));
+            Version++;
         }
 
         private static void LoadFolder(string langFolder)
