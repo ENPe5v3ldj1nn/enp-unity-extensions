@@ -8,6 +8,10 @@ public class WrapLayoutGroup : LayoutGroup
 {
     [SerializeField]
     private Vector2 _spacing = Vector2.zero;
+    [SerializeField]
+    private bool _controlChildWidth = true;
+    [SerializeField]
+    private bool _controlChildHeight = true;
     private float AvailableWidth => rectTransform.rect.width - padding.horizontal;
 
     private readonly List<Vector2> _childPositions = new();
@@ -90,6 +94,16 @@ public class WrapLayoutGroup : LayoutGroup
         SetChildrenPositions();
     }
 
+    private float GetChildWidth(RectTransform child)
+    {
+        return _controlChildWidth ? LayoutUtility.GetPreferredWidth(child) : child.rect.width;
+    }
+
+    private float GetChildHeight(RectTransform child)
+    {
+        return _controlChildHeight ? LayoutUtility.GetPreferredHeight(child) : child.rect.height;
+    }
+
     private void CalculatePositionsAndSize()
     {
         _childPositions.Clear();
@@ -104,8 +118,8 @@ public class WrapLayoutGroup : LayoutGroup
         for (int i = 0; i < rectChildren.Count; i++)
         {
             RectTransform child = rectChildren[i];
-            float width = LayoutUtility.GetPreferredWidth(child);
-            float height = LayoutUtility.GetPreferredHeight(child);
+            float width = GetChildWidth(child);
+            float height = GetChildHeight(child);
 
             if (x + width > AvailableWidth + padding.left && x > padding.left)
             {
@@ -156,7 +170,7 @@ public class WrapLayoutGroup : LayoutGroup
 
             for (int i = start; i < end; i++)
             {
-                totalRowWidth += LayoutUtility.GetPreferredWidth(rectChildren[i]) + _spacing.x;
+                totalRowWidth += GetChildWidth(rectChildren[i]) + _spacing.x;
             }
 
             if (totalRowWidth > 0)
@@ -181,8 +195,8 @@ public class WrapLayoutGroup : LayoutGroup
             for (int i = start; i < end; i++)
             {
                 RectTransform child = rectChildren[i];
-                float width = LayoutUtility.GetPreferredWidth(child);
-                float height = LayoutUtility.GetPreferredHeight(child);
+                float width = GetChildWidth(child);
+                float height = GetChildHeight(child);
 
                 float y = _childPositions[i].y;
                 float finalY = y;
@@ -203,8 +217,23 @@ public class WrapLayoutGroup : LayoutGroup
 
                 finalY += verticalOffset + padding.top;
 
-                SetChildAlongAxis(child, 0, offsetX, width);
-                SetChildAlongAxis(child, 1, finalY, height);
+                if (_controlChildWidth)
+                {
+                    SetChildAlongAxis(child, 0, offsetX, width);
+                }
+                else
+                {
+                    SetChildAlongAxis(child, 0, offsetX);
+                }
+
+                if (_controlChildHeight)
+                {
+                    SetChildAlongAxis(child, 1, finalY, height);
+                }
+                else
+                {
+                    SetChildAlongAxis(child, 1, finalY);
+                }
                 offsetX += width + _spacing.x;
             }
         }
