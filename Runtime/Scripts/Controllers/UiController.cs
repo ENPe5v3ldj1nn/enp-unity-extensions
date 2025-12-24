@@ -13,12 +13,24 @@ namespace enp_unity_extensions.Runtime.Scripts.Controllers
     {
         private static UiController<TWindowId> _instance;
         private readonly Dictionary<TWindowId, AnimatedWindow> _windowsMap = new();
+        public static AnimatedWindow CurrentWindow
+        {
+            get => AnimatedWindowHistory.CurrentWindow;
+            private set => AnimatedWindowHistory.CurrentWindow = value;
+        }
+
+        public static AnimatedWindow LastWindow
+        {
+            get => AnimatedWindowHistory.LastWindow;
+            private set => AnimatedWindowHistory.LastWindow = value;
+        }
 
         protected virtual void Initialize()
         {
             _instance = this;
             _windowsMap.Clear();
             SetupMap(_windowsMap);
+            AnimatedWindowHistory.Reset();
         }
 
         protected abstract void SetupMap(Dictionary<TWindowId, AnimatedWindow> windowsMap);
@@ -57,6 +69,52 @@ namespace enp_unity_extensions.Runtime.Scripts.Controllers
             throw new InvalidOperationException($"WindowId {id} → {target.GetType().Name}, очікували {typeof(T).Name}");
         }
 
+        public static void ShowLastWindow(UnityAction onClose = null)
+        {
+            var target = LastWindow;
+            if (target == null)
+                return;
+
+            OpenNext(target, WindowDirection.Middle, onClose);
+        }
+
+        public static void ShowLastWindow(WindowDirection direction, UnityAction onClose = null)
+        {
+            var target = LastWindow;
+            if (target == null)
+                return;
+
+            OpenNext(target, direction, onClose);
+        }
+
+        public static T ShowLastWindow<T>(UnityAction onClose = null) where T : Component
+        {
+            var target = LastWindow;
+            if (target == null)
+                return null;
+
+            OpenNext(target, WindowDirection.Middle, onClose);
+
+            if (target is T typed)
+                return typed;
+
+            throw new InvalidOperationException($"LastWindow is {target.GetType().Name}, expected {typeof(T).Name}");
+        }
+
+        public static T ShowLastWindow<T>(WindowDirection direction, UnityAction onClose = null) where T : Component
+        {
+            var target = LastWindow;
+            if (target == null)
+                return null;
+
+            OpenNext(target, direction, onClose);
+
+            if (target is T typed)
+                return typed;
+
+            throw new InvalidOperationException($"LastWindow is {target.GetType().Name}, expected {typeof(T).Name}");
+        }
+
         protected static void OpenNext(AnimatedWindow window)
         {
             OpenNext(window, CloseMiddle, OpenMiddle);
@@ -73,18 +131,23 @@ namespace enp_unity_extensions.Runtime.Scripts.Controllers
             AnimatedWindowConstant open = OpenMiddle,
             UnityEngine.Events.UnityAction onClose = null)
         {
-            var active = AnimatedWindowExtensions.ActiveWindow;
+            var active = CurrentWindow;
             if (active == null)
             {
                 onClose?.Invoke();
                 window.Open(open);
+                CurrentWindow = window;
                 return;
             }
+
+            if (active != window)
+                LastWindow = active;
 
             active.Close(close, () =>
             {
                 onClose?.Invoke();
                 window.Open(open);
+                CurrentWindow = window;
             });
         }
 

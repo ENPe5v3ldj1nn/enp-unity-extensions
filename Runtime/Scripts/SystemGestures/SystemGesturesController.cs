@@ -71,7 +71,7 @@ namespace enp_unity_extensions.Runtime.Scripts.SystemGestures
                 return;
 
             CleanupDeadHandlers();
-            var activeWindow = AnimatedWindowExtensions.ActiveWindow;
+            var activeWindow = AnimatedWindowHistory.CurrentWindow;
 
             for (var i = BackHandlers.Count - 1; i >= 0; i--)
             {
