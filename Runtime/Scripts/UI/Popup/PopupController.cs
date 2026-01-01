@@ -48,7 +48,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Popup
             BackgroundFadeMax = fadeMax;
         }
     
-        public static T Open<T>(AnimatedWindowConstant openAnim = OpenMiddle) where T : PopupWindow
+        public static T Open<T>(AnimatedWindowConstant openAnim = OpenMiddle, params object[] args) where T : PopupWindow
         {
             Instance.gameObject.SetActive(true);
             Instance._canvas.gameObject.SetActive(true);
@@ -59,7 +59,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Popup
                 Instance._background.DOFade(BackgroundFadeMax, AnimSpeed);
             }
 
-            return SetPopup<T>(typeof(T).Name, openAnim);;
+            return SetPopup<T>(typeof(T).Name, openAnim, args);
         }
 
         public static void Close(PopupWindow popup, AnimatedWindowConstant closeAnim = CloseMiddle, UnityAction onClose = null)
@@ -113,14 +113,14 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Popup
             popupToClose.Close(closeAnim.ToString(), OnComplete);
         }
     
-        private static T SetPopup<T>(string name, AnimatedWindowConstant openAnim) where T : PopupWindow
+        private static T SetPopup<T>(string name, AnimatedWindowConstant openAnim, params object[] args) where T : PopupWindow
         {
             var popupFromResource = Resources.Load<T>(PopupPath + name);
             var popup = Instantiate(popupFromResource, Instance._canvas.transform);
             Instance._windowStack.Push(popup);
             popup.transform.SetAsLastSibling();
             popup.Open(openAnim.ToString());
-            popup.OnOpen();
+            popup.OnOpen(args);
             return popup;
         }
     }

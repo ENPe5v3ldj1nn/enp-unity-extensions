@@ -22,7 +22,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Popup
             PopupController.Close(this, closeAnim);
         }
 
-        public abstract void OnOpen();
+        public abstract void OnOpen(params object[] args);
         
     }
 }
