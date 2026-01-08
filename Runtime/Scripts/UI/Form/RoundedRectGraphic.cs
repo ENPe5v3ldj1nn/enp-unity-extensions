@@ -49,7 +49,11 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
 
         public void ResetBaseAnglesToStyle()
         {
-            if (_style == null) return;
+            if (_style == null)
+            {
+                Debug.Log("[RoundedShapeGraphic] _style is null (ResetBaseAnglesToStyle).");
+                return;
+            }
             if (_useStyleBaseAngles) return;
             ApplyStyleBaseAngles();
             SetVerticesDirty();
@@ -75,7 +79,11 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
         {
             get
             {
-                if (_style == null) return s_WhiteTexture;
+                if (_style == null)
+                {
+                    Debug.Log("[RoundedShapeGraphic] _style is null (mainTexture).");
+                    return s_WhiteTexture;
+                }
                 return _style.GetRampTexture();
             }
         }
@@ -108,13 +116,21 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
         void Update()
         {
             if (!isActiveAndEnabled) return;
-            if (_style == null) return;
+            if (_style == null)
+            {
+                Debug.Log("[RoundedShapeGraphic] _style is null (Update).");
+                return;
+            }
             SyncStyleIfNeeded(false);
         }
 
         void SyncStyleIfNeeded(bool force)
         {
-            if (_style == null) return;
+            if (_style == null)
+            {
+                Debug.Log("[RoundedShapeGraphic] _style is null (SyncStyleIfNeeded).");
+                return;
+            }
             if (!force && _lastStyleVersion == _style.Version) return;
             _lastStyleVersion = _style.Version;
             ApplyStyleBaseAngles();
@@ -124,7 +140,11 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
 
         private void ApplyStyleBaseAngles()
         {
-            if (_style == null) return;
+            if (_style == null)
+            {
+                Debug.Log("[RoundedShapeGraphic] _style is null (ApplyStyleBaseAngles).");
+                return;
+            }
             _customFillGradientAngle = _style.FillGradientAngle;
             _customBorderGradientAngle = _style.BorderGradientAngle;
             _useStyleBaseAngles = true;
@@ -132,7 +152,11 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
 
         void EnsureCanvasChannels()
         {
-            if (canvas == null) return;
+            if (canvas == null)
+            {
+                Debug.Log("[RoundedShapeGraphic] canvas is null (EnsureCanvasChannels).");
+                return;
+            }
             canvas.additionalShaderChannels |= AdditionalCanvasShaderChannels.TexCoord1;
             canvas.additionalShaderChannels |= AdditionalCanvasShaderChannels.TexCoord2;
             canvas.additionalShaderChannels |= AdditionalCanvasShaderChannels.TexCoord3;
@@ -143,10 +167,12 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
         {
             if (_sharedMaterial == null)
             {
+                Debug.Log("[RoundedShapeGraphic] _sharedMaterial is null (EnsureMaterial).");
                 var shader = Shader.Find("UI/RoundedShapeSDF");
                 if (shader == null)
                 {
                     Debug.LogError("Shader 'UI/RoundedShapeSDF' not found.");
+                    Debug.Log("[RoundedShapeGraphic] shader is null (EnsureMaterial).");
                     return;
                 }
                 _sharedMaterial = new Material(shader);
