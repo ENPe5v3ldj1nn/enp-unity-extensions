@@ -16,6 +16,9 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
         [SerializeField] private float _customFillGradientAngle = 90f;
         [SerializeField] private float _customBorderGradientAngle = 90f;
         [SerializeField] private bool _useStyleShapeProperties = true;
+        [SerializeField] private bool _useStyleGradients = true;
+        [SerializeField] private Gradient _customFillGradient = DefaultWhiteGradient();
+        [SerializeField] private Gradient _customBorderGradient = DefaultWhiteGradient();
         [SerializeField] private RoundedShapeType _customShape = RoundedShapeType.RoundedRect;
         [SerializeField, Min(0f)] private float _customCornerRadius = 24f;
         [SerializeField, Min(0f)] private float _customBorderThickness;
@@ -27,6 +30,8 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
 
         private static Material _sharedMaterial;
         private int _lastStyleVersion = -1;
+        private Texture2D _customRamp;
+        private ulong _customRampHash;
 
         public RoundedShapeStyle Style
         {
@@ -40,6 +45,49 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
                 SetMaterialDirty();
                 SetVerticesDirty();
             }
+        }
+
+        public Gradient FillGradient => ResolveFillGradient();
+        public Gradient BorderGradient => ResolveBorderGradient();
+
+        public bool UseStyleGradients
+        {
+            get => _useStyleGradients;
+            set
+            {
+                if (_useStyleGradients == value) return;
+                _useStyleGradients = value;
+                MarkGradientTextureDirty();
+            }
+        }
+
+        public void SetGradientOverrides(Gradient fillGradient, Gradient borderGradient)
+        {
+            _customFillGradient = EnsureGradient(fillGradient);
+            _customBorderGradient = EnsureGradient(borderGradient);
+            _useStyleGradients = false;
+            MarkGradientTextureDirty();
+        }
+
+        public void ResetGradientsToStyle()
+        {
+            if (_style == null) return;
+            _useStyleGradients = true;
+            MarkGradientTextureDirty();
+        }
+
+        public void MarkGradientTextureDirty()
+        {
+            if (_useStyleGradients && _style != null)
+            {
+                _style.MarkDirty();
+            }
+            else
+            {
+                InvalidateCustomRamp();
+            }
+            SetVerticesDirty();
+            SetMaterialDirty();
         }
 
         public float FillGradientAngle => _useStyleBaseAngles ? (_style?.FillGradientAngle ?? _customFillGradientAngle) : _customFillGradientAngle;
@@ -60,10 +108,8 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
         public void ResetBaseAnglesToStyle()
         {
             if (_style == null)
-            {
-                Debug.Log("[RoundedShapeGraphic] _style is null (ResetBaseAnglesToStyle).");
                 return;
-            }
+            
             if (_useStyleBaseAngles) return;
             ApplyStyleBaseAngles();
             SetVerticesDirty();
@@ -89,20 +135,143 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
         {
             get
             {
-                if (_style == null)
+                if (_useStyleGradients && _style != null)
                 {
-                    Debug.Log("[RoundedShapeGraphic] _style is null (mainTexture).");
-                    return s_WhiteTexture;
+                    return _style.GetRampTexture();
                 }
-                return _style.GetRampTexture();
+                var fillGradient = ResolveFillGradient();
+                var borderGradient = ResolveBorderGradient();
+                return GetCustomRampTexture(fillGradient, borderGradient);
             }
         }
+
+        private Gradient ResolveFillGradient()
+        {
+            return _useStyleGradients && _style != null ? _style.FillGradient : EnsureGradient(_customFillGradient);
+        }
+
+        private Gradient ResolveBorderGradient()
+        {
+            return _useStyleGradients && _style != null ? _style.BorderGradient : EnsureGradient(_customBorderGradient);
+        }
+
+        private Texture GetCustomRampTexture(Gradient fillGradient, Gradient borderGradient)
+        {
+            if (fillGradient == null && borderGradient == null)
+            {
+                return s_WhiteTexture;
+            }
+            var hash = ComputeGradientHash(fillGradient, borderGradient);
+            if (_customRamp != null && _customRampHash == hash) return _customRamp;
+            DestroyCustomRamp();
+            _customRamp = CreateRampTexture(fillGradient, borderGradient);
+            _customRampHash = hash;
+            return _customRamp;
+        }
+
+        private void InvalidateCustomRamp()
+        {
+            _customRampHash = 0;
+            DestroyCustomRamp();
+        }
+
+        private void DestroyCustomRamp()
+        {
+            if (_customRamp == null) return;
+            if (Application.isPlaying) Destroy(_customRamp);
+            else DestroyImmediate(_customRamp);
+            _customRamp = null;
+        }
+
+        private static Gradient EnsureGradient(Gradient gradient)
+        {
+            return gradient ?? DefaultWhiteGradient();
+        }
+
+        private void EnsureCustomGradients()
+        {
+            if (_customFillGradient == null)
+                _customFillGradient = DefaultWhiteGradient();
+            if (_customBorderGradient == null)
+                _customBorderGradient = DefaultWhiteGradient();
+        }
+
+        private static Gradient DefaultWhiteGradient()
+        {
+            var gradient = new Gradient();
+            gradient.SetKeys(
+                new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
+                new[] { new GradientAlphaKey(1f, 0f), new GradientAlphaKey(1f, 1f) }
+            );
+            return gradient;
+        }
+
+        private Texture2D CreateRampTexture(Gradient fill, Gradient border)
+        {
+            const int width = 256;
+            const int height = 2;
+            var texture = new Texture2D(width, height, TextureFormat.RGBA32, false, true);
+            texture.wrapMode = TextureWrapMode.Clamp;
+            texture.filterMode = FilterMode.Bilinear;
+            texture.hideFlags = HideFlags.HideAndDontSave;
+            var pixels = new Color32[width * height];
+            for (int x = 0; x < width; x++)
+            {
+                var t = x / (float)(width - 1);
+                var fillColor = fill != null ? fill.Evaluate(t) : Color.white;
+                var borderColor = border != null ? border.Evaluate(t) : Color.white;
+                pixels[x + 0 * width] = (Color32)fillColor;
+                pixels[x + 1 * width] = (Color32)borderColor;
+            }
+            texture.SetPixels32(pixels);
+            texture.Apply(false, true);
+            return texture;
+        }
+
+        private ulong ComputeGradientHash(Gradient fill, Gradient border)
+        {
+            var hash = 1469598103934665603UL;
+            hash = (hash ^ HashGradient(fill)) * 1099511628211UL;
+            hash = (hash ^ HashGradient(border)) * 1099511628211UL;
+            return hash;
+        }
+
+        private static ulong HashGradient(Gradient gradient)
+        {
+            if (gradient == null) return 0UL;
+            unchecked
+            {
+                ulong hash = 1469598103934665603UL;
+                var colors = gradient.colorKeys;
+                var alphas = gradient.alphaKeys;
+                hash = (hash ^ (ulong)colors.Length) * 1099511628211UL;
+                for (int i = 0; i < colors.Length; i++)
+                {
+                    hash = (hash ^ Quant01(colors[i].color.r)) * 1099511628211UL;
+                    hash = (hash ^ Quant01(colors[i].color.g)) * 1099511628211UL;
+                    hash = (hash ^ Quant01(colors[i].color.b)) * 1099511628211UL;
+                    hash = (hash ^ QuantT(colors[i].time)) * 1099511628211UL;
+                }
+                hash = (hash ^ (ulong)alphas.Length) * 1099511628211UL;
+                for (int i = 0; i < alphas.Length; i++)
+                {
+                    hash = (hash ^ Quant01(alphas[i].alpha)) * 1099511628211UL;
+                    hash = (hash ^ QuantT(alphas[i].time)) * 1099511628211UL;
+                }
+                hash = (hash ^ (ulong)gradient.mode.GetHashCode()) * 1099511628211UL;
+                return hash;
+            }
+        }
+
+        private static ulong Quant01(float value) => (ulong)Mathf.Clamp(Mathf.RoundToInt(value * 65535f), 0, 65535);
+        private static ulong QuantT(float value) => (ulong)Mathf.Clamp(Mathf.RoundToInt(value * 65535f), 0, 65535);
 
         protected override void OnEnable()
         {
             base.OnEnable();
             EnsureCanvasChannels();
             EnsureMaterial();
+            EnsureCustomGradients();
             SyncStyleIfNeeded(true);
             SetVerticesDirty();
             SetMaterialDirty();
@@ -125,27 +294,35 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
             _customBorderThickness = Mathf.Max(0f, _customBorderThickness);
             _customShadowBlur = Mathf.Max(0f, _customShadowBlur);
             _customShadowSpread = Mathf.Max(0f, _customShadowSpread);
+            EnsureCustomGradients();
+        }
+
+        protected override void OnDisable()
+        {
+            base.OnDisable();
+            DestroyCustomRamp();
+        }
+
+        protected override void OnDestroy()
+        {
+            base.OnDestroy();
+            DestroyCustomRamp();
         }
 
         void Update()
         {
             if (!isActiveAndEnabled) return;
             if (_style == null)
-            {
-                Debug.Log("[RoundedShapeGraphic] _style is null (Update).");
                 return;
-            }
             SyncStyleIfNeeded(false);
         }
 
         void SyncStyleIfNeeded(bool force)
         {
             if (_style == null)
-            {
-                Debug.Log("[RoundedShapeGraphic] _style is null (SyncStyleIfNeeded).");
                 return;
-            }
-            if (!force && _lastStyleVersion == _style.Version) return;
+
+            if (!force && _lastStyleVersion == _style.Version) return;     
             _lastStyleVersion = _style.Version;
             ApplyStyleBaseAngles();
             SetMaterialDirty();
@@ -154,11 +331,9 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
 
         private void ApplyStyleBaseAngles()
         {
-            if (_style == null)
-            {
-                Debug.Log("[RoundedShapeGraphic] _style is null (ApplyStyleBaseAngles).");
+            if (!_style)
                 return;
-            }
+            
             _customFillGradientAngle = _style.FillGradientAngle;
             _customBorderGradientAngle = _style.BorderGradientAngle;
             _useStyleBaseAngles = true;
@@ -167,10 +342,8 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
         void EnsureCanvasChannels()
         {
             if (canvas == null)
-            {
-                Debug.Log("[RoundedShapeGraphic] canvas is null (EnsureCanvasChannels).");
                 return;
-            }
+            
             canvas.additionalShaderChannels |= AdditionalCanvasShaderChannels.TexCoord1;
             canvas.additionalShaderChannels |= AdditionalCanvasShaderChannels.TexCoord2;
             canvas.additionalShaderChannels |= AdditionalCanvasShaderChannels.TexCoord3;
