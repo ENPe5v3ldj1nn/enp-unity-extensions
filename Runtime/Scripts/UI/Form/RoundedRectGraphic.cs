@@ -1,5 +1,4 @@
-﻿using enp_unity_extensions.Scripts.UI.Form;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 
@@ -118,19 +117,19 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
 
             var st = _style;
 
-            var shape = st != null ? st.shape : RoundedShapeType.RoundedRect;
+            var shape = st != null ? st.Shape : RoundedShapeType.RoundedRect;
 
-            var cornerRadius = st != null ? st.cornerRadius : 24f;
-            var borderThickness = st != null ? st.borderThickness : 0f;
+            var cornerRadius = st != null ? st.CornerRadius : 24f;
+            var borderThickness = st != null ? st.BorderThickness : 0f;
 
-            var shadowEnabled = st != null && st.shadowEnabled;
-            var shadowColor = st != null ? st.shadowColor : new Color(0f, 0f, 0f, 0f);
-            var shadowOffset = st != null ? st.shadowOffset : Vector2.zero;
-            var shadowBlur = st != null ? st._shadowBlur : 0f;
-            var shadowSpread = st != null ? st._shadowSpread : 0f;
+            var shadowEnabled = st != null && st.ShadowEnabled;
+            var shadowColor = st != null ? st.ShadowColor : new Color(0f, 0f, 0f, 0f);
+            var shadowOffset = st != null ? st.ShadowOffset : Vector2.zero;
+            var shadowBlur = st != null ? st.ShadowBlur : 0f;
+            var shadowSpread = st != null ? st.ShadowSpread : 0f;
 
-            var fillAngle = st != null ? st.fillGradientAngle : 90f;
-            var borderAngle = st != null ? st.borderGradientAngle : 90f;
+            var fillAngle = st != null ? st.FillGradientAngle : 90f;
+            var borderAngle = st != null ? st.BorderGradientAngle : 90f;
 
             var rad = Mathf.Min(Mathf.Max(0f, cornerRadius), Mathf.Min(halfW, halfH));
             var border = Mathf.Min(Mathf.Max(0f, borderThickness), Mathf.Min(halfW, halfH));
@@ -208,8 +207,8 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
             if (halfW <= 0f || halfH <= 0f) return false;
 
             var st = _style;
-            var shape = st != null ? st.shape : RoundedShapeType.RoundedRect;
-            var cornerRadius = st != null ? st.cornerRadius : 24f;
+            var shape = st != null ? st.Shape : RoundedShapeType.RoundedRect;
+            var cornerRadius = st != null ? st.CornerRadius : 24f;
 
             if (shape == RoundedShapeType.Ellipse)
                 return SdEllipseApprox(p, new Vector2(halfW, halfH)) <= 0f;

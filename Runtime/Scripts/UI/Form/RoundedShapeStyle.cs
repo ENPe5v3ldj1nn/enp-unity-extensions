@@ -1,28 +1,26 @@
-﻿using enp_unity_extensions.Scripts.UI.Form;
-using UnityEngine;
-using UnityEngine.Serialization;
+﻿using UnityEngine;
 
 namespace enp_unity_extensions.Runtime.Scripts.UI.Form
 {
     [CreateAssetMenu(menuName = "UI/Rounded Shape Style", fileName = "RoundedShapeStyle")]
     public sealed class RoundedShapeStyle : ScriptableObject
     {
-        public RoundedShapeType shape = RoundedShapeType.RoundedRect;
+        public RoundedShapeType Shape = RoundedShapeType.RoundedRect;
 
-        public Gradient fillGradient = DefaultWhiteGradient();
-        [Range(0f, 360f)] public float fillGradientAngle = 90f;
+        public Gradient FillGradient = DefaultWhiteGradient();
+        [Range(0f, 360f)] public float FillGradientAngle = 90f;
 
-        public Gradient borderGradient = DefaultWhiteGradient();
-        [Range(0f, 360f)] public float borderGradientAngle = 90f;
+        public Gradient BorderGradient = DefaultWhiteGradient();
+        [Range(0f, 360f)] public float BorderGradientAngle = 90f;
 
-        [Min(0f)] public float cornerRadius = 24f;
-        [Min(0f)] public float borderThickness = 0f;
+        [Min(0f)] public float CornerRadius = 24f;
+        [Min(0f)] public float BorderThickness = 0f;
 
-        public bool shadowEnabled = false;
-        public Color shadowColor = new Color(0f, 0f, 0f, 0.35f);
-        public Vector2 shadowOffset = new Vector2(0f, -6f);
-        [Min(0f)] public float _shadowBlur = 12f;
-        [Min(0f)] public float _shadowSpread = 0f;
+        public bool ShadowEnabled = false;
+        public Color ShadowColor = new Color(0f, 0f, 0f, 0.35f);
+        public Vector2 ShadowOffset = new Vector2(0f, -6f);
+        [Min(0f)] public float ShadowBlur = 12f;
+        [Min(0f)] public float ShadowSpread = 0f;
 
         [SerializeField, HideInInspector] private int _version = 1;
 
@@ -31,18 +29,18 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
 
         public int Version => _version;
 
-        void OnValidate()
+        private void OnValidate()
         {
-            cornerRadius = Mathf.Max(0f, cornerRadius);
-            borderThickness = Mathf.Max(0f, borderThickness);
-            _shadowBlur = Mathf.Max(0f, _shadowBlur);
-            _shadowSpread = Mathf.Max(0f, _shadowSpread);
+            CornerRadius = Mathf.Max(0f, CornerRadius);
+            BorderThickness = Mathf.Max(0f, BorderThickness);
+            ShadowBlur = Mathf.Max(0f, ShadowBlur);
+            ShadowSpread = Mathf.Max(0f, ShadowSpread);
             _version++;
             if (_version < 1) _version = 1;
             _rampHash = 0;
         }
 
-        void OnDisable()
+        private void OnDisable()
         {
             if (_ramp == null) return;
             if (Application.isPlaying) Destroy(_ramp);
@@ -56,33 +54,33 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
             var h = ComputeHash();
             if (_ramp != null && _rampHash == h) return _ramp;
             _rampHash = h;
-            _ramp = CreateRampTexture(fillGradient, borderGradient);
+            _ramp = CreateRampTexture(FillGradient, BorderGradient);
             return _ramp;
         }
 
-        ulong ComputeHash()
+        private ulong ComputeHash()
         {
             ulong h = 1469598103934665603UL;
-            h = (h ^ HashGradient(fillGradient)) * 1099511628211UL;
-            h = (h ^ HashGradient(borderGradient)) * 1099511628211UL;
-            h = (h ^ (ulong)Mathf.RoundToInt(fillGradientAngle * 1000f)) * 1099511628211UL;
-            h = (h ^ (ulong)Mathf.RoundToInt(borderGradientAngle * 1000f)) * 1099511628211UL;
-            h = (h ^ (ulong)shape) * 1099511628211UL;
-            h = (h ^ (ulong)Mathf.RoundToInt(cornerRadius * 1000f)) * 1099511628211UL;
-            h = (h ^ (ulong)Mathf.RoundToInt(borderThickness * 1000f)) * 1099511628211UL;
-            h = (h ^ (ulong)shadowEnabled.GetHashCode()) * 1099511628211UL;
-            h = (h ^ Quant01(shadowColor.r)) * 1099511628211UL;
-            h = (h ^ Quant01(shadowColor.g)) * 1099511628211UL;
-            h = (h ^ Quant01(shadowColor.b)) * 1099511628211UL;
-            h = (h ^ Quant01(shadowColor.a)) * 1099511628211UL;
-            h = (h ^ Quant01(shadowOffset.x * 0.01f)) * 1099511628211UL;
-            h = (h ^ Quant01(shadowOffset.y * 0.01f)) * 1099511628211UL;
-            h = (h ^ (ulong)Mathf.RoundToInt(_shadowBlur * 1000f)) * 1099511628211UL;
-            h = (h ^ (ulong)Mathf.RoundToInt(_shadowSpread * 1000f)) * 1099511628211UL;
+            h = (h ^ HashGradient(FillGradient)) * 1099511628211UL;
+            h = (h ^ HashGradient(BorderGradient)) * 1099511628211UL;
+            h = (h ^ (ulong)Mathf.RoundToInt(FillGradientAngle * 1000f)) * 1099511628211UL;
+            h = (h ^ (ulong)Mathf.RoundToInt(BorderGradientAngle * 1000f)) * 1099511628211UL;
+            h = (h ^ (ulong)Shape) * 1099511628211UL;
+            h = (h ^ (ulong)Mathf.RoundToInt(CornerRadius * 1000f)) * 1099511628211UL;
+            h = (h ^ (ulong)Mathf.RoundToInt(BorderThickness * 1000f)) * 1099511628211UL;
+            h = (h ^ (ulong)ShadowEnabled.GetHashCode()) * 1099511628211UL;
+            h = (h ^ Quant01(ShadowColor.r)) * 1099511628211UL;
+            h = (h ^ Quant01(ShadowColor.g)) * 1099511628211UL;
+            h = (h ^ Quant01(ShadowColor.b)) * 1099511628211UL;
+            h = (h ^ Quant01(ShadowColor.a)) * 1099511628211UL;
+            h = (h ^ Quant01(ShadowOffset.x * 0.01f)) * 1099511628211UL;
+            h = (h ^ Quant01(ShadowOffset.y * 0.01f)) * 1099511628211UL;
+            h = (h ^ (ulong)Mathf.RoundToInt(ShadowBlur * 1000f)) * 1099511628211UL;
+            h = (h ^ (ulong)Mathf.RoundToInt(ShadowSpread * 1000f)) * 1099511628211UL;
             return h;
         }
 
-        static ulong HashGradient(Gradient g)
+        private static ulong HashGradient(Gradient g)
         {
             if (g == null) return 0UL;
             unchecked
@@ -112,10 +110,10 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
             }
         }
 
-        static ulong Quant01(float v) => (ulong)Mathf.Clamp(Mathf.RoundToInt(v * 65535f), 0, 65535);
-        static ulong QuantT(float v) => (ulong)Mathf.Clamp(Mathf.RoundToInt(v * 65535f), 0, 65535);
+        private static ulong Quant01(float v) => (ulong)Mathf.Clamp(Mathf.RoundToInt(v * 65535f), 0, 65535);
+        private static ulong QuantT(float v) => (ulong)Mathf.Clamp(Mathf.RoundToInt(v * 65535f), 0, 65535);
 
-        static Texture2D CreateRampTexture(Gradient fill, Gradient border)
+        private static Texture2D CreateRampTexture(Gradient fill, Gradient border)
         {
             const int w = 256;
             const int h = 2;
@@ -141,7 +139,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
             return tex;
         }
 
-        static Gradient DefaultWhiteGradient()
+        private static Gradient DefaultWhiteGradient()
         {
             var g = new Gradient();
             g.SetKeys(

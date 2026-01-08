@@ -8,20 +8,20 @@ namespace enp_unity_extensions.Editor.Form
     [CustomEditor(typeof(RoundedShapeGraphic))]
     public sealed class RoundedShapeGraphicEditor : UnityEditor.Editor
     {
-        SerializedProperty style;
-        SerializedProperty preciseRaycast;
-        SerializedProperty raycastTarget;
-        SerializedProperty maskable;
+        private SerializedProperty _styleProperty;
+        private SerializedProperty _preciseRaycastProperty;
+        private SerializedProperty _raycastTargetProperty;
+        private SerializedProperty _maskableProperty;
 
-        void OnEnable()
+        private void OnEnable()
         {
-            style = FindFirst("style", "_style", "m_Style");
-            preciseRaycast = FindFirst("preciseRaycast", "_preciseRaycast", "m_PreciseRaycast");
-            raycastTarget = serializedObject.FindProperty("m_RaycastTarget");
-            maskable = serializedObject.FindProperty("m_Maskable");
+            _styleProperty = FindFirst("style", "_style", "m_Style");
+            _preciseRaycastProperty = FindFirst("preciseRaycast", "_preciseRaycast", "m_PreciseRaycast");
+            _raycastTargetProperty = serializedObject.FindProperty("m_RaycastTarget");
+            _maskableProperty = serializedObject.FindProperty("m_Maskable");
         }
 
-        SerializedProperty FindFirst(params string[] names)
+        private SerializedProperty FindFirst(params string[] names)
         {
             for (int i = 0; i < names.Length; i++)
             {
@@ -35,7 +35,7 @@ namespace enp_unity_extensions.Editor.Form
         {
             serializedObject.Update();
 
-            if (style == null)
+            if (_styleProperty == null)
             {
                 EditorGUILayout.HelpBox("Cannot find serialized field for style. Ensure RoundedShapeGraphic has a [SerializeField] field named 'style' (or update the editor to match your field name).", MessageType.Error);
                 DrawDefaultInspector();
@@ -43,7 +43,7 @@ namespace enp_unity_extensions.Editor.Form
                 return;
             }
 
-            EditorGUILayout.PropertyField(style);
+            EditorGUILayout.PropertyField(_styleProperty);
 
             using (new EditorGUILayout.HorizontalScope())
             {
@@ -57,29 +57,29 @@ namespace enp_unity_extensions.Editor.Form
                     var asset = ScriptableObject.CreateInstance<RoundedShapeStyle>();
                     AssetDatabase.CreateAsset(asset, path);
                     AssetDatabase.SaveAssets();
-                    style.objectReferenceValue = asset;
+                    _styleProperty.objectReferenceValue = asset;
                     EditorGUIUtility.PingObject(asset);
                 }
 
                 if (GUILayout.Button("Ping Style"))
                 {
-                    if (style.objectReferenceValue != null)
-                        EditorGUIUtility.PingObject(style.objectReferenceValue);
+                    if (_styleProperty.objectReferenceValue != null)
+                        EditorGUIUtility.PingObject(_styleProperty.objectReferenceValue);
                 }
             }
 
             EditorGUILayout.Space(8);
 
-            if (raycastTarget != null)
-                EditorGUILayout.PropertyField(raycastTarget, new GUIContent("Raycast Target"));
+            if (_raycastTargetProperty != null)
+                EditorGUILayout.PropertyField(_raycastTargetProperty, new GUIContent("Raycast Target"));
 
-            if (preciseRaycast != null)
-                EditorGUILayout.PropertyField(preciseRaycast);
+            if (_preciseRaycastProperty != null)
+                EditorGUILayout.PropertyField(_preciseRaycastProperty);
 
             EditorGUILayout.Space(8);
 
-            if (maskable != null)
-                EditorGUILayout.PropertyField(maskable);
+            if (_maskableProperty != null)
+                EditorGUILayout.PropertyField(_maskableProperty);
 
             serializedObject.ApplyModifiedProperties();
         }
