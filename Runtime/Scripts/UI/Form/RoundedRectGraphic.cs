@@ -5,6 +5,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
 {
     [ExecuteAlways]
     [AddComponentMenu("UI/Rounded Shape Graphic")]
+    [RequireComponent(typeof(CanvasRenderer))]
     public sealed class RoundedShapeGraphic : MaskableGraphic, ICanvasRaycastFilter
     {
         [SerializeField] private RoundedShapeStyle _style;
