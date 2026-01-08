@@ -15,6 +15,15 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
         [SerializeField] private bool _useStyleBaseAngles = true;
         [SerializeField] private float _customFillGradientAngle = 90f;
         [SerializeField] private float _customBorderGradientAngle = 90f;
+        [SerializeField] private bool _useStyleShapeProperties = true;
+        [SerializeField] private RoundedShapeType _customShape = RoundedShapeType.RoundedRect;
+        [SerializeField, Min(0f)] private float _customCornerRadius = 24f;
+        [SerializeField, Min(0f)] private float _customBorderThickness;
+        [SerializeField] private bool _customShadowEnabled;
+        [SerializeField] private Color _customShadowColor = new Color(0f, 0f, 0f, 0.35f);
+        [SerializeField] private Vector2 _customShadowOffset = new Vector2(0f, -6f);
+        [SerializeField, Min(0f)] private float _customShadowBlur = 12f;
+        [SerializeField, Min(0f)] private float _customShadowSpread;
 
         private static Material _sharedMaterial;
         private int _lastStyleVersion = -1;
@@ -112,6 +121,10 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
             SyncStyleIfNeeded(true);
             SetVerticesDirty();
             SetMaterialDirty();
+            _customCornerRadius = Mathf.Max(0f, _customCornerRadius);
+            _customBorderThickness = Mathf.Max(0f, _customBorderThickness);
+            _customShadowBlur = Mathf.Max(0f, _customShadowBlur);
+            _customShadowSpread = Mathf.Max(0f, _customShadowSpread);
         }
 
         void Update()
@@ -196,17 +209,18 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
             var halfH = h * 0.5f;
 
             var st = _style;
+            var useStyleShape = _useStyleShapeProperties && st != null;
 
-            var shape = st != null ? st.Shape : RoundedShapeType.RoundedRect;
+            var shape = useStyleShape ? st.Shape : _customShape;
 
-            var cornerRadius = st != null ? st.CornerRadius : 24f;
-            var borderThickness = st != null ? st.BorderThickness : 0f;
+            var cornerRadius = useStyleShape ? st.CornerRadius : _customCornerRadius;
+            var borderThickness = useStyleShape ? st.BorderThickness : _customBorderThickness;
 
-            var shadowEnabled = st != null && st.ShadowEnabled;
-            var shadowColor = st != null ? st.ShadowColor : new Color(0f, 0f, 0f, 0f);
-            var shadowOffset = st != null ? st.ShadowOffset : Vector2.zero;
-            var shadowBlur = st != null ? st.ShadowBlur : 0f;
-            var shadowSpread = st != null ? st.ShadowSpread : 0f;
+            var shadowEnabled = useStyleShape ? st.ShadowEnabled : _customShadowEnabled;
+            var shadowColor = useStyleShape ? st.ShadowColor : _customShadowColor;
+            var shadowOffset = useStyleShape ? st.ShadowOffset : _customShadowOffset;     
+            var shadowBlur = useStyleShape ? st.ShadowBlur : _customShadowBlur;
+            var shadowSpread = useStyleShape ? st.ShadowSpread : _customShadowSpread;
 
             var fillAngle = FillGradientAngle;
             var borderAngle = BorderGradientAngle;
