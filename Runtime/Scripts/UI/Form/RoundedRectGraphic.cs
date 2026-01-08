@@ -51,10 +51,8 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
         public void ResetBaseAnglesToStyle()
         {
             if (_style == null)
-            {
-                Debug.Log("[RoundedShapeGraphic] _style is null (ResetBaseAnglesToStyle).");
                 return;
-            }
+            
             if (_useStyleBaseAngles) return;
             ApplyStyleBaseAngles();
             SetVerticesDirty();
@@ -99,6 +97,11 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
             SetMaterialDirty();
         }
 
+        private void Reset()
+        {
+            color = Color.white;
+        }
+
         protected override void OnRectTransformDimensionsChange()
         {
             base.OnRectTransformDimensionsChange();
@@ -117,21 +120,17 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
         void Update()
         {
             if (!isActiveAndEnabled) return;
-            if (_style == null)
-            {
-                Debug.Log("[RoundedShapeGraphic] _style is null (Update).");
+            if (!_style)
                 return;
-            }
+            
             SyncStyleIfNeeded(false);
         }
 
         void SyncStyleIfNeeded(bool force)
         {
-            if (_style == null)
-            {
-                Debug.Log("[RoundedShapeGraphic] _style is null (SyncStyleIfNeeded).");
+            if (!_style)
                 return;
-            }
+            
             if (!force && _lastStyleVersion == _style.Version) return;
             _lastStyleVersion = _style.Version;
             ApplyStyleBaseAngles();
@@ -141,11 +140,9 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
 
         private void ApplyStyleBaseAngles()
         {
-            if (_style == null)
-            {
-                Debug.Log("[RoundedShapeGraphic] _style is null (ApplyStyleBaseAngles).");
+            if (!_style)
                 return;
-            }
+            
             _customFillGradientAngle = _style.FillGradientAngle;
             _customBorderGradientAngle = _style.BorderGradientAngle;
             _useStyleBaseAngles = true;
@@ -154,10 +151,8 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
         void EnsureCanvasChannels()
         {
             if (canvas == null)
-            {
-                Debug.Log("[RoundedShapeGraphic] canvas is null (EnsureCanvasChannels).");
                 return;
-            }
+            
             canvas.additionalShaderChannels |= AdditionalCanvasShaderChannels.TexCoord1;
             canvas.additionalShaderChannels |= AdditionalCanvasShaderChannels.TexCoord2;
             canvas.additionalShaderChannels |= AdditionalCanvasShaderChannels.TexCoord3;
