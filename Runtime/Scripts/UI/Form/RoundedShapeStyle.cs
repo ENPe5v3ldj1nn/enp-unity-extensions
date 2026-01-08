@@ -1,40 +1,48 @@
-﻿using UnityEngine;
+using UnityEngine;
 
 namespace enp_unity_extensions.Runtime.Scripts.UI.Form
 {
     [CreateAssetMenu(menuName = "UI/Rounded Shape Style", fileName = "RoundedShapeStyle")]
     public sealed class RoundedShapeStyle : ScriptableObject
     {
-        public RoundedShapeType Shape = RoundedShapeType.RoundedRect;
-
-        public Gradient FillGradient = DefaultWhiteGradient();
-        [Range(0f, 360f)] public float FillGradientAngle = 90f;
-
-        public Gradient BorderGradient = DefaultWhiteGradient();
-        [Range(0f, 360f)] public float BorderGradientAngle = 90f;
-
-        [Min(0f)] public float CornerRadius = 24f;
-        [Min(0f)] public float BorderThickness = 0f;
-
-        public bool ShadowEnabled = false;
-        public Color ShadowColor = new Color(0f, 0f, 0f, 0.35f);
-        public Vector2 ShadowOffset = new Vector2(0f, -6f);
-        [Min(0f)] public float ShadowBlur = 12f;
-        [Min(0f)] public float ShadowSpread = 0f;
+        [SerializeField] private RoundedShapeType _shape = RoundedShapeType.RoundedRect;
+        [SerializeField] private Gradient _fillGradient = DefaultWhiteGradient();
+        [SerializeField, Range(0f, 360f)] private float _fillGradientAngle = 90f;
+        [SerializeField] private Gradient _borderGradient = DefaultWhiteGradient();
+        [SerializeField, Range(0f, 360f)] private float _borderGradientAngle = 90f;
+        [SerializeField, Min(0f)] private float _cornerRadius = 24f;
+        [SerializeField, Min(0f)] private float _borderThickness = 0f;
+        [SerializeField] private bool _shadowEnabled;
+        [SerializeField] private Color _shadowColor = new Color(0f, 0f, 0f, 0.35f);
+        [SerializeField] private Vector2 _shadowOffset = new Vector2(0f, -6f);
+        [SerializeField, Min(0f)] private float _shadowBlur = 12f;
+        [SerializeField, Min(0f)] private float _shadowSpread;
 
         [SerializeField, HideInInspector] private int _version = 1;
 
         [System.NonSerialized] private Texture2D _ramp;
         [System.NonSerialized] private ulong _rampHash;
 
+        public RoundedShapeType Shape => _shape;
+        public Gradient FillGradient => _fillGradient;
+        public float FillGradientAngle => _fillGradientAngle;
+        public Gradient BorderGradient => _borderGradient;
+        public float BorderGradientAngle => _borderGradientAngle;
+        public float CornerRadius => _cornerRadius;
+        public float BorderThickness => _borderThickness;
+        public bool ShadowEnabled => _shadowEnabled;
+        public Color ShadowColor => _shadowColor;
+        public Vector2 ShadowOffset => _shadowOffset;
+        public float ShadowBlur => _shadowBlur;
+        public float ShadowSpread => _shadowSpread;
         public int Version => _version;
 
         private void OnValidate()
         {
-            CornerRadius = Mathf.Max(0f, CornerRadius);
-            BorderThickness = Mathf.Max(0f, BorderThickness);
-            ShadowBlur = Mathf.Max(0f, ShadowBlur);
-            ShadowSpread = Mathf.Max(0f, ShadowSpread);
+            _cornerRadius = Mathf.Max(0f, _cornerRadius);
+            _borderThickness = Mathf.Max(0f, _borderThickness);
+            _shadowBlur = Mathf.Max(0f, _shadowBlur);
+            _shadowSpread = Mathf.Max(0f, _shadowSpread);
             _version++;
             if (_version < 1) _version = 1;
             _rampHash = 0;
@@ -51,102 +59,81 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
 
         public Texture2D GetRampTexture()
         {
-            var h = ComputeHash();
-            if (_ramp != null && _rampHash == h) return _ramp;
-            _rampHash = h;
-            _ramp = CreateRampTexture(FillGradient, BorderGradient);
+            var hash = ComputeHash();
+            if (_ramp != null && _rampHash == hash) return _ramp;
+            _rampHash = hash;
+            _ramp = CreateRampTexture(_fillGradient, _borderGradient);
             return _ramp;
         }
 
         private ulong ComputeHash()
         {
-            ulong h = 1469598103934665603UL;
-            h = (h ^ HashGradient(FillGradient)) * 1099511628211UL;
-            h = (h ^ HashGradient(BorderGradient)) * 1099511628211UL;
-            h = (h ^ (ulong)Mathf.RoundToInt(FillGradientAngle * 1000f)) * 1099511628211UL;
-            h = (h ^ (ulong)Mathf.RoundToInt(BorderGradientAngle * 1000f)) * 1099511628211UL;
-            h = (h ^ (ulong)Shape) * 1099511628211UL;
-            h = (h ^ (ulong)Mathf.RoundToInt(CornerRadius * 1000f)) * 1099511628211UL;
-            h = (h ^ (ulong)Mathf.RoundToInt(BorderThickness * 1000f)) * 1099511628211UL;
-            h = (h ^ (ulong)ShadowEnabled.GetHashCode()) * 1099511628211UL;
-            h = (h ^ Quant01(ShadowColor.r)) * 1099511628211UL;
-            h = (h ^ Quant01(ShadowColor.g)) * 1099511628211UL;
-            h = (h ^ Quant01(ShadowColor.b)) * 1099511628211UL;
-            h = (h ^ Quant01(ShadowColor.a)) * 1099511628211UL;
-            h = (h ^ Quant01(ShadowOffset.x * 0.01f)) * 1099511628211UL;
-            h = (h ^ Quant01(ShadowOffset.y * 0.01f)) * 1099511628211UL;
-            h = (h ^ (ulong)Mathf.RoundToInt(ShadowBlur * 1000f)) * 1099511628211UL;
-            h = (h ^ (ulong)Mathf.RoundToInt(ShadowSpread * 1000f)) * 1099511628211UL;
-            return h;
+            var hash = 1469598103934665603UL;
+            hash = (hash ^ HashGradient(_fillGradient)) * 1099511628211UL;
+            hash = (hash ^ HashGradient(_borderGradient)) * 1099511628211UL;
+            return hash;
         }
 
-        private static ulong HashGradient(Gradient g)
+        private static ulong HashGradient(Gradient gradient)
         {
-            if (g == null) return 0UL;
+            if (gradient == null) return 0UL;
             unchecked
             {
-                ulong h = 1469598103934665603UL;
-                var c = g.colorKeys;
-                var a = g.alphaKeys;
-
-                h = (h ^ (ulong)c.Length) * 1099511628211UL;
-                for (int i = 0; i < c.Length; i++)
+                ulong hash = 1469598103934665603UL;
+                var colors = gradient.colorKeys;
+                var alphas = gradient.alphaKeys;
+                hash = (hash ^ (ulong)colors.Length) * 1099511628211UL;
+                for (int i = 0; i < colors.Length; i++)
                 {
-                    h = (h ^ Quant01(c[i].color.r)) * 1099511628211UL;
-                    h = (h ^ Quant01(c[i].color.g)) * 1099511628211UL;
-                    h = (h ^ Quant01(c[i].color.b)) * 1099511628211UL;
-                    h = (h ^ QuantT(c[i].time)) * 1099511628211UL;
+                    hash = (hash ^ Quant01(colors[i].color.r)) * 1099511628211UL;
+                    hash = (hash ^ Quant01(colors[i].color.g)) * 1099511628211UL;
+                    hash = (hash ^ Quant01(colors[i].color.b)) * 1099511628211UL;
+                    hash = (hash ^ QuantT(colors[i].time)) * 1099511628211UL;
                 }
-
-                h = (h ^ (ulong)a.Length) * 1099511628211UL;
-                for (int i = 0; i < a.Length; i++)
+                hash = (hash ^ (ulong)alphas.Length) * 1099511628211UL;
+                for (int i = 0; i < alphas.Length; i++)
                 {
-                    h = (h ^ Quant01(a[i].alpha)) * 1099511628211UL;
-                    h = (h ^ QuantT(a[i].time)) * 1099511628211UL;
+                    hash = (hash ^ Quant01(alphas[i].alpha)) * 1099511628211UL;
+                    hash = (hash ^ QuantT(alphas[i].time)) * 1099511628211UL;
                 }
-
-                h = (h ^ (ulong)g.mode.GetHashCode()) * 1099511628211UL;
-                return h;
+                hash = (hash ^ (ulong)gradient.mode.GetHashCode()) * 1099511628211UL;
+                return hash;
             }
         }
 
-        private static ulong Quant01(float v) => (ulong)Mathf.Clamp(Mathf.RoundToInt(v * 65535f), 0, 65535);
-        private static ulong QuantT(float v) => (ulong)Mathf.Clamp(Mathf.RoundToInt(v * 65535f), 0, 65535);
+        private static ulong Quant01(float value) => (ulong)Mathf.Clamp(Mathf.RoundToInt(value * 65535f), 0, 65535);
+        private static ulong QuantT(float value) => (ulong)Mathf.Clamp(Mathf.RoundToInt(value * 65535f), 0, 65535);
 
         private static Texture2D CreateRampTexture(Gradient fill, Gradient border)
         {
-            const int w = 256;
-            const int h = 2;
-
-            var tex = new Texture2D(w, h, TextureFormat.RGBA32, false, true);
-            tex.wrapMode = TextureWrapMode.Clamp;
-            tex.filterMode = FilterMode.Bilinear;
-            tex.hideFlags = HideFlags.HideAndDontSave;
-
-            var pixels = new Color32[w * h];
-
-            for (int x = 0; x < w; x++)
+            const int width = 256;
+            const int height = 2;
+            var texture = new Texture2D(width, height, TextureFormat.RGBA32, false, true);
+            texture.wrapMode = TextureWrapMode.Clamp;
+            texture.filterMode = FilterMode.Bilinear;
+            texture.hideFlags = HideFlags.HideAndDontSave;
+            var pixels = new Color32[width * height];
+            for (int x = 0; x < width; x++)
             {
-                var t = x / (float)(w - 1);
-                var cf = fill != null ? fill.Evaluate(t) : Color.white;
-                var cb = border != null ? border.Evaluate(t) : Color.white;
-                pixels[x + 0 * w] = (Color32)cf;
-                pixels[x + 1 * w] = (Color32)cb;
+                var t = x / (float)(width - 1);
+                var fillColor = fill != null ? fill.Evaluate(t) : Color.white;
+                var borderColor = border != null ? border.Evaluate(t) : Color.white;
+                pixels[x + 0 * width] = (Color32)fillColor;
+                pixels[x + 1 * width] = (Color32)borderColor;
             }
-
-            tex.SetPixels32(pixels);
-            tex.Apply(false, true);
-            return tex;
+            texture.SetPixels32(pixels);
+            texture.Apply(false, true);
+            return texture;
         }
 
         private static Gradient DefaultWhiteGradient()
         {
-            var g = new Gradient();
-            g.SetKeys(
+            var gradient = new Gradient();
+            gradient.SetKeys(
                 new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
                 new[] { new GradientAlphaKey(1f, 0f), new GradientAlphaKey(1f, 1f) }
             );
-            return g;
+            return gradient;
         }
     }
 }

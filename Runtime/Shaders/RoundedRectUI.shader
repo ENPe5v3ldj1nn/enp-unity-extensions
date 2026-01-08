@@ -142,8 +142,14 @@ Shader "UI/RoundedShapeSDF"
 
                 float2 p = i.local.xy;
 
-                float tFill = GradientT(p, halfSize, i.gradDirs.xy);
-                float tBorder = GradientT(p, halfSize, i.gradDirs.zw);
+                float fillAngleDeg = i.gradDirs.x + i.gradDirs.y * _Time.y;
+                float borderAngleDeg = i.gradDirs.z + i.gradDirs.w * _Time.y;
+                float fillRad = radians(fillAngleDeg);
+                float borderRad = radians(borderAngleDeg);
+                float2 fillDir = float2(cos(fillRad), sin(fillRad));
+                float2 borderDir = float2(cos(borderRad), sin(borderRad));
+                float tFill = GradientT(p, halfSize, fillDir);
+                float tBorder = GradientT(p, halfSize, borderDir);
 
                 fixed4 fillS = SampleRamp(tFill, 0.25);
                 fixed4 borderS = SampleRamp(tBorder, 0.75);

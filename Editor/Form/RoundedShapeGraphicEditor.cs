@@ -12,6 +12,8 @@ namespace enp_unity_extensions.Editor.Form
         private SerializedProperty _preciseRaycastProperty;
         private SerializedProperty _raycastTargetProperty;
         private SerializedProperty _maskableProperty;
+        private SerializedProperty _fillGradientAngleSpeedProperty;
+        private SerializedProperty _borderGradientAngleSpeedProperty;
 
         private void OnEnable()
         {
@@ -19,6 +21,8 @@ namespace enp_unity_extensions.Editor.Form
             _preciseRaycastProperty = FindFirst("preciseRaycast", "_preciseRaycast", "m_PreciseRaycast");
             _raycastTargetProperty = serializedObject.FindProperty("m_RaycastTarget");
             _maskableProperty = serializedObject.FindProperty("m_Maskable");
+            _fillGradientAngleSpeedProperty = serializedObject.FindProperty("_fillGradientAngleSpeed");
+            _borderGradientAngleSpeedProperty = serializedObject.FindProperty("_borderGradientAngleSpeed");
         }
 
         private SerializedProperty FindFirst(params string[] names)
@@ -74,7 +78,13 @@ namespace enp_unity_extensions.Editor.Form
                 EditorGUILayout.PropertyField(_raycastTargetProperty, new GUIContent("Raycast Target"));
 
             if (_preciseRaycastProperty != null)
-                EditorGUILayout.PropertyField(_preciseRaycastProperty);
+                EditorGUILayout.PropertyField(_preciseRaycastProperty);     
+
+            if (_fillGradientAngleSpeedProperty != null)
+                EditorGUILayout.PropertyField(_fillGradientAngleSpeedProperty, new GUIContent("Fill Gradient Angle Speed (deg/sec)"));
+
+            if (_borderGradientAngleSpeedProperty != null)
+                EditorGUILayout.PropertyField(_borderGradientAngleSpeedProperty, new GUIContent("Border Gradient Angle Speed (deg/sec)"));
 
             EditorGUILayout.Space(8);
 

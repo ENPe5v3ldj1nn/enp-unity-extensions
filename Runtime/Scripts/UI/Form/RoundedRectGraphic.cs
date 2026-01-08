@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 namespace enp_unity_extensions.Runtime.Scripts.UI.Form
@@ -10,6 +9,11 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
     {
         [SerializeField] private RoundedShapeStyle _style;
         [SerializeField] private bool _preciseRaycast = false;
+        [SerializeField] private float _fillGradientAngleSpeed;
+        [SerializeField] private float _borderGradientAngleSpeed;
+        [SerializeField] private bool _useStyleBaseAngles = true;
+        [SerializeField] private float _customFillGradientAngle = 90f;
+        [SerializeField] private float _customBorderGradientAngle = 90f;
 
         private static Material _sharedMaterial;
         private int _lastStyleVersion = -1;
@@ -22,9 +26,49 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
                 if (_style == value) return;
                 _style = value;
                 _lastStyleVersion = -1;
+                ApplyStyleBaseAngles();
                 SetMaterialDirty();
                 SetVerticesDirty();
             }
+        }
+
+        public float FillGradientAngle => _useStyleBaseAngles ? (_style?.FillGradientAngle ?? _customFillGradientAngle) : _customFillGradientAngle;
+        public float BorderGradientAngle => _useStyleBaseAngles ? (_style?.BorderGradientAngle ?? _customBorderGradientAngle) : _customBorderGradientAngle;
+        public float FillGradientAngleSpeed => _fillGradientAngleSpeed;
+        public float BorderGradientAngleSpeed => _borderGradientAngleSpeed;
+
+        public void SetBaseAngles(float fillAngle, float borderAngle)
+        {
+            var changed = _useStyleBaseAngles || !Mathf.Approximately(_customFillGradientAngle, fillAngle) || !Mathf.Approximately(_customBorderGradientAngle, borderAngle);
+            if (!changed) return;
+            _customFillGradientAngle = fillAngle;
+            _customBorderGradientAngle = borderAngle;
+            _useStyleBaseAngles = false;
+            SetVerticesDirty();
+        }
+
+        public void ResetBaseAnglesToStyle()
+        {
+            if (_style == null) return;
+            if (_useStyleBaseAngles) return;
+            ApplyStyleBaseAngles();
+            SetVerticesDirty();
+        }
+
+        public void SetGradientSpeeds(float fillSpeed, float borderSpeed)
+        {
+            var changed = false;
+            if (!Mathf.Approximately(_fillGradientAngleSpeed, fillSpeed))
+            {
+                _fillGradientAngleSpeed = fillSpeed;
+                changed = true;
+            }
+            if (!Mathf.Approximately(_borderGradientAngleSpeed, borderSpeed))
+            {
+                _borderGradientAngleSpeed = borderSpeed;
+                changed = true;
+            }
+            if (changed) SetVerticesDirty();
         }
 
         public override Texture mainTexture
@@ -73,8 +117,17 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
             if (_style == null) return;
             if (!force && _lastStyleVersion == _style.Version) return;
             _lastStyleVersion = _style.Version;
+            ApplyStyleBaseAngles();
             SetMaterialDirty();
             SetVerticesDirty();
+        }
+
+        private void ApplyStyleBaseAngles()
+        {
+            if (_style == null) return;
+            _customFillGradientAngle = _style.FillGradientAngle;
+            _customBorderGradientAngle = _style.BorderGradientAngle;
+            _useStyleBaseAngles = true;
         }
 
         void EnsureCanvasChannels()
@@ -128,25 +181,15 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
             var shadowBlur = st != null ? st.ShadowBlur : 0f;
             var shadowSpread = st != null ? st.ShadowSpread : 0f;
 
-            var fillAngle = st != null ? st.FillGradientAngle : 90f;
-            var borderAngle = st != null ? st.BorderGradientAngle : 90f;
+            var fillAngle = FillGradientAngle;
+            var borderAngle = BorderGradientAngle;
+            var fillSpeed = FillGradientAngleSpeed;
+            var borderSpeed = BorderGradientAngleSpeed;
 
             var rad = Mathf.Min(Mathf.Max(0f, cornerRadius), Mathf.Min(halfW, halfH));
             var border = Mathf.Min(Mathf.Max(0f, borderThickness), Mathf.Min(halfW, halfH));
             var params0 = new Vector4(halfW, halfH, rad, border);
-
-            var fa = fillAngle * Mathf.Deg2Rad;
-            var ba = borderAngle * Mathf.Deg2Rad;
-
-            var fillDir = new Vector2(Mathf.Cos(fa), Mathf.Sin(fa));
-            if (fillDir.sqrMagnitude < 1e-6f) fillDir = Vector2.up;
-            fillDir.Normalize();
-
-            var borderDir = new Vector2(Mathf.Cos(ba), Mathf.Sin(ba));
-            if (borderDir.sqrMagnitude < 1e-6f) borderDir = Vector2.up;
-            borderDir.Normalize();
-
-            var gradDirs = new Vector4(fillDir.x, fillDir.y, borderDir.x, borderDir.y);
+            var gradientData = new Vector4(fillAngle, fillSpeed, borderAngle, borderSpeed);
 
             var shCol = shadowEnabled ? shadowColor : new Color(0f, 0f, 0f, 0f);
             var tangent = new Vector4(shCol.r, shCol.g, shCol.b, shCol.a);
@@ -169,16 +212,16 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
 
             var vcol = (Color32)color;
 
-            AddVert(vh, p0, vcol, (Vector2)p0 - center, flag, sp, params0, gradDirs, tangent);
-            AddVert(vh, p1, vcol, (Vector2)p1 - center, flag, sp, params0, gradDirs, tangent);
-            AddVert(vh, p2, vcol, (Vector2)p2 - center, flag, sp, params0, gradDirs, tangent);
-            AddVert(vh, p3, vcol, (Vector2)p3 - center, flag, sp, params0, gradDirs, tangent);
+            AddVert(vh, p0, vcol, (Vector2)p0 - center, flag, sp, params0, gradientData, tangent);
+            AddVert(vh, p1, vcol, (Vector2)p1 - center, flag, sp, params0, gradientData, tangent);
+            AddVert(vh, p2, vcol, (Vector2)p2 - center, flag, sp, params0, gradientData, tangent);
+            AddVert(vh, p3, vcol, (Vector2)p3 - center, flag, sp, params0, gradientData, tangent);
 
             vh.AddTriangle(0, 1, 2);
             vh.AddTriangle(2, 3, 0);
         }
 
-        static void AddVert(VertexHelper vh, Vector3 pos, Color32 col, Vector2 local, float flag, Vector4 shadowParams, Vector4 params0, Vector4 gradDirs, Vector4 tangent)
+        static void AddVert(VertexHelper vh, Vector3 pos, Color32 col, Vector2 local, float flag, Vector4 shadowParams, Vector4 params0, Vector4 gradientData, Vector4 tangent)
         {
             UIVertex v = UIVertex.simpleVert;
             v.position = pos;
@@ -186,7 +229,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
             v.uv0 = shadowParams;
             v.uv1 = new Vector4(local.x, local.y, flag, 0f);
             v.uv2 = params0;
-            v.uv3 = gradDirs;
+            v.uv3 = gradientData;
             v.tangent = tangent;
             vh.AddVert(v);
         }
