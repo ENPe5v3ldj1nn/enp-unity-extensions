@@ -14,6 +14,15 @@ namespace enp_unity_extensions.Editor.Form
         private SerializedProperty _maskableProperty;
         private SerializedProperty _fillGradientAngleSpeedProperty;
         private SerializedProperty _borderGradientAngleSpeedProperty;
+        private SerializedProperty _useStyleShapePropertiesProperty;
+        private SerializedProperty _customShapeProperty;
+        private SerializedProperty _customCornerRadiusProperty;
+        private SerializedProperty _customBorderThicknessProperty;
+        private SerializedProperty _customShadowEnabledProperty;
+        private SerializedProperty _customShadowColorProperty;
+        private SerializedProperty _customShadowOffsetProperty;
+        private SerializedProperty _customShadowBlurProperty;
+        private SerializedProperty _customShadowSpreadProperty;
 
         private void OnEnable()
         {
@@ -23,6 +32,15 @@ namespace enp_unity_extensions.Editor.Form
             _maskableProperty = serializedObject.FindProperty("m_Maskable");
             _fillGradientAngleSpeedProperty = serializedObject.FindProperty("_fillGradientAngleSpeed");
             _borderGradientAngleSpeedProperty = serializedObject.FindProperty("_borderGradientAngleSpeed");
+            _useStyleShapePropertiesProperty = serializedObject.FindProperty("_useStyleShapeProperties");
+            _customShapeProperty = serializedObject.FindProperty("_customShape");
+            _customCornerRadiusProperty = serializedObject.FindProperty("_customCornerRadius");
+            _customBorderThicknessProperty = serializedObject.FindProperty("_customBorderThickness");
+            _customShadowEnabledProperty = serializedObject.FindProperty("_customShadowEnabled");
+            _customShadowColorProperty = serializedObject.FindProperty("_customShadowColor");
+            _customShadowOffsetProperty = serializedObject.FindProperty("_customShadowOffset");
+            _customShadowBlurProperty = serializedObject.FindProperty("_customShadowBlur");
+            _customShadowSpreadProperty = serializedObject.FindProperty("_customShadowSpread");
         }
 
         private SerializedProperty FindFirst(params string[] names)
@@ -85,6 +103,36 @@ namespace enp_unity_extensions.Editor.Form
 
             if (_borderGradientAngleSpeedProperty != null)
                 EditorGUILayout.PropertyField(_borderGradientAngleSpeedProperty, new GUIContent("Border Gradient Angle Speed (deg/sec)"));
+
+            if (_useStyleShapePropertiesProperty != null)
+            {
+                EditorGUILayout.Space(4);
+                EditorGUILayout.PropertyField(_useStyleShapePropertiesProperty, new GUIContent("Use Style Shape Properties"));
+                if (!_useStyleShapePropertiesProperty.boolValue)
+                {
+                    EditorGUI.indentLevel++;
+                    if (_customShapeProperty != null)
+                        EditorGUILayout.PropertyField(_customShapeProperty);
+                    if (_customCornerRadiusProperty != null)
+                        EditorGUILayout.PropertyField(_customCornerRadiusProperty);
+                    if (_customBorderThicknessProperty != null)
+                        EditorGUILayout.PropertyField(_customBorderThicknessProperty);
+                    if (_customShadowEnabledProperty != null)
+                        EditorGUILayout.PropertyField(_customShadowEnabledProperty);
+                    if (_customShadowEnabledProperty != null && _customShadowEnabledProperty.boolValue)
+                    {
+                        if (_customShadowColorProperty != null)
+                            EditorGUILayout.PropertyField(_customShadowColorProperty);
+                        if (_customShadowOffsetProperty != null)
+                            EditorGUILayout.PropertyField(_customShadowOffsetProperty);
+                        if (_customShadowBlurProperty != null)
+                            EditorGUILayout.PropertyField(_customShadowBlurProperty);
+                        if (_customShadowSpreadProperty != null)
+                            EditorGUILayout.PropertyField(_customShadowSpreadProperty);
+                    }
+                    EditorGUI.indentLevel--;
+                }
+            }
 
             EditorGUILayout.Space(8);
 
