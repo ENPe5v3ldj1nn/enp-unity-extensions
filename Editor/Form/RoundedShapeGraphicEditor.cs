@@ -14,7 +14,6 @@ namespace enp_unity_extensions.Editor.Form
         private SerializedProperty _maskableProperty;
         private SerializedProperty _fillGradientAngleSpeedProperty;
         private SerializedProperty _borderGradientAngleSpeedProperty;
-        private SerializedProperty _colorProperty;
 
         private void OnEnable()
         {
@@ -24,7 +23,6 @@ namespace enp_unity_extensions.Editor.Form
             _maskableProperty = serializedObject.FindProperty("m_Maskable");
             _fillGradientAngleSpeedProperty = serializedObject.FindProperty("_fillGradientAngleSpeed");
             _borderGradientAngleSpeedProperty = serializedObject.FindProperty("_borderGradientAngleSpeed");
-            _colorProperty = serializedObject.FindProperty("m_Color");
         }
 
         private SerializedProperty FindFirst(params string[] names)
@@ -50,8 +48,6 @@ namespace enp_unity_extensions.Editor.Form
             }
 
             EditorGUILayout.PropertyField(_styleProperty);
-            if (_colorProperty != null)
-                EditorGUILayout.PropertyField(_colorProperty, new GUIContent("Color"));
 
             using (new EditorGUILayout.HorizontalScope())
             {

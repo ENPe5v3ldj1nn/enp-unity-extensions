@@ -21,7 +21,6 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
         [SerializeField, HideInInspector] private int _version = 1;
 
         [System.NonSerialized] private Texture2D _ramp;
-        [System.NonSerialized] private int _rampVersion = -1;
         [System.NonSerialized] private ulong _rampHash;
 
         public RoundedShapeType Shape => _shape;
@@ -46,7 +45,6 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
             _shadowSpread = Mathf.Max(0f, _shadowSpread);
             _version++;
             if (_version < 1) _version = 1;
-            _rampVersion = -1;
             _rampHash = 0;
         }
 
@@ -56,26 +54,14 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
             if (Application.isPlaying) Destroy(_ramp);
             else DestroyImmediate(_ramp);
             _ramp = null;
-            _rampVersion = -1;
             _rampHash = 0;
         }
 
         public Texture2D GetRampTexture()
         {
-            #if UNITY_EDITOR
-            if (!Application.isPlaying)
-            {
-                var hash = ComputeHash();
-                if (_ramp != null && _rampHash == hash) return _ramp;
-                _rampHash = hash;
-                _rampVersion = _version;
-                _ramp = CreateRampTexture(_fillGradient, _borderGradient);
-                return _ramp;
-            }
-            #endif
-
-            if (_ramp != null && _rampVersion == _version) return _ramp;
-            _rampVersion = _version;
+            var hash = ComputeHash();
+            if (_ramp != null && _rampHash == hash) return _ramp;
+            _rampHash = hash;
             _ramp = CreateRampTexture(_fillGradient, _borderGradient);
             return _ramp;
         }
@@ -117,14 +103,6 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
 
         private static ulong Quant01(float value) => (ulong)Mathf.Clamp(Mathf.RoundToInt(value * 65535f), 0, 65535);
         private static ulong QuantT(float value) => (ulong)Mathf.Clamp(Mathf.RoundToInt(value * 65535f), 0, 65535);
-
-        public void MarkDirty()
-        {
-            _version++;
-            if (_version < 1) _version = 1;
-            _rampVersion = -1;
-            _rampHash = 0;
-        }
 
         private static Texture2D CreateRampTexture(Gradient fill, Gradient border)
         {
