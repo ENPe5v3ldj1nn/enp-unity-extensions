@@ -283,6 +283,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
             SetVerticesDirty();
         }
 
+        #if UNITY_EDITOR
         protected override void OnValidate()
         {
             EnsureCanvasChannels();
@@ -291,11 +292,12 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
             SetVerticesDirty();
             SetMaterialDirty();
             _customCornerRadius = Mathf.Max(0f, _customCornerRadius);
-            _customBorderThickness = Mathf.Max(0f, _customBorderThickness);
+            _customBorderThickness = Mathf.Max(0f, _customBorderThickness);     
             _customShadowBlur = Mathf.Max(0f, _customShadowBlur);
             _customShadowSpread = Mathf.Max(0f, _customShadowSpread);
             EnsureCustomGradients();
         }
+        #endif
 
         protected override void OnDisable()
         {
