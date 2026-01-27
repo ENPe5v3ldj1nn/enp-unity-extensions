@@ -58,18 +58,6 @@ namespace enp_unity_extensions.Runtime.Scripts.Controllers
             }
         }
 
-        public static AnimatedWindow ShowExclusive(Type windowType, UnityAction onClose = null)
-        {
-            return ShowExclusive(windowType, WindowDirection.Middle, onClose);
-        }
-
-        public static AnimatedWindow ShowExclusive(Type windowType, WindowDirection direction, UnityAction onClose = null)
-        {
-            var target = GetWindowInternal(windowType);
-            OpenNext(target, direction, onClose);
-            return target;
-        }
-
         public static T ShowExclusive<T>(UnityAction onClose = null) where T : AnimatedWindow
         {
             return ShowExclusive<T>(WindowDirection.Middle, onClose);
@@ -80,30 +68,6 @@ namespace enp_unity_extensions.Runtime.Scripts.Controllers
             var target = GetWindow<T>();
             OpenNext(target, direction, onClose);
             return target;
-        }
-
-        public static Type ShowExclusiveType(Type windowType, UnityAction onClose = null)
-        {
-            ShowExclusive(windowType, WindowDirection.Middle, onClose);
-            return windowType;
-        }
-
-        public static Type ShowExclusiveType(Type windowType, WindowDirection direction, UnityAction onClose = null)
-        {
-            ShowExclusive(windowType, direction, onClose);
-            return windowType;
-        }
-
-        public static Type ShowExclusiveType<T>(UnityAction onClose = null) where T : AnimatedWindow
-        {
-            ShowExclusive<T>(WindowDirection.Middle, onClose);
-            return typeof(T);
-        }
-
-        public static Type ShowExclusiveType<T>(WindowDirection direction, UnityAction onClose = null) where T : AnimatedWindow
-        {
-            ShowExclusive<T>(direction, onClose);
-            return typeof(T);
         }
 
         public static void ShowLastWindow<T>(UnityAction onClose = null) where T : AnimatedWindow
@@ -155,11 +119,6 @@ namespace enp_unity_extensions.Runtime.Scripts.Controllers
                 throw new KeyNotFoundException($"Window type {windowType.Name} not registered in {_instance.GetType().Name}.");
 
             return candidate;
-        }
-
-        protected static void OpenNext(AnimatedWindow window)
-        {
-            OpenNext(window, CloseMiddle, OpenMiddle);
         }
 
         protected static void OpenNext(AnimatedWindow window, WindowDirection direction, UnityAction onClose = null)
