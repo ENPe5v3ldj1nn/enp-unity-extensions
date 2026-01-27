@@ -8,11 +8,11 @@ using static enp_unity_extensions.Runtime.Scripts.UI.Windows.AnimatedWindowConst
 namespace enp_unity_extensions.Runtime.Scripts.Controllers
 {
     [AddComponentMenu("")]
-    public abstract class UiController<TWindowId> : MonoBehaviour
-        where TWindowId : struct, Enum
+    public abstract class UiController : MonoBehaviour
     {
-        private static UiController<TWindowId> _instance;
-        private readonly Dictionary<TWindowId, AnimatedWindow> _windowsMap = new();
+        private static UiController _instance;
+        private readonly Dictionary<Type, AnimatedWindow> _windowsMap = new();
+
         public static AnimatedWindow CurrentWindow
         {
             get => AnimatedWindowHistory.CurrentWindow;
@@ -25,6 +25,9 @@ namespace enp_unity_extensions.Runtime.Scripts.Controllers
             private set => AnimatedWindowHistory.LastWindow = value;
         }
 
+        public static Type CurrentWindowType => CurrentWindow != null ? CurrentWindow.GetType() : null;
+        public static Type LastWindowType => LastWindow != null ? LastWindow.GetType() : null;
+
         protected virtual void Initialize()
         {
             _instance = this;
@@ -33,86 +36,120 @@ namespace enp_unity_extensions.Runtime.Scripts.Controllers
             AnimatedWindowHistory.Reset();
         }
 
-        protected abstract void SetupMap(Dictionary<TWindowId, AnimatedWindow> windowsMap);
-        
-        public static void ShowExclusiveById(TWindowId id, UnityAction onClose = null)
+        protected abstract void SetupMap(Dictionary<Type, AnimatedWindow> windowsMap);
+
+        protected void AutoRegisterWindows(Dictionary<Type, AnimatedWindow> windowsMap, bool includeInactive = true)
         {
-            var target = _instance._windowsMap[id];
-            OpenNext(target, WindowDirection.Middle, onClose);
+            var windows = GetComponentsInChildren<AnimatedWindow>(includeInactive);
+            for (int i = 0; i < windows.Length; i++)
+            {
+                var w = windows[i];
+                var t = w.GetType();
+
+                if (windowsMap.TryGetValue(t, out var existing) && existing != w)
+                    throw new InvalidOperationException($"Duplicate window type registration: {t.Name}. Instances: {existing.name} and {w.name}");
+
+                windowsMap[t] = w;
+            }
         }
 
-        public static void ShowExclusiveById(TWindowId id, WindowDirection direction, UnityAction onClose = null)
+        public static AnimatedWindow ShowExclusive(Type windowType, UnityAction onClose = null)
         {
-            var target = _instance._windowsMap[id];
+            return ShowExclusive(windowType, WindowDirection.Middle, onClose);
+        }
+
+        public static AnimatedWindow ShowExclusive(Type windowType, WindowDirection direction, UnityAction onClose = null)
+        {
+            var target = GetWindowInternal(windowType);
             OpenNext(target, direction, onClose);
+            return target;
         }
 
-        public static T ShowExclusiveByType<T>(TWindowId id, UnityAction onClose = null) where T : Component
+        public static T ShowExclusive<T>(UnityAction onClose = null) where T : AnimatedWindow
         {
-            var target = _instance._windowsMap[id];
-            OpenNext(target, WindowDirection.Middle, onClose);
-
-            if (target is T typed)
-                return typed;
-
-            throw new InvalidOperationException($"WindowId {id} → {target.GetType().Name}, очікували {typeof(T).Name}");
+            return ShowExclusive<T>(WindowDirection.Middle, onClose);
         }
 
-        public static T ShowExclusiveByType<T>(TWindowId id, WindowDirection direction, UnityAction onClose = null) where T : Component
+        public static T ShowExclusive<T>(WindowDirection direction, UnityAction onClose = null) where T : AnimatedWindow
         {
-            var target = _instance._windowsMap[id];
+            var target = GetWindow<T>();
             OpenNext(target, direction, onClose);
-
-            if (target is T typed)
-                return typed;
-
-            throw new InvalidOperationException($"WindowId {id} → {target.GetType().Name}, очікували {typeof(T).Name}");
+            return target;
         }
 
-        public static void ShowLastWindow(UnityAction onClose = null)
+        public static Type ShowExclusiveType(Type windowType, UnityAction onClose = null)
+        {
+            ShowExclusive(windowType, WindowDirection.Middle, onClose);
+            return windowType;
+        }
+
+        public static Type ShowExclusiveType(Type windowType, WindowDirection direction, UnityAction onClose = null)
+        {
+            ShowExclusive(windowType, direction, onClose);
+            return windowType;
+        }
+
+        public static Type ShowExclusiveType<T>(UnityAction onClose = null) where T : AnimatedWindow
+        {
+            ShowExclusive<T>(WindowDirection.Middle, onClose);
+            return typeof(T);
+        }
+
+        public static Type ShowExclusiveType<T>(WindowDirection direction, UnityAction onClose = null) where T : AnimatedWindow
+        {
+            ShowExclusive<T>(direction, onClose);
+            return typeof(T);
+        }
+
+        public static void ShowLastWindow<T>(UnityAction onClose = null) where T : AnimatedWindow
+        {
+            ShowLastWindow<T>(WindowDirection.Middle, onClose);
+        }
+
+        public static void ShowLastWindow<T>(WindowDirection direction, UnityAction onClose = null) where T : AnimatedWindow
         {
             var target = LastWindow;
             if (target == null)
                 return;
 
-            OpenNext(target, WindowDirection.Middle, onClose);
-        }
-
-        public static void ShowLastWindow(WindowDirection direction, UnityAction onClose = null)
-        {
-            var target = LastWindow;
-            if (target == null)
-                return;
+            if (target is not T)
+                throw new InvalidOperationException($"LastWindow is {target.GetType().Name}, expected {typeof(T).Name}");
 
             OpenNext(target, direction, onClose);
         }
 
-        public static T ShowLastWindow<T>(UnityAction onClose = null) where T : Component
+        public static T GetWindow<T>() where T : AnimatedWindow
         {
-            var target = LastWindow;
-            if (target == null)
-                return null;
-
-            OpenNext(target, WindowDirection.Middle, onClose);
-
-            if (target is T typed)
-                return typed;
-
-            throw new InvalidOperationException($"LastWindow is {target.GetType().Name}, expected {typeof(T).Name}");
+            return (T)GetWindowInternal(typeof(T));
         }
 
-        public static T ShowLastWindow<T>(WindowDirection direction, UnityAction onClose = null) where T : Component
+        private static AnimatedWindow GetWindowInternal(Type windowType)
         {
-            var target = LastWindow;
-            if (target == null)
-                return null;
+            if (windowType == null)
+                throw new ArgumentNullException(nameof(windowType));
 
-            OpenNext(target, direction, onClose);
+            if (_instance._windowsMap.TryGetValue(windowType, out var exact))
+                return exact;
 
-            if (target is T typed)
-                return typed;
+            AnimatedWindow candidate = null;
+            Type candidateType = null;
 
-            throw new InvalidOperationException($"LastWindow is {target.GetType().Name}, expected {typeof(T).Name}");
+            foreach (var kv in _instance._windowsMap)
+            {
+                if (!windowType.IsAssignableFrom(kv.Key))
+                    continue;
+
+                if (candidate != null)
+                    throw new InvalidOperationException($"Multiple windows match requested type {windowType.Name}. Matches: {candidateType.Name}, {kv.Key.Name}");
+
+                candidate = kv.Value;
+                candidateType = kv.Key;
+            }
+
+            if (candidate == null)
+                throw new KeyNotFoundException($"Window type {windowType.Name} not registered in {_instance.GetType().Name}.");
+
+            return candidate;
         }
 
         protected static void OpenNext(AnimatedWindow window)
@@ -120,16 +157,13 @@ namespace enp_unity_extensions.Runtime.Scripts.Controllers
             OpenNext(window, CloseMiddle, OpenMiddle);
         }
 
-        protected static void OpenNext(AnimatedWindow window, WindowDirection direction, UnityEngine.Events.UnityAction onClose = null)
+        protected static void OpenNext(AnimatedWindow window, WindowDirection direction, UnityAction onClose = null)
         {
             var (close, open) = ResolveDirection(direction);
             OpenNext(window, close, open, onClose);
         }
 
-        protected static void OpenNext(AnimatedWindow window,
-            AnimatedWindowConstant close = CloseMiddle,
-            AnimatedWindowConstant open = OpenMiddle,
-            UnityEngine.Events.UnityAction onClose = null)
+        protected static void OpenNext(AnimatedWindow window, AnimatedWindowConstant close, AnimatedWindowConstant open, UnityAction onClose = null)
         {
             var active = CurrentWindow;
             if (active == null)
