@@ -38,6 +38,11 @@ namespace enp_unity_extensions.Runtime.Scripts.Controllers
 
         protected abstract void SetupMap(Dictionary<Type, AnimatedWindow> windowsMap);
 
+        protected void RegisterWindow(AnimatedWindow window)
+        {
+            _windowsMap[window.GetType()] = window;
+        }
+
         protected void AutoRegisterWindows(Dictionary<Type, AnimatedWindow> windowsMap, bool includeInactive = true)
         {
             var windows = GetComponentsInChildren<AnimatedWindow>(includeInactive);
