@@ -70,20 +70,17 @@ namespace enp_unity_extensions.Runtime.Scripts.Controllers
             return target;
         }
 
-        public static void ShowLastWindow<T>(UnityAction onClose = null) where T : AnimatedWindow
+        public static void ShowLastWindow(UnityAction onClose = null)
         {
-            ShowLastWindow<T>(WindowDirection.Middle, onClose);
+            ShowLastWindow(WindowDirection.Middle, onClose);
         }
 
-        public static void ShowLastWindow<T>(WindowDirection direction, UnityAction onClose = null) where T : AnimatedWindow
+        public static void ShowLastWindow(WindowDirection direction, UnityAction onClose = null)
         {
             var target = LastWindow;
             if (target == null)
                 return;
-
-            if (target is not T)
-                throw new InvalidOperationException($"LastWindow is {target.GetType().Name}, expected {typeof(T).Name}");
-
+            
             OpenNext(target, direction, onClose);
         }
 
