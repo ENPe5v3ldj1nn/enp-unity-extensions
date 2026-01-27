@@ -8,9 +8,9 @@ using static enp_unity_extensions.Runtime.Scripts.UI.Windows.AnimatedWindowConst
 namespace enp_unity_extensions.Runtime.Scripts.Controllers
 {
     [AddComponentMenu("")]
-    public abstract class UiController : MonoBehaviour
+    public abstract class AbstractUiController : MonoBehaviour
     {
-        private static UiController _instance;
+        private static AbstractUiController _instance;
         private readonly Dictionary<Type, AnimatedWindow> _windowsMap = new();
 
         public static AnimatedWindow CurrentWindow
