@@ -14,6 +14,15 @@ namespace enp_unity_extensions.Editor.Form
         private SerializedProperty _maskableProperty;
         private SerializedProperty _fillGradientAngleSpeedProperty;
         private SerializedProperty _borderGradientAngleSpeedProperty;
+
+        private SerializedProperty _useStyleGradientsProperty;
+        private SerializedProperty _customFillGradientProperty;
+        private SerializedProperty _customBorderGradientProperty;
+
+        private SerializedProperty _useStyleBaseAnglesProperty;
+        private SerializedProperty _customFillGradientAngleProperty;
+        private SerializedProperty _customBorderGradientAngleProperty;
+
         private SerializedProperty _useStyleShapePropertiesProperty;
         private SerializedProperty _customShapeProperty;
         private SerializedProperty _customCornerRadiusProperty;
@@ -32,6 +41,15 @@ namespace enp_unity_extensions.Editor.Form
             _maskableProperty = serializedObject.FindProperty("m_Maskable");
             _fillGradientAngleSpeedProperty = serializedObject.FindProperty("_fillGradientAngleSpeed");
             _borderGradientAngleSpeedProperty = serializedObject.FindProperty("_borderGradientAngleSpeed");
+
+            _useStyleGradientsProperty = serializedObject.FindProperty("_useStyleGradients");
+            _customFillGradientProperty = serializedObject.FindProperty("_customFillGradient");
+            _customBorderGradientProperty = serializedObject.FindProperty("_customBorderGradient");
+
+            _useStyleBaseAnglesProperty = serializedObject.FindProperty("_useStyleBaseAngles");
+            _customFillGradientAngleProperty = serializedObject.FindProperty("_customFillGradientAngle");
+            _customBorderGradientAngleProperty = serializedObject.FindProperty("_customBorderGradientAngle");
+
             _useStyleShapePropertiesProperty = serializedObject.FindProperty("_useStyleShapeProperties");
             _customShapeProperty = serializedObject.FindProperty("_customShape");
             _customCornerRadiusProperty = serializedObject.FindProperty("_customCornerRadius");
@@ -59,7 +77,7 @@ namespace enp_unity_extensions.Editor.Form
 
             if (_styleProperty == null)
             {
-                EditorGUILayout.HelpBox("Cannot find serialized field for style. Ensure RoundedShapeGraphic has a [SerializeField] field named 'style' (or update the editor to match your field name).", MessageType.Error);
+                EditorGUILayout.HelpBox("Cannot find serialized field for style.", MessageType.Error);
                 DrawDefaultInspector();
                 serializedObject.ApplyModifiedProperties();
                 return;
@@ -88,7 +106,15 @@ namespace enp_unity_extensions.Editor.Form
                     if (_styleProperty.objectReferenceValue != null)
                         EditorGUIUtility.PingObject(_styleProperty.objectReferenceValue);
                 }
+
+                if (GUILayout.Button("Clear"))
+                {
+                    _styleProperty.objectReferenceValue = null;
+                }
             }
+
+            var hasStyle = _styleProperty.objectReferenceValue != null;
+            var style = hasStyle ? (RoundedShapeStyle)_styleProperty.objectReferenceValue : null;
 
             EditorGUILayout.Space(8);
 
@@ -96,7 +122,7 @@ namespace enp_unity_extensions.Editor.Form
                 EditorGUILayout.PropertyField(_raycastTargetProperty, new GUIContent("Raycast Target"));
 
             if (_preciseRaycastProperty != null)
-                EditorGUILayout.PropertyField(_preciseRaycastProperty);     
+                EditorGUILayout.PropertyField(_preciseRaycastProperty);
 
             if (_fillGradientAngleSpeedProperty != null)
                 EditorGUILayout.PropertyField(_fillGradientAngleSpeedProperty, new GUIContent("Fill Gradient Angle Speed (deg/sec)"));
@@ -104,9 +130,107 @@ namespace enp_unity_extensions.Editor.Form
             if (_borderGradientAngleSpeedProperty != null)
                 EditorGUILayout.PropertyField(_borderGradientAngleSpeedProperty, new GUIContent("Border Gradient Angle Speed (deg/sec)"));
 
+            EditorGUILayout.Space(10);
+            EditorGUILayout.LabelField("Gradients", EditorStyles.boldLabel);
+
+            if (_useStyleGradientsProperty != null)
+                EditorGUILayout.PropertyField(_useStyleGradientsProperty, new GUIContent("Use Style Gradients"));
+
+            var useStyleGradients = _useStyleGradientsProperty != null && _useStyleGradientsProperty.boolValue;
+            if (!hasStyle) useStyleGradients = false;
+
+            if (!useStyleGradients)
+            {
+                EditorGUI.indentLevel++;
+                if (_customFillGradientProperty != null)
+                    EditorGUILayout.PropertyField(_customFillGradientProperty, new GUIContent("Fill Gradient"));
+                if (_customBorderGradientProperty != null)
+                    EditorGUILayout.PropertyField(_customBorderGradientProperty, new GUIContent("Border Gradient"));
+                EditorGUI.indentLevel--;
+            }
+            else
+            {
+                if (style != null)
+                {
+                    EditorGUILayout.LabelField("Fill Gradient: Style", EditorStyles.miniLabel);
+                    EditorGUILayout.LabelField("Border Gradient: Style", EditorStyles.miniLabel);
+                }
+            }
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                GUI.enabled = hasStyle;
+                if (GUILayout.Button("Reset Gradients To Style"))
+                {
+                    if (_useStyleGradientsProperty != null)
+                        _useStyleGradientsProperty.boolValue = true;
+                }
+                GUI.enabled = true;
+
+                if (GUILayout.Button("Use Custom Gradients"))
+                {
+                    if (_useStyleGradientsProperty != null)
+                        _useStyleGradientsProperty.boolValue = false;
+                }
+            }
+
+            EditorGUILayout.Space(10);
+            EditorGUILayout.LabelField("Gradient Angles", EditorStyles.boldLabel);
+
+            var useStyleAngles = _useStyleBaseAnglesProperty != null && _useStyleBaseAnglesProperty.boolValue;
+
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                GUI.enabled = hasStyle;
+                if (_useStyleBaseAnglesProperty != null)
+                    EditorGUILayout.PropertyField(_useStyleBaseAnglesProperty, new GUIContent("Use Style Base Angles"));
+                GUI.enabled = true;
+
+                if (GUILayout.Button("Use Custom Angles"))
+                {
+                    if (_useStyleBaseAnglesProperty != null)
+                        _useStyleBaseAnglesProperty.boolValue = false;
+                }
+
+                GUI.enabled = hasStyle;
+                if (GUILayout.Button("Reset Angles To Style"))
+                {
+                    if (_useStyleBaseAnglesProperty != null)
+                        _useStyleBaseAnglesProperty.boolValue = true;
+
+                    if (style != null)
+                    {
+                        if (_customFillGradientAngleProperty != null)
+                            _customFillGradientAngleProperty.floatValue = style.FillGradientAngle;
+                        if (_customBorderGradientAngleProperty != null)
+                            _customBorderGradientAngleProperty.floatValue = style.BorderGradientAngle;
+                    }
+                }
+                GUI.enabled = true;
+            }
+
+            if (hasStyle && useStyleAngles && style != null)
+            {
+                EditorGUILayout.LabelField($"Fill Angle (Style): {style.FillGradientAngle:0.##}°", EditorStyles.miniLabel);
+                EditorGUILayout.LabelField($"Border Angle (Style): {style.BorderGradientAngle:0.##}°", EditorStyles.miniLabel);
+            }
+
+            var showCustomAngles = !hasStyle || !useStyleAngles;
+            if (showCustomAngles)
+            {
+                EditorGUI.indentLevel++;
+                if (_customFillGradientAngleProperty != null)
+                    _customFillGradientAngleProperty.floatValue = EditorGUILayout.Slider(new GUIContent("Fill Gradient Angle"), NormalizeAngle(_customFillGradientAngleProperty.floatValue), 0f, 360f);
+                if (_customBorderGradientAngleProperty != null)
+                    _customBorderGradientAngleProperty.floatValue = EditorGUILayout.Slider(new GUIContent("Border Gradient Angle"), NormalizeAngle(_customBorderGradientAngleProperty.floatValue), 0f, 360f);
+                EditorGUI.indentLevel--;
+            }
+
+            EditorGUILayout.Space(10);
+            EditorGUILayout.LabelField("Shape Properties", EditorStyles.boldLabel);
+
             if (_useStyleShapePropertiesProperty != null)
             {
-                EditorGUILayout.Space(4);
                 EditorGUILayout.PropertyField(_useStyleShapePropertiesProperty, new GUIContent("Use Style Shape Properties"));
                 if (!_useStyleShapePropertiesProperty.boolValue)
                 {
@@ -140,6 +264,13 @@ namespace enp_unity_extensions.Editor.Form
                 EditorGUILayout.PropertyField(_maskableProperty);
 
             serializedObject.ApplyModifiedProperties();
+        }
+
+        private static float NormalizeAngle(float angle)
+        {
+            angle %= 360f;
+            if (angle < 0f) angle += 360f;
+            return angle;
         }
     }
 }
