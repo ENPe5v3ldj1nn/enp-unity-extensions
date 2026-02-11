@@ -5,7 +5,8 @@
         "Unity.TextMeshPro",
         "UniRx",
         "DOTween.Modules",
-        "Unity.InputSystem"
+        "Unity.InputSystem",
+        "Google.Play.Review"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
