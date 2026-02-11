@@ -6,7 +6,9 @@
         "UniRx",
         "DOTween.Modules",
         "Unity.InputSystem",
-        "Google.Play.Review"
+        "Google.Play.Review",
+        "Google.Play.Common",
+        "Google.Play.Core"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
