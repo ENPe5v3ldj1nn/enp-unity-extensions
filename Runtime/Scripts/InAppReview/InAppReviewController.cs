@@ -9,6 +9,9 @@ using Google.Play.Review;
 
 public static class InAppReviewController
 {
+    private const int MaxInAppReviewAttemptsBeforeDirectOpen = 3;
+    private static int s_rateAndReviewAttempts;
+
 #if UNITY_ANDROID && PLAY_REVIEW
     private static ReviewManager s_reviewManager;
     private static PlayReviewInfo s_playReviewInfo;
@@ -24,6 +27,8 @@ public static class InAppReviewController
     
     public static void Initialize(string androidStoreUrl, string iosStoreUrl)
     {
+        s_rateAndReviewAttempts = 0;
+
 #if UNITY_ANDROID
         s_androidStoreUrl = androidStoreUrl;
 
@@ -46,6 +51,13 @@ public static class InAppReviewController
     
     public static void RateAndReview()
     {
+        s_rateAndReviewAttempts++;
+        if (s_rateAndReviewAttempts > MaxInAppReviewAttemptsBeforeDirectOpen)
+        {
+            DirectlyOpen();
+            return;
+        }
+
 #if UNITY_IOS
         Device.RequestStoreReview();
 #elif UNITY_ANDROID && PLAY_REVIEW
