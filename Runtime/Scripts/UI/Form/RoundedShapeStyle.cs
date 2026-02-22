@@ -120,8 +120,13 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
 
         public void MarkDirty()
         {
-            _version++;
-            if (_version < 1) _version = 1;
+            // In edit mode the style is validated via OnValidate and the ramp is also hash-checked.
+            // Bumping a serialized version here would unnecessarily dirty the asset.
+            if (Application.isPlaying)
+            {
+                _version++;
+                if (_version < 1) _version = 1;
+            }
             _rampVersion = -1;
             _rampHash = 0;
         }

@@ -1,13 +1,14 @@
-﻿using System.IO;
-using enp_unity_extensions.Runtime.Scripts.UI.Form;
+﻿using enp_unity_extensions.Runtime.Scripts.UI.Form;
 using UnityEditor;
 using UnityEngine;
 
 namespace enp_unity_extensions.Editor.Form
 {
     [CustomEditor(typeof(RoundedShapeGraphic))]
+    [CanEditMultipleObjects]
     public sealed class RoundedShapeGraphicEditor : UnityEditor.Editor
     {
+        private SerializedProperty _colorProperty;
         private SerializedProperty _styleProperty;
         private SerializedProperty _preciseRaycastProperty;
         private SerializedProperty _raycastTargetProperty;
@@ -35,6 +36,7 @@ namespace enp_unity_extensions.Editor.Form
 
         private void OnEnable()
         {
+            _colorProperty = serializedObject.FindProperty("m_Color");
             _styleProperty = FindFirst("style", "_style", "m_Style");
             _preciseRaycastProperty = FindFirst("preciseRaycast", "_preciseRaycast", "m_PreciseRaycast");
             _raycastTargetProperty = serializedObject.FindProperty("m_RaycastTarget");
@@ -83,7 +85,10 @@ namespace enp_unity_extensions.Editor.Form
                 return;
             }
 
-            EditorGUILayout.PropertyField(_styleProperty);
+            if (_colorProperty != null)
+                EditorGUILayout.PropertyField(_colorProperty, new GUIContent("Color"));
+
+            EditorGUILayout.PropertyField(_styleProperty, new GUIContent("Style (Optional)"));
 
             using (new EditorGUILayout.HorizontalScope())
             {
@@ -93,7 +98,8 @@ namespace enp_unity_extensions.Editor.Form
                     if (!AssetDatabase.IsValidFolder(folder))
                         AssetDatabase.CreateFolder("Assets", "UIStyles");
 
-                    var path = AssetDatabase.GenerateUniqueAssetPath(Path.Combine(folder, "RoundedShapeStyle.asset"));
+                    // AssetDatabase prefers forward slashes.
+                    var path = AssetDatabase.GenerateUniqueAssetPath($"{folder}/RoundedShapeStyle.asset");
                     var asset = ScriptableObject.CreateInstance<RoundedShapeStyle>();
                     AssetDatabase.CreateAsset(asset, path);
                     AssetDatabase.SaveAssets();
@@ -113,7 +119,7 @@ namespace enp_unity_extensions.Editor.Form
                 }
             }
 
-            var hasStyle = _styleProperty.objectReferenceValue != null;
+            var hasStyle = !_styleProperty.hasMultipleDifferentValues && _styleProperty.objectReferenceValue != null;
             var style = hasStyle ? (RoundedShapeStyle)_styleProperty.objectReferenceValue : null;
 
             EditorGUILayout.Space(8);
@@ -133,11 +139,13 @@ namespace enp_unity_extensions.Editor.Form
             EditorGUILayout.Space(10);
             EditorGUILayout.LabelField("Gradients", EditorStyles.boldLabel);
 
+            var useStyleGradients = false;
             if (_useStyleGradientsProperty != null)
-                EditorGUILayout.PropertyField(_useStyleGradientsProperty, new GUIContent("Use Style Gradients"));
-
-            var useStyleGradients = _useStyleGradientsProperty != null && _useStyleGradientsProperty.boolValue;
-            if (!hasStyle) useStyleGradients = false;
+            {
+                using (new EditorGUI.DisabledScope(!hasStyle))
+                    EditorGUILayout.PropertyField(_useStyleGradientsProperty, new GUIContent("Use Style Gradients"));
+                useStyleGradients = hasStyle && _useStyleGradientsProperty.boolValue;
+            }
 
             if (!useStyleGradients)
             {
@@ -177,14 +185,15 @@ namespace enp_unity_extensions.Editor.Form
             EditorGUILayout.Space(10);
             EditorGUILayout.LabelField("Gradient Angles", EditorStyles.boldLabel);
 
-            var useStyleAngles = _useStyleBaseAnglesProperty != null && _useStyleBaseAnglesProperty.boolValue;
+            var useStyleAngles = hasStyle && _useStyleBaseAnglesProperty != null && _useStyleBaseAnglesProperty.boolValue;
 
             using (new EditorGUILayout.HorizontalScope())
             {
-                GUI.enabled = hasStyle;
                 if (_useStyleBaseAnglesProperty != null)
-                    EditorGUILayout.PropertyField(_useStyleBaseAnglesProperty, new GUIContent("Use Style Base Angles"));
-                GUI.enabled = true;
+                {
+                    using (new EditorGUI.DisabledScope(!hasStyle))
+                        EditorGUILayout.PropertyField(_useStyleBaseAnglesProperty, new GUIContent("Use Style Base Angles"));
+                }
 
                 if (GUILayout.Button("Use Custom Angles"))
                 {
@@ -220,9 +229,15 @@ namespace enp_unity_extensions.Editor.Form
             {
                 EditorGUI.indentLevel++;
                 if (_customFillGradientAngleProperty != null)
-                    _customFillGradientAngleProperty.floatValue = EditorGUILayout.Slider(new GUIContent("Fill Gradient Angle"), NormalizeAngle(_customFillGradientAngleProperty.floatValue), 0f, 360f);
+                {
+                    _customFillGradientAngleProperty.floatValue = NormalizeAngle(_customFillGradientAngleProperty.floatValue);
+                    EditorGUILayout.Slider(_customFillGradientAngleProperty, 0f, 360f, new GUIContent("Fill Gradient Angle"));
+                }
                 if (_customBorderGradientAngleProperty != null)
-                    _customBorderGradientAngleProperty.floatValue = EditorGUILayout.Slider(new GUIContent("Border Gradient Angle"), NormalizeAngle(_customBorderGradientAngleProperty.floatValue), 0f, 360f);
+                {
+                    _customBorderGradientAngleProperty.floatValue = NormalizeAngle(_customBorderGradientAngleProperty.floatValue);
+                    EditorGUILayout.Slider(_customBorderGradientAngleProperty, 0f, 360f, new GUIContent("Border Gradient Angle"));
+                }
                 EditorGUI.indentLevel--;
             }
 
@@ -231,8 +246,23 @@ namespace enp_unity_extensions.Editor.Form
 
             if (_useStyleShapePropertiesProperty != null)
             {
-                EditorGUILayout.PropertyField(_useStyleShapePropertiesProperty, new GUIContent("Use Style Shape Properties"));
-                if (!_useStyleShapePropertiesProperty.boolValue)
+                using (new EditorGUI.DisabledScope(!hasStyle))
+                    EditorGUILayout.PropertyField(_useStyleShapePropertiesProperty, new GUIContent("Use Style Shape Properties"));
+
+                var useStyleShape = hasStyle && !_useStyleShapePropertiesProperty.hasMultipleDifferentValues && _useStyleShapePropertiesProperty.boolValue;
+
+                if (useStyleShape && style != null)
+                {
+                    EditorGUILayout.LabelField($"Shape (Style): {style.Shape}", EditorStyles.miniLabel);
+                    EditorGUILayout.LabelField($"Corner Radius (Style): {style.CornerRadius:0.##}", EditorStyles.miniLabel);
+                    EditorGUILayout.LabelField($"Border Thickness (Style): {style.BorderThickness:0.##}", EditorStyles.miniLabel);
+                    if (style.ShadowEnabled)
+                        EditorGUILayout.LabelField("Shadow: Style (Enabled)", EditorStyles.miniLabel);
+                    else
+                        EditorGUILayout.LabelField("Shadow: Style (Disabled)", EditorStyles.miniLabel);
+                }
+
+                if (!useStyleShape)
                 {
                     EditorGUI.indentLevel++;
                     if (_customShapeProperty != null)
