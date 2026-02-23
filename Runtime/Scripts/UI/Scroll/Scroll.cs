@@ -1,11 +1,13 @@
 ﻿using System;
+using UniRx;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
 namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
 {
     [DisallowMultipleComponent]
-    public sealed class Scroll : MonoBehaviour, IInitializePotentialDragHandler, IBeginDragHandler, IDragHandler, IEndDragHandler, IScrollHandler
+    public sealed class Scroll : MonoBehaviour,
+        IInitializePotentialDragHandler, IBeginDragHandler, IDragHandler, IEndDragHandler, IScrollHandler
     {
         public enum Axis { Horizontal, Vertical }
         public enum MovementType { Unrestricted, Elastic, Clamped }
@@ -78,9 +80,58 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
         private float TimeNow => _useUnscaledTime ? Time.unscaledTime : Time.time;
         private float DeltaTime => _useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
 
+        // ===== UniRx / Snap cache =====
+        private Subject<Vector2> _contentPosSubject;
+        private Subject<float> _axisPosSubject;
+
+        private Subject<int> _snapIndexSubject;
+        private Subject<float> _snapPagePosSubject; // 0..N-1 (float)
+        private Subject<float> _snapPage01Subject;  // 0..1
+
+        private Vector2 _lastNotifiedPos;
+        private bool _hasLastNotifiedPos;
+
+        private int _lastNotifiedSnapIndex = -1;
+        private float _lastNotifiedSnapPagePos = float.NaN;
+        private float _lastNotifiedSnap01 = float.NaN;
+
+        private float[] _snapTargetsAxis = new float[0];
+        private int _snapTargetsCount;
+        private int _snapTargetsChildCount = -1;
+        private Vector2 _snapTargetsViewSize;
+        private bool _snapTargetsDirty = true;
+
+        private const float SnapNotifyEpsilon = 0.0001f;
+
+        public IObservable<Vector2> ContentAnchoredPositionChanged => _contentPosSubject;
+        public IObservable<float> AxisPositionChanged => _axisPosSubject;
+
+        public IObservable<int> SnapIndexChanged => _snapIndexSubject;
+        public IObservable<float> SnapPagePositionChanged => _snapPagePosSubject;
+        public IObservable<float> SnapPage01Changed => _snapPage01Subject;
+
+        public int SnapPageCount => _snapTargetsCount;
+
+        public void MarkSnapTargetsDirty() => _snapTargetsDirty = true;
+
         private void Awake()
         {
             viewRect = (RectTransform)transform;
+
+            if (_content == null)
+            {
+                Debug.LogError($"{nameof(Scroll)}: Content is not assigned.", this);
+                enabled = false;
+                return;
+            }
+
+            _contentPosSubject = new Subject<Vector2>();
+            _axisPosSubject = new Subject<float>();
+            _snapIndexSubject = new Subject<int>();
+            _snapPagePosSubject = new Subject<float>();
+            _snapPage01Subject = new Subject<float>();
+
+            _snapTargetsDirty = true;
         }
 
         private void OnEnable()
@@ -102,6 +153,32 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
 
             pressScreenPos = Vector2.zero;
             lastScreenPosForSimultaneous = Vector2.zero;
+
+            _snapTargetsDirty = true;
+            if (_snapEnabled) EnsureSnapTargets();
+
+            NotifyPositionChanged(_content.anchoredPosition);
+        }
+
+        private void OnRectTransformDimensionsChange()
+        {
+            _snapTargetsDirty = true;
+        }
+
+        private void OnDestroy()
+        {
+            CompleteAndDispose(_contentPosSubject);
+            CompleteAndDispose(_axisPosSubject);
+            CompleteAndDispose(_snapIndexSubject);
+            CompleteAndDispose(_snapPagePosSubject);
+            CompleteAndDispose(_snapPage01Subject);
+        }
+
+        private static void CompleteAndDispose<T>(Subject<T> s)
+        {
+            if (s == null) return;
+            try { s.OnCompleted(); } catch { /* ignore */ }
+            s.Dispose();
         }
 
         public void OnInitializePotentialDrag(PointerEventData eventData)
@@ -286,7 +363,14 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
                 if (_axis == Axis.Horizontal) target.y = _content.anchoredPosition.y;
                 else target.x = _content.anchoredPosition.x;
 
-                Vector2 pos = Vector2.SmoothDamp(_content.anchoredPosition, target, ref springVelocity, Mathf.Max(0.001f, _elasticity), Mathf.Infinity, dt);
+                Vector2 pos = Vector2.SmoothDamp(
+                    _content.anchoredPosition,
+                    target,
+                    ref springVelocity,
+                    Mathf.Max(0.001f, _elasticity),
+                    Mathf.Infinity,
+                    dt);
+
                 SetContentAnchoredPosition(pos);
 
                 velocity = Vector2.zero;
@@ -297,7 +381,13 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
             if (snapping)
             {
                 float curAxis = GetAxisValue(_content.anchoredPosition);
-                float newAxis = Mathf.SmoothDamp(curAxis, snapTargetAxis, ref snapDampVel, Mathf.Max(0.001f, _snapSmoothTime), _snapMaxSpeed, dt);
+                float newAxis = Mathf.SmoothDamp(
+                    curAxis,
+                    snapTargetAxis,
+                    ref snapDampVel,
+                    Mathf.Max(0.001f, _snapSmoothTime),
+                    _snapMaxSpeed,
+                    dt);
 
                 Vector2 pos = SetAxisValue(_content.anchoredPosition, newAxis);
 
@@ -384,7 +474,12 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
 
             UpdateBounds();
 
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(viewRect, screenPos, eventData.pressEventCamera, out pointerStartLocalCursor);
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                viewRect,
+                screenPos,
+                eventData.pressEventCamera,
+                out pointerStartLocalCursor);
+
             contentStartPosition = _content.anchoredPosition;
 
             prevContentPos = _content.anchoredPosition;
@@ -399,7 +494,11 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
 
             UpdateBounds();
 
-            RectTransformUtility.ScreenPointToLocalPointInRectangle(viewRect, eventData.position, eventData.pressEventCamera, out Vector2 localCursor);
+            RectTransformUtility.ScreenPointToLocalPointInRectangle(
+                viewRect,
+                eventData.position,
+                eventData.pressEventCamera,
+                out Vector2 localCursor);
 
             Vector2 pointerDelta = localCursor - pointerStartLocalCursor;
             Vector2 newPos = contentStartPosition + pointerDelta;
@@ -486,58 +585,24 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
 
         private void StartSnap(float axisVelocity)
         {
-            int childCount = _content.childCount;
-            if (childCount <= 0) return;
+            EnsureSnapTargets();
+            int count = _snapTargetsCount;
+            if (count <= 0) return;
 
             UpdateBounds();
 
             float curAxis = GetAxisValue(_content.anchoredPosition);
 
-            float[] candidates = new float[childCount];
-            int cCount = 0;
-
-            for (int i = 0; i < childCount; i++)
-            {
-                RectTransform child = (RectTransform)_content.GetChild(i);
-                if (!child.gameObject.activeInHierarchy) continue;
-
-                Bounds b = RectTransformUtility.CalculateRelativeRectTransformBounds(viewRect, child);
-
-                float childAlign = GetAlignedValue(b, _axis, _snapAlignment);
-                float viewAlign = GetAlignedValue(viewBounds, _axis, _snapAlignment);
-
-                float delta = viewAlign - childAlign;
-                float targetAxis = curAxis + delta;
-
-                candidates[cCount++] = targetAxis;
-            }
-
-            if (cCount <= 0) return;
-
-            Array.Sort(candidates, 0, cCount);
-
-            int nearestIndex = 0;
-            float nearestDist = Mathf.Abs(candidates[0] - curAxis);
-
-            for (int i = 1; i < cCount; i++)
-            {
-                float d = Mathf.Abs(candidates[i] - curAxis);
-                if (d < nearestDist)
-                {
-                    nearestDist = d;
-                    nearestIndex = i;
-                }
-            }
-
+            int nearestIndex = FindNearestSnapIndex(curAxis);
             int chosenIndex = nearestIndex;
 
             if (_snapUseVelocityToAdvance && Mathf.Abs(axisVelocity) >= _snapAdvanceVelocityThreshold)
             {
                 int dir = axisVelocity > 0f ? 1 : -1;
-                chosenIndex = Mathf.Clamp(nearestIndex + dir, 0, cCount - 1);
+                chosenIndex = Mathf.Clamp(nearestIndex + dir, 0, count - 1);
             }
 
-            float bestAxis = candidates[chosenIndex];
+            float bestAxis = _snapTargetsAxis[chosenIndex];
             float bestDist = Mathf.Abs(bestAxis - curAxis);
 
             if (bestDist <= _snapStopDistance)
@@ -583,6 +648,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
             else position.x = _content.anchoredPosition.x;
 
             _content.anchoredPosition = position;
+            NotifyPositionChanged(position);
         }
 
         private void UpdateBounds()
@@ -646,6 +712,160 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
 
             decidingDirection = false;
             routeToParent = false;
+        }
+
+        // ===== Snap targets cache (no alloc in hot path) =====
+
+        private void EnsureSnapTargets()
+        {
+            if (!_snapEnabled) return;
+
+            Vector2 viewSize = viewRect.rect.size;
+            int childCount = _content.childCount;
+
+            if (!_snapTargetsDirty &&
+                _snapTargetsChildCount == childCount &&
+                _snapTargetsViewSize == viewSize)
+                return;
+
+            _snapTargetsDirty = false;
+            _snapTargetsViewSize = viewSize;
+            _snapTargetsChildCount = childCount;
+
+            if (childCount <= 0)
+            {
+                _snapTargetsCount = 0;
+                return;
+            }
+
+            UpdateBounds();
+
+            float curAxis = GetAxisValue(_content.anchoredPosition);
+            float viewAlign = GetAlignedValue(viewBounds, _axis, _snapAlignment);
+
+            EnsureSnapTargetsCapacity(childCount);
+
+            int cCount = 0;
+            for (int i = 0; i < childCount; i++)
+            {
+                RectTransform child = (RectTransform)_content.GetChild(i);
+                if (!child.gameObject.activeInHierarchy) continue;
+
+                Bounds b = RectTransformUtility.CalculateRelativeRectTransformBounds(viewRect, child);
+                float childAlign = GetAlignedValue(b, _axis, _snapAlignment);
+
+                float targetAxis = curAxis + (viewAlign - childAlign);
+                _snapTargetsAxis[cCount++] = targetAxis;
+            }
+
+            if (cCount <= 0)
+            {
+                _snapTargetsCount = 0;
+                return;
+            }
+
+            Array.Sort(_snapTargetsAxis, 0, cCount);
+            _snapTargetsCount = cCount;
+        }
+
+        private void EnsureSnapTargetsCapacity(int required)
+        {
+            if (_snapTargetsAxis.Length >= required) return;
+
+            int newSize = Mathf.NextPowerOfTwo(required);
+            if (newSize < 4) newSize = 4;
+
+            Array.Resize(ref _snapTargetsAxis, newSize);
+        }
+
+        private int FindNearestSnapIndex(float axis)
+        {
+            int count = _snapTargetsCount;
+            if (count <= 0) return -1;
+
+            int best = 0;
+            float bestDist = Mathf.Abs(_snapTargetsAxis[0] - axis);
+
+            for (int i = 1; i < count; i++)
+            {
+                float d = Mathf.Abs(_snapTargetsAxis[i] - axis);
+                if (d < bestDist)
+                {
+                    bestDist = d;
+                    best = i;
+                }
+            }
+
+            return best;
+        }
+
+        private float CalculateSnapPagePosition(float axis)
+        {
+            int count = _snapTargetsCount;
+            if (count <= 1) return 0f;
+
+            float first = _snapTargetsAxis[0];
+            float last = _snapTargetsAxis[count - 1];
+
+            if (axis <= first) return 0f;
+            if (axis >= last) return count - 1;
+
+            for (int i = 0; i < count - 1; i++)
+            {
+                float a0 = _snapTargetsAxis[i];
+                float a1 = _snapTargetsAxis[i + 1];
+                if (axis <= a1)
+                {
+                    float t = Mathf.InverseLerp(a0, a1, axis);
+                    return i + t;
+                }
+            }
+
+            return count - 1;
+        }
+
+        // ===== UniRx emit =====
+
+        private void NotifyPositionChanged(Vector2 position)
+        {
+            if (_contentPosSubject == null) return;
+
+            if (_hasLastNotifiedPos && position == _lastNotifiedPos)
+                return;
+
+            _hasLastNotifiedPos = true;
+            _lastNotifiedPos = position;
+
+            _contentPosSubject.OnNext(position);
+
+            float axis = GetAxisValue(position);
+            _axisPosSubject.OnNext(axis);
+
+            if (!_snapEnabled) return;
+
+            EnsureSnapTargets();
+            if (_snapTargetsCount <= 0) return;
+
+            int snapIndex = FindNearestSnapIndex(axis);
+            if (snapIndex != _lastNotifiedSnapIndex)
+            {
+                _lastNotifiedSnapIndex = snapIndex;
+                _snapIndexSubject.OnNext(snapIndex);
+            }
+
+            float pagePos = CalculateSnapPagePosition(axis);
+            if (float.IsNaN(_lastNotifiedSnapPagePos) || Mathf.Abs(pagePos - _lastNotifiedSnapPagePos) > SnapNotifyEpsilon)
+            {
+                _lastNotifiedSnapPagePos = pagePos;
+                _snapPagePosSubject.OnNext(pagePos);
+            }
+
+            float page01 = (_snapTargetsCount <= 1) ? 0f : pagePos / (_snapTargetsCount - 1);
+            if (float.IsNaN(_lastNotifiedSnap01) || Mathf.Abs(page01 - _lastNotifiedSnap01) > SnapNotifyEpsilon)
+            {
+                _lastNotifiedSnap01 = page01;
+                _snapPage01Subject.OnNext(page01);
+            }
         }
     }
 }
