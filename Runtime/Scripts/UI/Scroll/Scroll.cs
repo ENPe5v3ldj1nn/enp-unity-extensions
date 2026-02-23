@@ -110,6 +110,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
         private int _snapTargetsChildCount = -1;
         private Vector2 _snapTargetsViewSize;
         private bool _snapTargetsDirty = true;
+        private bool _isInitialized;
 
         public int SnapPageCount => _snapTargetsCount;
         public void MarkSnapTargetsDirty() => _snapTargetsDirty = true;
@@ -126,16 +127,17 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
 
         private void Awake()
         {
-            viewRect = (RectTransform)transform;
-
-            if (_content == null)
-            {
-                Debug.LogError($"{nameof(Scroll)}: Content is not assigned.", this);
-                enabled = false;
+            if (_isInitialized)
                 return;
-            }
-
+            
+            viewRect = (RectTransform)transform;
             _snapTargetsDirty = true;
+            _isInitialized = true;
+        }
+
+        public void Initialize()
+        {
+            Awake();
         }
 
         private void OnEnable()
