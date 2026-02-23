@@ -100,6 +100,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
         private int _snapTargetsChildCount = -1;
         private Vector2 _snapTargetsViewSize;
         private bool _snapTargetsDirty = true;
+        private bool _isInitialized;
 
         private const float SnapNotifyEpsilon = 0.0001f;
 
@@ -113,9 +114,13 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
         public int SnapPageCount => _snapTargetsCount;
 
         public void MarkSnapTargetsDirty() => _snapTargetsDirty = true;
+        
 
         private void Awake()
         {
+            if (_isInitialized)
+                return;
+
             viewRect = (RectTransform)transform;
 
             if (_content == null)
@@ -132,6 +137,13 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
             _snapPage01Subject = new Subject<float>();
 
             _snapTargetsDirty = true;
+                        
+            _isInitialized = true;
+        }
+
+        public void Initialize()
+        {
+            Awake();
         }
 
         private void OnEnable()
