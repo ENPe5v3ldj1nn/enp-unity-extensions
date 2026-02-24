@@ -52,38 +52,37 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
         [SerializeField] private bool _snapAfterWheel = true;
         [SerializeField] private float _snapWheelDelay = 0.08f;
 
-        private RectTransform viewRect;
+        private RectTransform _viewRect;
 
-        private Bounds viewBounds;
-        private Bounds contentBounds;
+        private Bounds _viewBounds;
+        private Bounds _contentBounds;
 
-        private Vector2 pointerStartLocalCursor;
-        private Vector2 contentStartPosition;
+        private Vector2 _pointerStartLocalCursor;
+        private Vector2 _contentStartPosition;
 
-        private Vector2 velocity;
-        private Vector2 springVelocity;
+        private Vector2 _velocity;
+        private Vector2 _springVelocity;
 
-        private bool dragging;
+        private bool _dragging;
 
-        private Vector2 prevContentPos;
-        private float prevTime;
-        private bool hasPrev;
+        private Vector2 _prevContentPos;
+        private float _prevTime;
+        private bool _hasPrev;
 
-        private bool pendingSnap;
-        private bool snapping;
-        private float snapTargetAxis;
-        private float snapDampVel;
-        private float wheelSnapTimer;
+        private bool _pendingSnap;
+        private bool _snapping;
+        private float _snapTargetAxis;
+        private float _snapDampVel;
+        private float _wheelSnapTimer;
 
-        private bool decidingDirection;
-        private bool routeToParent;
-        private Vector2 pressScreenPos;
-        private Vector2 lastScreenPosForSimultaneous;
+        private bool _decidingDirection;
+        private bool _routeToParent;
+        private Vector2 _pressScreenPos;
+        private Vector2 _lastScreenPosForSimultaneous;
 
         private float TimeNow => _useUnscaledTime ? Time.unscaledTime : Time.time;
         private float DeltaTime => _useUnscaledTime ? Time.unscaledDeltaTime : Time.deltaTime;
 
-        // ===== UniRx =====
         private readonly Subject<Unit> _startedSubject = new Subject<Unit>();
         private readonly Subject<Unit> _userDragBeganSubject = new Subject<Unit>();
         private readonly Subject<Unit> _userDragEndedSubject = new Subject<Unit>();
@@ -92,8 +91,8 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
         private readonly Subject<float> _axisPosSubject = new Subject<float>();
 
         private readonly Subject<int> _snapIndexSubject = new Subject<int>();
-        private readonly Subject<float> _snapPagePosSubject = new Subject<float>(); // 0..N-1 float
-        private readonly Subject<float> _snapPage01Subject = new Subject<float>();  // 0..1
+        private readonly Subject<float> _snapPagePosSubject = new Subject<float>();
+        private readonly Subject<float> _snapPage01Subject = new Subject<float>();
 
         public IObservable<Unit> Started => _startedSubject;
         public IObservable<Unit> UserDragBegan => _userDragBeganSubject;
@@ -106,13 +105,10 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
         public IObservable<float> SnapPagePositionChanged => _snapPagePosSubject;
         public IObservable<float> SnapPage01Changed => _snapPage01Subject;
 
-        // ===== Snap cache =====
-        // Page order (0..N-1) -> target axis
         private float[] _snapTargetsAxisByPage = Array.Empty<float>();
 
-        // Sorted by axis (for snapping physics)
         private float[] _snapTargetsAxisSorted = Array.Empty<float>();
-        private int[] _snapPageBySorted = Array.Empty<int>(); // sortedIndex -> pageIndex
+        private int[] _snapPageBySorted = Array.Empty<int>();
 
         private int _snapTargetsCount;
         private int _snapTargetsChildCount = -1;
@@ -124,7 +120,6 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
         public int SnapPageCount => _snapTargetsCount;
         public void MarkSnapTargetsDirty() => _snapTargetsDirty = true;
 
-        // ===== notify gating =====
         private Vector2 _lastNotifiedPos;
         private bool _hasLastNotifiedPos;
 
@@ -139,16 +134,12 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
             Initialize();
         }
 
-        /// <summary>
-        /// Keeps your original API: you can call Initialize() manually from your window/controller.
-        /// Safe to call multiple times.
-        /// </summary>
         public void Initialize()
         {
             if (_isInitialized)
                 return;
 
-            viewRect = (RectTransform)transform;
+            _viewRect = (RectTransform)transform;
             _snapTargetsDirty = true;
             _isInitialized = true;
         }
@@ -161,28 +152,27 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
             if (!_isInitialized)
                 return;
 
-            dragging = false;
+            _dragging = false;
 
-            velocity = Vector2.zero;
-            springVelocity = Vector2.zero;
+            _velocity = Vector2.zero;
+            _springVelocity = Vector2.zero;
 
-            hasPrev = false;
+            _hasPrev = false;
 
-            pendingSnap = false;
-            snapping = false;
-            snapDampVel = 0f;
-            wheelSnapTimer = 0f;
+            _pendingSnap = false;
+            _snapping = false;
+            _snapDampVel = 0f;
+            _wheelSnapTimer = 0f;
 
-            decidingDirection = false;
-            routeToParent = false;
+            _decidingDirection = false;
+            _routeToParent = false;
 
-            pressScreenPos = Vector2.zero;
-            lastScreenPosForSimultaneous = Vector2.zero;
+            _pressScreenPos = Vector2.zero;
+            _lastScreenPosForSimultaneous = Vector2.zero;
 
             _snapTargetsDirty = true;
             if (_snapEnabled) EnsureSnapTargets();
 
-            // initial emit (important for indicator to be correct instantly)
             NotifyPositionChanged(_content.anchoredPosition);
             _startedSubject.OnNext(Unit.Default);
         }
@@ -208,7 +198,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
         private static void CompleteAndDispose<T>(Subject<T> s)
         {
             if (s == null) return;
-            try { s.OnCompleted(); } catch { /* ignore */ }
+            try { s.OnCompleted(); } catch {  }
             s.Dispose();
         }
 
@@ -222,32 +212,32 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
         {
             if (!_isInitialized) return;
 
-            pendingSnap = false;
-            snapping = false;
-            snapDampVel = 0f;
-            wheelSnapTimer = 0f;
+            _pendingSnap = false;
+            _snapping = false;
+            _snapDampVel = 0f;
+            _wheelSnapTimer = 0f;
 
-            pressScreenPos = eventData.position;
-            lastScreenPosForSimultaneous = eventData.position;
+            _pressScreenPos = eventData.position;
+            _lastScreenPosForSimultaneous = eventData.position;
 
-            decidingDirection = false;
-            routeToParent = false;
-            dragging = false;
+            _decidingDirection = false;
+            _routeToParent = false;
+            _dragging = false;
 
             if (_parentScroll != null && _nestedMode == NestedMode.Simultaneous)
             {
-                BeginDragSelfAt(eventData, pressScreenPos);
-                _parentScroll.ExternalBeginDragAt(eventData, pressScreenPos);
+                BeginDragSelfAt(eventData, _pressScreenPos);
+                _parentScroll.ExternalBeginDragAt(eventData, _pressScreenPos);
                 return;
             }
 
             if (_parentScroll != null && _nestedMode == NestedMode.DominantAxis)
             {
-                decidingDirection = true;
+                _decidingDirection = true;
                 return;
             }
 
-            BeginDragSelfAt(eventData, pressScreenPos);
+            BeginDragSelfAt(eventData, _pressScreenPos);
         }
 
         public void OnDrag(PointerEventData eventData)
@@ -258,8 +248,8 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
             {
                 DragSelf(eventData);
 
-                Vector2 d = eventData.position - lastScreenPosForSimultaneous;
-                lastScreenPosForSimultaneous = eventData.position;
+                Vector2 d = eventData.position - _lastScreenPosForSimultaneous;
+                _lastScreenPosForSimultaneous = eventData.position;
 
                 float parentAxis = _parentScroll._axis == Axis.Horizontal ? d.x : d.y;
                 if (Mathf.Abs(parentAxis) >= _parentAxisDeadZone)
@@ -268,9 +258,9 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
                 return;
             }
 
-            if (decidingDirection)
+            if (_decidingDirection)
             {
-                Vector2 d = eventData.position - pressScreenPos;
+                Vector2 d = eventData.position - _pressScreenPos;
                 float ax = Mathf.Abs(d.x);
                 float ay = Mathf.Abs(d.y);
 
@@ -295,23 +285,23 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
                     return;
                 }
 
-                decidingDirection = false;
+                _decidingDirection = false;
 
                 if (chooseParent && _parentScroll != null)
                 {
-                    routeToParent = true;
-                    _parentScroll.ExternalBeginDragAt(eventData, pressScreenPos);
+                    _routeToParent = true;
+                    _parentScroll.ExternalBeginDragAt(eventData, _pressScreenPos);
                     _parentScroll.ExternalDrag(eventData);
                     return;
                 }
 
-                routeToParent = false;
-                BeginDragSelfAt(eventData, pressScreenPos);
+                _routeToParent = false;
+                BeginDragSelfAt(eventData, _pressScreenPos);
                 DragSelf(eventData);
                 return;
             }
 
-            if (routeToParent)
+            if (_routeToParent)
             {
                 _parentScroll.ExternalDrag(eventData);
                 return;
@@ -331,15 +321,15 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
                 return;
             }
 
-            if (routeToParent)
+            if (_routeToParent)
             {
                 _parentScroll.ExternalEndDrag(eventData);
-                routeToParent = false;
-                decidingDirection = false;
+                _routeToParent = false;
+                _decidingDirection = false;
                 return;
             }
 
-            decidingDirection = false;
+            _decidingDirection = false;
             EndDragSelf();
         }
 
@@ -368,10 +358,10 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
 
             if (_snapEnabled && _snapAfterWheel)
             {
-                wheelSnapTimer = Mathf.Max(wheelSnapTimer, _snapWheelDelay);
-                pendingSnap = false;
-                snapping = false;
-                snapDampVel = 0f;
+                _wheelSnapTimer = Mathf.Max(_wheelSnapTimer, _snapWheelDelay);
+                _pendingSnap = false;
+                _snapping = false;
+                _snapDampVel = 0f;
             }
         }
 
@@ -381,14 +371,14 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
 
             float dt = DeltaTime;
             if (dt <= 0f) return;
-            if (dragging) return;
-            if (decidingDirection) return;
-            if (routeToParent) return;
+            if (_dragging) return;
+            if (_decidingDirection) return;
+            if (_routeToParent) return;
 
-            if (wheelSnapTimer > 0f)
+            if (_wheelSnapTimer > 0f)
             {
-                wheelSnapTimer -= dt;
-                if (wheelSnapTimer <= 0f && _snapEnabled) pendingSnap = true;
+                _wheelSnapTimer -= dt;
+                if (_wheelSnapTimer <= 0f && _snapEnabled) _pendingSnap = true;
             }
 
             UpdateBounds();
@@ -397,8 +387,8 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
 
             if (_movementType == MovementType.Elastic && (offset.x != 0f || offset.y != 0f))
             {
-                snapping = false;
-                if (_snapEnabled) pendingSnap = true;
+                _snapping = false;
+                if (_snapEnabled) _pendingSnap = true;
 
                 Vector2 target = _content.anchoredPosition + offset;
 
@@ -408,25 +398,25 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
                 Vector2 pos = Vector2.SmoothDamp(
                     _content.anchoredPosition,
                     target,
-                    ref springVelocity,
+                    ref _springVelocity,
                     Mathf.Max(0.001f, _elasticity),
                     Mathf.Infinity,
                     dt);
 
                 SetContentAnchoredPosition(pos);
 
-                velocity = Vector2.zero;
-                hasPrev = false;
+                _velocity = Vector2.zero;
+                _hasPrev = false;
                 return;
             }
 
-            if (snapping)
+            if (_snapping)
             {
                 float curAxis = GetAxisValue(_content.anchoredPosition);
                 float newAxis = Mathf.SmoothDamp(
                     curAxis,
-                    snapTargetAxis,
-                    ref snapDampVel,
+                    _snapTargetAxis,
+                    ref _snapDampVel,
                     Mathf.Max(0.001f, _snapSmoothTime),
                     _snapMaxSpeed,
                     dt);
@@ -441,23 +431,23 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
 
                 SetContentAnchoredPosition(pos);
 
-                if (Mathf.Abs(snapTargetAxis - newAxis) <= _snapStopDistance)
+                if (Mathf.Abs(_snapTargetAxis - newAxis) <= _snapStopDistance)
                 {
-                    Vector2 finalPos = SetAxisValue(_content.anchoredPosition, snapTargetAxis);
+                    Vector2 finalPos = SetAxisValue(_content.anchoredPosition, _snapTargetAxis);
 
                     if (_movementType == MovementType.Clamped)
                     {
                         Vector2 off = CalculateOffset(finalPos - _content.anchoredPosition);
                         finalPos += off;
-                        snapTargetAxis = GetAxisValue(finalPos);
-                        finalPos = SetAxisValue(finalPos, snapTargetAxis);
+                        _snapTargetAxis = GetAxisValue(finalPos);
+                        finalPos = SetAxisValue(finalPos, _snapTargetAxis);
                     }
 
                     SetContentAnchoredPosition(finalPos);
-                    velocity = Vector2.zero;
-                    snapDampVel = 0f;
-                    snapping = false;
-                    hasPrev = false;
+                    _velocity = Vector2.zero;
+                    _snapDampVel = 0f;
+                    _snapping = false;
+                    _hasPrev = false;
                 }
 
                 return;
@@ -465,23 +455,23 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
 
             if (_inertia)
             {
-                if (_axis == Axis.Horizontal) velocity.y = 0f;
-                else velocity.x = 0f;
+                if (_axis == Axis.Horizontal) _velocity.y = 0f;
+                else _velocity.x = 0f;
 
-                velocity *= Mathf.Pow(_decelerationRate, dt);
+                _velocity *= Mathf.Pow(_decelerationRate, dt);
 
-                if (Mathf.Abs(velocity.x) < 1f) velocity.x = 0f;
-                if (Mathf.Abs(velocity.y) < 1f) velocity.y = 0f;
+                if (Mathf.Abs(_velocity.x) < 1f) _velocity.x = 0f;
+                if (Mathf.Abs(_velocity.y) < 1f) _velocity.y = 0f;
 
-                if (velocity.x != 0f || velocity.y != 0f)
+                if (_velocity.x != 0f || _velocity.y != 0f)
                 {
-                    Vector2 pos = _content.anchoredPosition + velocity * dt;
+                    Vector2 pos = _content.anchoredPosition + _velocity * dt;
 
                     if (_movementType == MovementType.Clamped)
                     {
                         Vector2 off = CalculateOffset(pos - _content.anchoredPosition);
                         pos += off;
-                        velocity = Vector2.zero;
+                        _velocity = Vector2.zero;
                     }
 
                     SetContentAnchoredPosition(pos);
@@ -489,64 +479,64 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
                 }
             }
 
-            if (_snapEnabled && pendingSnap)
+            if (_snapEnabled && _pendingSnap)
             {
-                float v = GetAxisValue(velocity);
+                float v = GetAxisValue(_velocity);
                 if (!_inertia || Mathf.Abs(v) <= _snapStartVelocityThreshold)
                 {
                     StartSnap(v);
-                    pendingSnap = false;
+                    _pendingSnap = false;
                 }
             }
         }
 
         private void BeginDragSelfAt(PointerEventData eventData, Vector2 screenPos)
         {
-            if (!dragging)
+            if (!_dragging)
                 _userDragBeganSubject.OnNext(Unit.Default);
 
-            dragging = true;
-            decidingDirection = false;
-            routeToParent = false;
+            _dragging = true;
+            _decidingDirection = false;
+            _routeToParent = false;
 
-            velocity = Vector2.zero;
-            springVelocity = Vector2.zero;
+            _velocity = Vector2.zero;
+            _springVelocity = Vector2.zero;
 
-            pendingSnap = false;
-            snapping = false;
-            snapDampVel = 0f;
-            wheelSnapTimer = 0f;
+            _pendingSnap = false;
+            _snapping = false;
+            _snapDampVel = 0f;
+            _wheelSnapTimer = 0f;
 
             UpdateBounds();
 
             RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                viewRect,
+                _viewRect,
                 screenPos,
                 eventData.pressEventCamera,
-                out pointerStartLocalCursor);
+                out _pointerStartLocalCursor);
 
-            contentStartPosition = _content.anchoredPosition;
+            _contentStartPosition = _content.anchoredPosition;
 
-            prevContentPos = _content.anchoredPosition;
-            prevTime = TimeNow;
-            hasPrev = true;
+            _prevContentPos = _content.anchoredPosition;
+            _prevTime = TimeNow;
+            _hasPrev = true;
         }
 
         private void DragSelf(PointerEventData eventData)
         {
-            if (!dragging)
+            if (!_dragging)
                 BeginDragSelfAt(eventData, eventData.position);
 
             UpdateBounds();
 
             RectTransformUtility.ScreenPointToLocalPointInRectangle(
-                viewRect,
+                _viewRect,
                 eventData.position,
                 eventData.pressEventCamera,
                 out Vector2 localCursor);
 
-            Vector2 pointerDelta = localCursor - pointerStartLocalCursor;
-            Vector2 newPos = contentStartPosition + pointerDelta;
+            Vector2 pointerDelta = localCursor - _pointerStartLocalCursor;
+            Vector2 newPos = _contentStartPosition + pointerDelta;
 
             Vector2 cur = _content.anchoredPosition;
 
@@ -565,8 +555,8 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
                 }
                 else
                 {
-                    if (offset.x != 0f) newPos.x -= RubberDelta(offset.x, viewBounds.size.x);
-                    if (offset.y != 0f) newPos.y -= RubberDelta(offset.y, viewBounds.size.y);
+                    if (offset.x != 0f) newPos.x -= RubberDelta(offset.x, _viewBounds.size.x);
+                    if (offset.y != 0f) newPos.y -= RubberDelta(offset.y, _viewBounds.size.y);
                 }
             }
 
@@ -576,18 +566,18 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
 
         private void EndDragSelf()
         {
-            if (dragging)
+            if (_dragging)
                 _userDragEndedSubject.OnNext(Unit.Default);
 
-            dragging = false;
-            decidingDirection = false;
-            routeToParent = false;
+            _dragging = false;
+            _decidingDirection = false;
+            _routeToParent = false;
 
             if (_snapEnabled)
             {
-                pendingSnap = true;
-                snapping = false;
-                snapDampVel = 0f;
+                _pendingSnap = true;
+                _snapping = false;
+                _snapDampVel = 0f;
             }
         }
 
@@ -612,26 +602,26 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
         private void UpdateVelocity()
         {
             float t = TimeNow;
-            float dt = t - prevTime;
+            float dt = t - _prevTime;
 
-            if (!hasPrev || dt <= 0f)
+            if (!_hasPrev || dt <= 0f)
             {
-                prevContentPos = _content.anchoredPosition;
-                prevTime = t;
-                hasPrev = true;
+                _prevContentPos = _content.anchoredPosition;
+                _prevTime = t;
+                _hasPrev = true;
                 return;
             }
 
             Vector2 cur = _content.anchoredPosition;
-            Vector2 v = (cur - prevContentPos) / dt;
+            Vector2 v = (cur - _prevContentPos) / dt;
 
             if (_axis == Axis.Horizontal) v.y = 0f;
             else v.x = 0f;
 
-            velocity = v;
+            _velocity = v;
 
-            prevContentPos = cur;
-            prevTime = t;
+            _prevContentPos = cur;
+            _prevTime = t;
         }
 
         private void StartSnap(float axisVelocity)
@@ -660,8 +650,8 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
 
             if (bestDist <= _snapStopDistance)
             {
-                snapTargetAxis = bestAxis;
-                snapping = false;
+                _snapTargetAxis = bestAxis;
+                _snapping = false;
                 return;
             }
 
@@ -674,11 +664,11 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
                 bestAxis = GetAxisValue(targetPos);
             }
 
-            snapTargetAxis = bestAxis;
-            velocity = Vector2.zero;
-            snapDampVel = 0f;
-            snapping = true;
-            hasPrev = false;
+            _snapTargetAxis = bestAxis;
+            _velocity = Vector2.zero;
+            _snapDampVel = 0f;
+            _snapping = true;
+            _hasPrev = false;
         }
 
         private float GetAlignedValue(Bounds b, Axis ax, SnapAlignment align)
@@ -706,8 +696,8 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
 
         private void UpdateBounds()
         {
-            viewBounds = new Bounds(viewRect.rect.center, viewRect.rect.size);
-            contentBounds = RectTransformUtility.CalculateRelativeRectTransformBounds(viewRect, _content);
+            _viewBounds = new Bounds(_viewRect.rect.center, _viewRect.rect.size);
+            _contentBounds = RectTransformUtility.CalculateRelativeRectTransformBounds(_viewRect, _content);
         }
 
         private Vector2 CalculateOffset(Vector2 delta)
@@ -716,18 +706,18 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
 
             Vector2 offset = Vector2.zero;
 
-            Vector3 min = contentBounds.min + (Vector3)delta;
-            Vector3 max = contentBounds.max + (Vector3)delta;
+            Vector3 min = _contentBounds.min + (Vector3)delta;
+            Vector3 max = _contentBounds.max + (Vector3)delta;
 
             if (_axis == Axis.Horizontal)
             {
-                if (min.x > viewBounds.min.x) offset.x = viewBounds.min.x - min.x;
-                else if (max.x < viewBounds.max.x) offset.x = viewBounds.max.x - max.x;
+                if (min.x > _viewBounds.min.x) offset.x = _viewBounds.min.x - min.x;
+                else if (max.x < _viewBounds.max.x) offset.x = _viewBounds.max.x - max.x;
             }
             else
             {
-                if (min.y > viewBounds.min.y) offset.y = viewBounds.min.y - min.y;
-                else if (max.y < viewBounds.max.y) offset.y = viewBounds.max.y - max.y;
+                if (min.y > _viewBounds.min.y) offset.y = _viewBounds.min.y - min.y;
+                else if (max.y < _viewBounds.max.y) offset.y = _viewBounds.max.y - max.y;
             }
 
             return offset;
@@ -756,22 +746,19 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
         {
             if (!_isInitialized) return;
 
-            velocity = Vector2.zero;
-            springVelocity = Vector2.zero;
-            hasPrev = false;
+            _velocity = Vector2.zero;
+            _springVelocity = Vector2.zero;
+            _hasPrev = false;
 
-            pendingSnap = false;
-            snapping = false;
-            snapDampVel = 0f;
-            wheelSnapTimer = 0f;
+            _pendingSnap = false;
+            _snapping = false;
+            _snapDampVel = 0f;
+            _wheelSnapTimer = 0f;
 
-            decidingDirection = false;
-            routeToParent = false;
+            _decidingDirection = false;
+            _routeToParent = false;
         }
 
-        // =======================
-        // Snap targets cache
-        // =======================
 
         private void EnsureSnapTargetsCapacity(int required)
         {
@@ -791,7 +778,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
                 return;
             }
 
-            Vector2 viewSize = viewRect.rect.size;
+            Vector2 viewSize = _viewRect.rect.size;
             int childCount = _content.childCount;
 
             if (!_snapTargetsDirty &&
@@ -812,7 +799,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
             UpdateBounds();
 
             float curAxis = GetAxisValue(_content.anchoredPosition);
-            float viewAlign = GetAlignedValue(viewBounds, _axis, _snapAlignment);
+            float viewAlign = GetAlignedValue(_viewBounds, _axis, _snapAlignment);
 
             EnsureSnapTargetsCapacity(childCount);
 
@@ -825,7 +812,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
                     RectTransform child = (RectTransform)_content.GetChild(i);
                     if (!child.gameObject.activeInHierarchy) continue;
 
-                    Bounds b = RectTransformUtility.CalculateRelativeRectTransformBounds(viewRect, child);
+                    Bounds b = RectTransformUtility.CalculateRelativeRectTransformBounds(_viewRect, child);
                     float childAlign = GetAlignedValue(b, _axis, _snapAlignment);
 
                     float targetAxis = curAxis + (viewAlign - childAlign);
@@ -839,7 +826,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
                     RectTransform child = (RectTransform)_content.GetChild(i);
                     if (!child.gameObject.activeInHierarchy) continue;
 
-                    Bounds b = RectTransformUtility.CalculateRelativeRectTransformBounds(viewRect, child);
+                    Bounds b = RectTransformUtility.CalculateRelativeRectTransformBounds(_viewRect, child);
                     float childAlign = GetAlignedValue(b, _axis, _snapAlignment);
 
                     float targetAxis = curAxis + (viewAlign - childAlign);
@@ -866,20 +853,26 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
             int count = _snapTargetsCount;
             if (count <= 0) return -1;
 
-            int best = 0;
-            float bestDist = Mathf.Abs(_snapTargetsAxisSorted[0] - axis);
+            float[] arr = _snapTargetsAxisSorted;
+            int hi = count - 1;
 
-            for (int i = 1; i < count; i++)
+            if (axis <= arr[0]) return 0;
+            if (axis >= arr[hi]) return hi;
+
+            int lo = 0;
+            while (lo <= hi)
             {
-                float d = Mathf.Abs(_snapTargetsAxisSorted[i] - axis);
-                if (d < bestDist)
-                {
-                    bestDist = d;
-                    best = i;
-                }
+                int mid = (lo + hi) >> 1;
+                float v = arr[mid];
+
+                if (v < axis) lo = mid + 1;
+                else if (v > axis) hi = mid - 1;
+                else return mid;
             }
 
-            return best;
+            int next = lo;
+            int prev = lo - 1;
+            return (axis - arr[prev] <= arr[next] - axis) ? prev : next;
         }
 
         private float CalculateSnapPagePosition(float axis)
@@ -927,9 +920,6 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
             return count - 1;
         }
 
-        // =======================
-        // Notify / Streams
-        // =======================
 
         private void NotifyPositionChanged(Vector2 position)
         {
@@ -977,38 +967,26 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
             }
         }
 
-        // =======================
-        // Public API: normalized/page positioning
-        // =======================
 
-        /// <summary>
-        /// Similar to ScrollRect: returns 0..1 along the active axis.
-        /// 0 = start, 1 = end (based on content bounds vs view bounds).
-        /// </summary>
         public float GetNormalizedPosition()
         {
             if (!_isInitialized) return 0f;
 
             UpdateBounds();
 
-            float contentSize = _axis == Axis.Horizontal ? contentBounds.size.x : contentBounds.size.y;
-            float viewSize = _axis == Axis.Horizontal ? viewBounds.size.x : viewBounds.size.y;
+            float contentSize = _axis == Axis.Horizontal ? _contentBounds.size.x : _contentBounds.size.y;
+            float viewSize = _axis == Axis.Horizontal ? _viewBounds.size.x : _viewBounds.size.y;
 
             float hidden = contentSize - viewSize;
             if (hidden <= 0.0001f) return 0f;
 
-            float viewMin = _axis == Axis.Horizontal ? viewBounds.min.x : viewBounds.min.y;
-            float contentMin = _axis == Axis.Horizontal ? contentBounds.min.x : contentBounds.min.y;
+            float viewMin = _axis == Axis.Horizontal ? _viewBounds.min.x : _viewBounds.min.y;
+            float contentMin = _axis == Axis.Horizontal ? _contentBounds.min.x : _contentBounds.min.y;
 
             float t = (viewMin - contentMin) / hidden;
             return Mathf.Clamp01(t);
         }
 
-        /// <summary>
-        /// Sets 0..1 along the active axis (like ScrollRect normalizedPosition).
-        /// immediate=true: sets instantly
-        /// immediate=false: moves via snap smoothing (if snap enabled), otherwise sets instantly.
-        /// </summary>
         public void SetNormalizedPosition(float normalized, bool immediate = true)
         {
             if (!_isInitialized) return;
@@ -1017,15 +995,15 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
 
             UpdateBounds();
 
-            float contentSize = _axis == Axis.Horizontal ? contentBounds.size.x : contentBounds.size.y;
-            float viewSize = _axis == Axis.Horizontal ? viewBounds.size.x : viewBounds.size.y;
+            float contentSize = _axis == Axis.Horizontal ? _contentBounds.size.x : _contentBounds.size.y;
+            float viewSize = _axis == Axis.Horizontal ? _viewBounds.size.x : _viewBounds.size.y;
 
             float hidden = contentSize - viewSize;
             if (hidden <= 0.0001f)
                 return;
 
-            float viewMin = _axis == Axis.Horizontal ? viewBounds.min.x : viewBounds.min.y;
-            float contentMin = _axis == Axis.Horizontal ? contentBounds.min.x : contentBounds.min.y;
+            float viewMin = _axis == Axis.Horizontal ? _viewBounds.min.x : _viewBounds.min.y;
+            float contentMin = _axis == Axis.Horizontal ? _contentBounds.min.x : _contentBounds.min.y;
 
             float targetContentMin = viewMin - normalized * hidden;
             float delta = targetContentMin - contentMin;
@@ -1044,27 +1022,24 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
 
             if (!immediate && _snapEnabled)
             {
-                snapTargetAxis = axis;
-                velocity = Vector2.zero;
-                snapDampVel = 0f;
-                snapping = true;
-                pendingSnap = false;
-                hasPrev = false;
+                _snapTargetAxis = axis;
+                _velocity = Vector2.zero;
+                _snapDampVel = 0f;
+                _snapping = true;
+                _pendingSnap = false;
+                _hasPrev = false;
                 return;
             }
 
-            snapping = false;
-            pendingSnap = false;
-            velocity = Vector2.zero;
-            snapDampVel = 0f;
-            hasPrev = false;
+            _snapping = false;
+            _pendingSnap = false;
+            _velocity = Vector2.zero;
+            _snapDampVel = 0f;
+            _hasPrev = false;
 
             SetContentAnchoredPosition(pos);
         }
 
-        /// <summary>
-        /// Snap helper: sets to a page index in your chosen SnapPageOrder.
-        /// </summary>
         public void SetPage(int pageIndex, bool immediate = true)
         {
             if (!_isInitialized) return;
@@ -1089,20 +1064,20 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Scroll
 
             if (!immediate)
             {
-                snapTargetAxis = axis;
-                velocity = Vector2.zero;
-                snapDampVel = 0f;
-                snapping = true;
-                pendingSnap = false;
-                hasPrev = false;
+                _snapTargetAxis = axis;
+                _velocity = Vector2.zero;
+                _snapDampVel = 0f;
+                _snapping = true;
+                _pendingSnap = false;
+                _hasPrev = false;
                 return;
             }
 
-            snapping = false;
-            pendingSnap = false;
-            velocity = Vector2.zero;
-            snapDampVel = 0f;
-            hasPrev = false;
+            _snapping = false;
+            _pendingSnap = false;
+            _velocity = Vector2.zero;
+            _snapDampVel = 0f;
+            _hasPrev = false;
 
             SetContentAnchoredPosition(pos);
         }
