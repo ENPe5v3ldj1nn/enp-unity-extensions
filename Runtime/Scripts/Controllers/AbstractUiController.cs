@@ -42,6 +42,13 @@ namespace enp_unity_extensions.Runtime.Scripts.Controllers
         {
             _windowsMap[window.GetType()] = window;
         }
+        
+        protected void CloseAll()
+        {
+            foreach (var keyValuePair in _windowsMap)
+                keyValuePair.Value.gameObject.SetActive(false);
+        }
+
 
         protected void AutoRegisterWindows(Dictionary<Type, AnimatedWindow> windowsMap, bool includeInactive = true)
         {
