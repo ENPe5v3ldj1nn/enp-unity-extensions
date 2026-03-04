@@ -16,6 +16,7 @@ namespace enp_unity_extensions.Scripts.Language
 
         private static string _resourcesBasePath = "Languages";
         private const string FallbackLangFolder = "english";
+        private static bool _hasLanguage;
 
         public static void SetResourcesPath(string basePath)
         {
@@ -24,8 +25,15 @@ namespace enp_unity_extensions.Scripts.Language
 
         public static void SetLanguage(SystemLanguage language)
         {
+            if (_hasLanguage && language == CurrentLanguage)
+            {
+                LanguageChanged?.Invoke(CurrentLanguage);
+                return;
+            }
+
             CurrentLanguage = language;
             Reload();
+            _hasLanguage = true;
             LanguageChanged?.Invoke(CurrentLanguage);
         }
 
