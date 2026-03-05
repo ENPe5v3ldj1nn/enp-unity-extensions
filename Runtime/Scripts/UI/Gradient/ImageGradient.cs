@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace Enp.UI.MyGradient
+namespace enp_unity_extensions.Runtime.Scripts.UI.Gradient
 {
     [AddComponentMenu("UI/Effects/Image Gradient")]
     [RequireComponent(typeof(Graphic))]

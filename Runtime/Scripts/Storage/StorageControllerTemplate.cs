@@ -1,4 +1,4 @@
-﻿namespace enp_unity_extensions.Scripts.Storage
+namespace enp_unity_extensions.Runtime.Scripts.Storage
 {
     public class StorageControllerTemplate
     {

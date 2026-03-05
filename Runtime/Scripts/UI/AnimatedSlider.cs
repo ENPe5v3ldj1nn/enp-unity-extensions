@@ -1,10 +1,10 @@
-﻿using DG.Tweening;
+using DG.Tweening;
 using UniRx;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 
-namespace enp_unity_extensions.Scripts.UI
+namespace enp_unity_extensions.Runtime.Scripts.UI
 {
     public class AnimatedSlider : MonoBehaviour
     {

@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using enp_unity_extensions.Editor.Language;
 using Newtonsoft.Json.Linq;
 using UnityEditor;
 using UnityEngine;
