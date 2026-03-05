@@ -17,8 +17,8 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
         [SerializeField] private float _customBorderGradientAngle = 90f;
         [SerializeField] private bool _useStyleShapeProperties = true;
         [SerializeField] private bool _useStyleGradients = true;
-        [SerializeField] private Gradient _customFillGradient = DefaultWhiteGradient();
-        [SerializeField] private Gradient _customBorderGradient = DefaultWhiteGradient();
+        [SerializeField] private UnityEngine.Gradient _customFillGradient = DefaultWhiteGradient();
+        [SerializeField] private UnityEngine.Gradient _customBorderGradient = DefaultWhiteGradient();
         [SerializeField] private RoundedShapeType _customShape = RoundedShapeType.RoundedRect;
         [SerializeField, Min(0f)] private float _customCornerRadius = 24f;
         [SerializeField, Min(0f)] private float _customBorderThickness;
@@ -47,8 +47,8 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
             }
         }
 
-        public Gradient FillGradient => ResolveFillGradient();
-        public Gradient BorderGradient => ResolveBorderGradient();
+        public UnityEngine.Gradient FillGradient => ResolveFillGradient();
+        public UnityEngine.Gradient BorderGradient => ResolveBorderGradient();
 
         public bool UseStyleGradients
         {
@@ -61,7 +61,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
             }
         }
 
-        public void SetGradientOverrides(Gradient fillGradient, Gradient borderGradient)
+        public void SetGradientOverrides(UnityEngine.Gradient fillGradient, UnityEngine.Gradient borderGradient)
         {
             _customFillGradient = EnsureGradient(fillGradient);
             _customBorderGradient = EnsureGradient(borderGradient);
@@ -142,17 +142,17 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
             }
         }
 
-        private Gradient ResolveFillGradient()
+        private UnityEngine.Gradient ResolveFillGradient()
         {
             return _useStyleGradients && _style != null ? _style.FillGradient : EnsureGradient(_customFillGradient);
         }
 
-        private Gradient ResolveBorderGradient()
+        private UnityEngine.Gradient ResolveBorderGradient()
         {
             return _useStyleGradients && _style != null ? _style.BorderGradient : EnsureGradient(_customBorderGradient);
         }
 
-        private Texture GetCustomRampTexture(Gradient fillGradient, Gradient borderGradient)
+        private Texture GetCustomRampTexture(UnityEngine.Gradient fillGradient, UnityEngine.Gradient borderGradient)
         {
             if (fillGradient == null && borderGradient == null)
             {
@@ -180,7 +180,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
             _customRamp = null;
         }
 
-        private static Gradient EnsureGradient(Gradient gradient)
+        private static UnityEngine.Gradient EnsureGradient(UnityEngine.Gradient gradient)
         {
             return gradient ?? DefaultWhiteGradient();
         }
@@ -193,9 +193,9 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
                 _customBorderGradient = DefaultWhiteGradient();
         }
 
-        private static Gradient DefaultWhiteGradient()
+        private static UnityEngine.Gradient DefaultWhiteGradient()
         {
-            var gradient = new Gradient();
+            var gradient = new UnityEngine.Gradient();
             gradient.SetKeys(
                 new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
                 new[] { new GradientAlphaKey(1f, 0f), new GradientAlphaKey(1f, 1f) }
@@ -203,7 +203,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
             return gradient;
         }
 
-        private Texture2D CreateRampTexture(Gradient fill, Gradient border)
+        private Texture2D CreateRampTexture(UnityEngine.Gradient fill, UnityEngine.Gradient border)
         {
             const int width = 256;
             const int height = 2;
@@ -225,7 +225,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
             return texture;
         }
 
-        private ulong ComputeGradientHash(Gradient fill, Gradient border)
+        private ulong ComputeGradientHash(UnityEngine.Gradient fill, UnityEngine.Gradient border)
         {
             var hash = 1469598103934665603UL;
             hash = (hash ^ HashGradient(fill)) * 1099511628211UL;
@@ -233,7 +233,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
             return hash;
         }
 
-        private static ulong HashGradient(Gradient gradient)
+        private static ulong HashGradient(UnityEngine.Gradient gradient)
         {
             if (gradient == null) return 0UL;
             unchecked

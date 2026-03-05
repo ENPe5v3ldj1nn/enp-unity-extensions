@@ -6,9 +6,9 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
     public sealed class RoundedShapeStyle : ScriptableObject
     {
         [SerializeField] private RoundedShapeType _shape = RoundedShapeType.RoundedRect;
-        [SerializeField] private Gradient _fillGradient = DefaultWhiteGradient();
+        [SerializeField] private UnityEngine.Gradient _fillGradient = DefaultWhiteGradient();
         [SerializeField, Range(0f, 360f)] private float _fillGradientAngle = 90f;
-        [SerializeField] private Gradient _borderGradient = DefaultWhiteGradient();
+        [SerializeField] private UnityEngine.Gradient _borderGradient = DefaultWhiteGradient();
         [SerializeField, Range(0f, 360f)] private float _borderGradientAngle = 90f;
         [SerializeField, Min(0f)] private float _cornerRadius = 24f;
         [SerializeField, Min(0f)] private float _borderThickness = 0f;
@@ -25,9 +25,9 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
         [System.NonSerialized] private ulong _rampHash;
 
         public RoundedShapeType Shape => _shape;
-        public Gradient FillGradient => _fillGradient;
+        public UnityEngine.Gradient FillGradient => _fillGradient;
         public float FillGradientAngle => _fillGradientAngle;
-        public Gradient BorderGradient => _borderGradient;
+        public UnityEngine.Gradient BorderGradient => _borderGradient;
         public float BorderGradientAngle => _borderGradientAngle;
         public float CornerRadius => _cornerRadius;
         public float BorderThickness => _borderThickness;
@@ -88,7 +88,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
             return hash;
         }
 
-        private static ulong HashGradient(Gradient gradient)
+        private static ulong HashGradient(UnityEngine.Gradient gradient)
         {
             if (gradient == null) return 0UL;
             unchecked
@@ -131,7 +131,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
             _rampHash = 0;
         }
 
-        private static Texture2D CreateRampTexture(Gradient fill, Gradient border)
+        private static Texture2D CreateRampTexture(UnityEngine.Gradient fill, UnityEngine.Gradient border)
         {
             const int width = 256;
             const int height = 2;
@@ -153,9 +153,9 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
             return texture;
         }
 
-        private static Gradient DefaultWhiteGradient()
+        private static UnityEngine.Gradient DefaultWhiteGradient()
         {
-            var gradient = new Gradient();
+            var gradient = new UnityEngine.Gradient();
             gradient.SetKeys(
                 new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
                 new[] { new GradientAlphaKey(1f, 0f), new GradientAlphaKey(1f, 1f) }

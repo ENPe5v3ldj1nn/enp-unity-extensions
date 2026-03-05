@@ -7,13 +7,13 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Gradient
     [RequireComponent(typeof(Graphic))]
     public class ImageGradient : BaseMeshEffect
     {
-        [SerializeField] private Gradient gradient = new Gradient();
+        [SerializeField] private UnityEngine.Gradient gradient = new UnityEngine.Gradient   ();
         [SerializeField, Range(-180f, 180f)] private float angle = 0f;
         [SerializeField] private Vector2 offset = Vector2.zero;
         [SerializeField] private bool ignoreRatio = true;
         [SerializeField, Range(1, 64)] private int segments = 16;
 
-        public Gradient Gradient { get => gradient; set { gradient = value; SetDirty(); } }
+        public UnityEngine.Gradient Gradient { get => gradient; set { gradient = value; SetDirty(); } }
         public float Angle { get => angle; set { angle = value; SetDirty(); } }
         public Vector2 Offset { get => offset; set { offset = value; SetDirty(); } }
         public bool IgnoreRatio { get => ignoreRatio; set { ignoreRatio = value; SetDirty(); } }

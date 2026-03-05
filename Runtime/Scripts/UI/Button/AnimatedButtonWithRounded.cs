@@ -1,5 +1,4 @@
 using enp_unity_extensions.Runtime.Scripts.UI.Form;
-using enp_unity_extensions.Runtime.Scripts.UI.Button;
 using UnityEngine;
 
 namespace enp_unity_extensions.Runtime.Scripts.UI.Button
@@ -8,12 +7,12 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Button
     {
         [SerializeField] private RoundedShapeGraphic _roundedShapeGraphic;
         [Header("Active colors")]
-        [SerializeField] private Gradient _activeColorMain = new Gradient();
-        [SerializeField] private Gradient _activeColorBorder = new Gradient();
+        [SerializeField] private UnityEngine.Gradient _activeColorMain = new UnityEngine.Gradient();
+        [SerializeField] private UnityEngine.Gradient _activeColorBorder = new UnityEngine.Gradient();
         
         [Header("InActive colors")]
-        [SerializeField] private Gradient _deActiveColorMain = new Gradient();
-        [SerializeField] private Gradient _deActiveColorBorder = new Gradient();
+        [SerializeField] private UnityEngine.Gradient _deActiveColorMain = new UnityEngine.Gradient();
+        [SerializeField] private UnityEngine.Gradient _deActiveColorBorder = new UnityEngine.Gradient();
 
 
         private bool _isActive;
