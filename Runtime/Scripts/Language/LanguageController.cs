@@ -7,10 +7,9 @@ namespace enp_unity_extensions.Scripts.Language
 {
     public static class LanguageController
     {
-        public static event Action<string> LanguageChanged;
-        public static event Action<LanguageId> LanguageIdChanged;
+        public static event Action<LanguageId> LanguageChanged;
 
-        public static LanguageId? CurrentLanguageId { get; private set; }
+        public static LanguageId CurrentLanguageId { get; private set; }
         public static string CurrentLanguageFolder { get; private set; }
         public static int Version { get; private set; }
 
@@ -22,7 +21,6 @@ namespace enp_unity_extensions.Scripts.Language
         private static string _resourcesBasePath = "Languages";
         private static readonly string _fallbackLangFolder = LanguageId.EnglishUS.ToFolderName();
         private static bool _hasLanguage;
-        private static readonly Dictionary<Type, Delegate> _folderResolvers = new Dictionary<Type, Delegate>(8);
 
         static LanguageController()
         {
@@ -35,12 +33,6 @@ namespace enp_unity_extensions.Scripts.Language
             _resourcesBasePath = string.IsNullOrEmpty(basePath) ? "" : basePath.TrimEnd('/');
         }
 
-        public static void RegisterFolderResolver<TEnum>(Func<TEnum, string> resolver) where TEnum : struct, Enum
-        {
-            if (resolver == null) throw new ArgumentNullException(nameof(resolver));
-            _folderResolvers[typeof(TEnum)] = resolver;
-        }
-
         public static void SetLanguage(LanguageId id)
         {
             var folder = id.ToFolderName();
@@ -48,8 +40,7 @@ namespace enp_unity_extensions.Scripts.Language
             if (_hasLanguage && string.Equals(folder, CurrentLanguageFolder, StringComparison.OrdinalIgnoreCase))
             {
                 CurrentLanguageId = id;
-                LanguageIdChanged?.Invoke(id);
-                LanguageChanged?.Invoke(CurrentLanguageFolder);
+                LanguageChanged?.Invoke(id);
                 return;
             }
 
@@ -57,32 +48,7 @@ namespace enp_unity_extensions.Scripts.Language
             CurrentLanguageFolder = folder;
             Reload();
             _hasLanguage = true;
-            LanguageIdChanged?.Invoke(id);
-            LanguageChanged?.Invoke(CurrentLanguageFolder);
-        }
-
-        public static void SetLanguage<TEnum>(TEnum language) where TEnum : struct, Enum
-        {
-            if (!_folderResolvers.TryGetValue(typeof(TEnum), out var del))
-                throw new InvalidOperationException($"Folder resolver is not registered for enum type '{typeof(TEnum).FullName}'.");
-
-            var resolver = (Func<TEnum, string>)del;
-            var folder = resolver(language);
-            if (string.IsNullOrWhiteSpace(folder))
-                throw new InvalidOperationException($"Folder resolver returned empty folder for enum '{typeof(TEnum).FullName}' value '{language}'.");
-
-            if (_hasLanguage && string.Equals(folder, CurrentLanguageFolder, StringComparison.OrdinalIgnoreCase))
-            {
-                CurrentLanguageId = null;
-                LanguageChanged?.Invoke(CurrentLanguageFolder);
-                return;
-            }
-
-            CurrentLanguageId = null;
-            CurrentLanguageFolder = folder;
-            Reload();
-            _hasLanguage = true;
-            LanguageChanged?.Invoke(CurrentLanguageFolder);
+            LanguageChanged?.Invoke(id);
         }
 
         public static string Get(string key)
@@ -115,84 +81,51 @@ namespace enp_unity_extensions.Scripts.Language
             var assets = Resources.LoadAll<TextAsset>(path);
             if (assets == null || assets.Length == 0) return;
 
-            foreach (var ta in assets)
+            for (var i = 0; i < assets.Length; i++)
             {
+                var ta = assets[i];
+                if (ta == null) continue;
+
                 try
                 {
-                    if (ta == null)
-                    {
-                        LogWarning($"[Language] Null TextAsset found in '{path}', skipping.");
-                        continue;
-                    }
-
                     var root = JObject.Parse(ta.text);
                     foreach (var prop in root.Properties())
                     {
                         var key = prop.Name;
-                        if (string.IsNullOrWhiteSpace(key))
-                        {
-                            LogWarning($"[Language] Empty key in '{ta.name}' ({path}), skipping.");
-                            continue;
-                        }
+                        if (string.IsNullOrWhiteSpace(key)) continue;
 
                         var token = prop.Value;
                         if (token.Type == JTokenType.String)
                         {
-                            if (Data.ContainsKey(key))
-                                LogWarning($"[Language] Key '{key}' overwritten by '{ta.name}' in '{path}'.");
-
                             Data[key] = token.Value<string>() ?? string.Empty;
+                            continue;
                         }
-                        else if (token.Type == JTokenType.Array && token is JArray arrayToken)
+
+                        if (token.Type == JTokenType.Array && token is JArray arrayToken)
                         {
                             var list = new List<string>(arrayToken.Count);
                             foreach (var item in arrayToken)
                             {
-                                if (item.Type != JTokenType.String)
-                                {
-                                    LogWarning($"[Language] Key '{key}' in '{ta.name}' ({path}) has non-string array item, skipping.");
-                                    continue;
-                                }
+                                if (item.Type != JTokenType.String) continue;
 
                                 var value = item.Value<string>();
-                                if (string.IsNullOrWhiteSpace(value))
-                                {
-                                    LogWarning($"[Language] Key '{key}' in '{ta.name}' ({path}) has empty array item, skipping.");
-                                    continue;
-                                }
+                                if (string.IsNullOrWhiteSpace(value)) continue;
 
                                 list.Add(value.Trim());
                             }
 
                             if (list.Count > 0)
-                            {
-                                if (Arrays.ContainsKey(key))
-                                    LogWarning($"[Language] Array key '{key}' overwritten by '{ta.name}' in '{path}'.");
-
                                 Arrays[key] = list.ToArray();
-                            }
-                            else
-                            {
-                                LogWarning($"[Language] Array key '{key}' in '{ta.name}' ({path}) has no valid items, skipping.");
-                            }
-                        }
-                        else
-                        {
-                            LogWarning($"[Language] Key '{key}' in '{ta.name}' ({path}) has unsupported token type '{token.Type}', skipping.");
+
+                            continue;
                         }
                     }
                 }
                 catch (Exception ex)
                 {
-                    LogError($"[Language] Failed to parse '{ta?.name ?? "<null>"}' in '{path}': {ex.Message}");
+                    LogError($"[Language] Failed to parse '{ta.name}' in '{path}': {ex.Message}");
                 }
             }
-        }
-
-        private static void LogWarning(string message)
-        {
-            if (!IsCanLog) return;
-            Debug.LogWarning(message);
         }
 
         private static void LogError(string message)

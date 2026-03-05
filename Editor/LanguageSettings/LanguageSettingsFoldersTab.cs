@@ -4,6 +4,7 @@ using System.IO;
 using System.Linq;
 using enp_unity_extensions.Editor.Language;
 using enp_unity_extensions.Runtime.Scripts.Language;
+using enp_unity_extensions.Scripts.Language;
 using UnityEditor;
 using UnityEngine;
 
@@ -14,8 +15,8 @@ namespace enp_unity_extensions.Editor.LanguageSettings
         public string Title => "Translation Folders";
 
         private LanguageSettingsWindow _host;
-        private SystemLanguage _newFolderLanguage = SystemLanguage.English;
-        private SystemLanguage _selectedLanguageForSet = SystemLanguage.English;
+        private LanguageId _newFolderLanguage = LanguageId.EnglishUK;
+        private LanguageId _selectedLanguageForSet = LanguageId.EnglishUK;
         private Vector2 _foldersScroll;
         private readonly List<string> _folders = new List<string>();
 
@@ -23,7 +24,7 @@ namespace enp_unity_extensions.Editor.LanguageSettings
         {
             _host = host;
             RefreshFolders();
-            SyncSelectedLanguage(LanguageController.CurrentLanguage);
+            SyncSelectedLanguage(LanguageController.CurrentLanguageId);
         }
 
         public void OnDisable()
@@ -137,7 +138,7 @@ namespace enp_unity_extensions.Editor.LanguageSettings
             }
         }
 
-        public void SyncSelectedLanguage(SystemLanguage language)
+        public void SyncSelectedLanguage(LanguageId language)
         {
             if (_folders.Count == 0)
             {
@@ -168,9 +169,9 @@ namespace enp_unity_extensions.Editor.LanguageSettings
             _host.SetStatus($"Found {_folders.Count} folders in {basePath}", MessageType.Info);
         }
 
-        private void CreateFolder(SystemLanguage language)
+        private void CreateFolder(LanguageId language)
         {
-            var folderName = GetFolderNameFor(language);
+            var folderName = Scripts.Language.LanguageIdExtensions.ToFolderName(language);
             if (string.IsNullOrEmpty(folderName))
             {
                 _host.SetStatus($"Unsupported language value: {language}", MessageType.Error);
@@ -271,21 +272,21 @@ namespace enp_unity_extensions.Editor.LanguageSettings
             return true;
         }
 
-        private IEnumerable<SystemLanguage> GetAvailableLanguages()
+        private IEnumerable<LanguageId> GetAvailableLanguages()
         {
             var existing = new HashSet<string>(_folders, StringComparer.OrdinalIgnoreCase);
-            foreach (SystemLanguage language in Enum.GetValues(typeof(SystemLanguage)))
+            foreach (LanguageId language in Enum.GetValues(typeof(LanguageId)))
             {
-                var folder = GetFolderNameFor(language);
+                var folder = Scripts.Language.LanguageIdExtensions.ToFolderName(language);
                 if (string.IsNullOrEmpty(folder)) continue;
                 if (existing.Contains(folder)) continue;
                 yield return language;
             }
         }
 
-        private IEnumerable<SystemLanguage> GetLanguagesWithFolders()
+        private IEnumerable<LanguageId> GetLanguagesWithFolders()
         {
-            var seen = new HashSet<SystemLanguage>();
+            var seen = new HashSet<LanguageId>();
             foreach (var folder in _folders)
             {
                 if (!TryGetLanguageForFolder(folder, out var language)) continue;
@@ -296,11 +297,11 @@ namespace enp_unity_extensions.Editor.LanguageSettings
             }
         }
 
-        private static bool TryGetLanguageForFolder(string folderName, out SystemLanguage language)
+        private static bool TryGetLanguageForFolder(string folderName, out LanguageId language)
         {
-            foreach (SystemLanguage lang in Enum.GetValues(typeof(SystemLanguage)))
+            foreach (LanguageId lang in Enum.GetValues(typeof(LanguageId)))
             {
-                if (string.Equals(GetFolderNameFor(lang), folderName, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(Scripts.Language.LanguageIdExtensions.ToFolderName(lang), folderName, StringComparison.OrdinalIgnoreCase))
                 {
                     language = lang;
                     return true;
@@ -311,58 +312,8 @@ namespace enp_unity_extensions.Editor.LanguageSettings
             return false;
         }
 
-        private static string GetFolderNameFor(SystemLanguage language)
-        {
-            switch (language)
-            {
-                case SystemLanguage.Afrikaans: return "afrikaans";
-                case SystemLanguage.Arabic: return "arabic";
-                case SystemLanguage.Basque: return "basque";
-                case SystemLanguage.Belarusian: return "belarusian";
-                case SystemLanguage.Bulgarian: return "bulgarian";
-                case SystemLanguage.Catalan: return "catalan";
-                case SystemLanguage.Chinese: return "chinese";
-                case SystemLanguage.ChineseSimplified: return "chinese_simplified";
-                case SystemLanguage.ChineseTraditional: return "chinese_traditional";
-                case SystemLanguage.Czech: return "czech";
-                case SystemLanguage.Danish: return "danish";
-                case SystemLanguage.Dutch: return "dutch";
-                case SystemLanguage.English: return "english";
-                case SystemLanguage.Estonian: return "estonian";
-                case SystemLanguage.Faroese: return "faroese";
-                case SystemLanguage.Finnish: return "finnish";
-                case SystemLanguage.French: return "french";
-                case SystemLanguage.German: return "german";
-                case SystemLanguage.Greek: return "greek";
-                case SystemLanguage.Hebrew: return "hebrew";
-                case SystemLanguage.Hungarian: return "hungarian";
-                case SystemLanguage.Icelandic: return "icelandic";
-                case SystemLanguage.Indonesian: return "indonesian";
-                case SystemLanguage.Italian: return "italian";
-                case SystemLanguage.Japanese: return "japanese";
-                case SystemLanguage.Korean: return "korean";
-                case SystemLanguage.Latvian: return "latvian";
-                case SystemLanguage.Lithuanian: return "lithuanian";
-                case SystemLanguage.Norwegian: return "norwegian";
-                case SystemLanguage.Polish: return "polish";
-                case SystemLanguage.Portuguese: return "portuguese";
-                case SystemLanguage.Romanian: return "romanian";
-                case SystemLanguage.Russian: return "russian";
-                case SystemLanguage.SerboCroatian: return "serbo_croatian";
-                case SystemLanguage.Slovak: return "slovak";
-                case SystemLanguage.Slovenian: return "slovenian";
-                case SystemLanguage.Spanish: return "spanish";
-                case SystemLanguage.Swedish: return "swedish";
-                case SystemLanguage.Thai: return "thai";
-                case SystemLanguage.Turkish: return "turkish";
-                case SystemLanguage.Ukrainian: return "ukrainian";
-                case SystemLanguage.Vietnamese: return "vietnamese";
-                case SystemLanguage.Hindi: return "hindi";
-                default: return string.Empty;
-            }
-        }
 
-        private void ApplyLanguageSelection(SystemLanguage language)
+        private void ApplyLanguageSelection(LanguageId language)
         {
             try
             {

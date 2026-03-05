@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using enp_unity_extensions.Runtime.Scripts.Language;
+using enp_unity_extensions.Scripts.Language;
 using UnityEditor;
 using UnityEngine;
 
@@ -76,7 +77,7 @@ namespace enp_unity_extensions.Editor.LanguageSettings
             }
         }
 
-        private void HandleLanguageChanged(SystemLanguage language)
+        private void HandleLanguageChanged(LanguageId language)
         {
             _foldersTab.SyncSelectedLanguage(language);
             Repaint();
