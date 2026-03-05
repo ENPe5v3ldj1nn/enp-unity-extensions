@@ -1,7 +1,8 @@
 ﻿using enp_unity_extensions.Runtime.Scripts.UI.Form;
+using enp_unity_extensions.Scripts.UI.Button;
 using UnityEngine;
 
-namespace enp_unity_extensions.Scripts.UI.Button
+namespace enp_unity_extensions.Runtime.Scripts.UI.Button
 {
     public class AnimatedButtonWithRounded : AnimatedButton
     {

@@ -3,38 +3,86 @@ using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
 
-namespace enp_unity_extensions.Runtime.Scripts.Language
+namespace enp_unity_extensions.Scripts.Language
 {
     public static class LanguageController
     {
-        public static event Action<SystemLanguage> LanguageChanged;
-        public static SystemLanguage CurrentLanguage { get; private set; }
+        public static event Action<string> LanguageChanged;
+        public static event Action<LanguageId> LanguageIdChanged;
+
+        public static LanguageId? CurrentLanguageId { get; private set; }
+        public static string CurrentLanguageFolder { get; private set; }
         public static int Version { get; private set; }
+
         public static readonly Dictionary<string, string> Data = new Dictionary<string, string>();
         public static readonly Dictionary<string, string[]> Arrays = new Dictionary<string, string[]>();
+
         public static bool IsCanLog { get; set; } = true;
 
         private static string _resourcesBasePath = "Languages";
-        private const string FallbackLangFolder = "english";
+        private static readonly string _fallbackLangFolder = LanguageId.EnglishUS.ToFolderName();
         private static bool _hasLanguage;
+        private static readonly Dictionary<Type, Delegate> _folderResolvers = new Dictionary<Type, Delegate>(8);
+
+        static LanguageController()
+        {
+            CurrentLanguageId = LanguageId.EnglishUS;
+            CurrentLanguageFolder = _fallbackLangFolder;
+        }
 
         public static void SetResourcesPath(string basePath)
         {
             _resourcesBasePath = string.IsNullOrEmpty(basePath) ? "" : basePath.TrimEnd('/');
         }
 
-        public static void SetLanguage(SystemLanguage language)
+        public static void RegisterFolderResolver<TEnum>(Func<TEnum, string> resolver) where TEnum : struct, Enum
         {
-            if (_hasLanguage && language == CurrentLanguage)
+            if (resolver == null) throw new ArgumentNullException(nameof(resolver));
+            _folderResolvers[typeof(TEnum)] = resolver;
+        }
+
+        public static void SetLanguage(LanguageId id)
+        {
+            var folder = id.ToFolderName();
+
+            if (_hasLanguage && string.Equals(folder, CurrentLanguageFolder, StringComparison.OrdinalIgnoreCase))
             {
-                LanguageChanged?.Invoke(CurrentLanguage);
+                CurrentLanguageId = id;
+                LanguageIdChanged?.Invoke(id);
+                LanguageChanged?.Invoke(CurrentLanguageFolder);
                 return;
             }
 
-            CurrentLanguage = language;
+            CurrentLanguageId = id;
+            CurrentLanguageFolder = folder;
             Reload();
             _hasLanguage = true;
-            LanguageChanged?.Invoke(CurrentLanguage);
+            LanguageIdChanged?.Invoke(id);
+            LanguageChanged?.Invoke(CurrentLanguageFolder);
+        }
+
+        public static void SetLanguage<TEnum>(TEnum language) where TEnum : struct, Enum
+        {
+            if (!_folderResolvers.TryGetValue(typeof(TEnum), out var del))
+                throw new InvalidOperationException($"Folder resolver is not registered for enum type '{typeof(TEnum).FullName}'.");
+
+            var resolver = (Func<TEnum, string>)del;
+            var folder = resolver(language);
+            if (string.IsNullOrWhiteSpace(folder))
+                throw new InvalidOperationException($"Folder resolver returned empty folder for enum '{typeof(TEnum).FullName}' value '{language}'.");
+
+            if (_hasLanguage && string.Equals(folder, CurrentLanguageFolder, StringComparison.OrdinalIgnoreCase))
+            {
+                CurrentLanguageId = null;
+                LanguageChanged?.Invoke(CurrentLanguageFolder);
+                return;
+            }
+
+            CurrentLanguageId = null;
+            CurrentLanguageFolder = folder;
+            Reload();
+            _hasLanguage = true;
+            LanguageChanged?.Invoke(CurrentLanguageFolder);
         }
 
         public static string Get(string key)
@@ -53,8 +101,11 @@ namespace enp_unity_extensions.Runtime.Scripts.Language
         {
             Data.Clear();
             Arrays.Clear();
-            LoadFolder(FallbackLangFolder);
-            LoadFolder(GetLanguageFolderName(CurrentLanguage));
+            LoadFolder(_fallbackLangFolder);
+
+            if (!string.Equals(CurrentLanguageFolder, _fallbackLangFolder, StringComparison.OrdinalIgnoreCase))
+                LoadFolder(CurrentLanguageFolder);
+
             Version++;
         }
 
@@ -63,6 +114,7 @@ namespace enp_unity_extensions.Runtime.Scripts.Language
             var path = string.IsNullOrEmpty(_resourcesBasePath) ? langFolder : $"{_resourcesBasePath}/{langFolder}";
             var assets = Resources.LoadAll<TextAsset>(path);
             if (assets == null || assets.Length == 0) return;
+
             foreach (var ta in assets)
             {
                 try
@@ -87,9 +139,7 @@ namespace enp_unity_extensions.Runtime.Scripts.Language
                         if (token.Type == JTokenType.String)
                         {
                             if (Data.ContainsKey(key))
-                            {
                                 LogWarning($"[Language] Key '{key}' overwritten by '{ta.name}' in '{path}'.");
-                            }
 
                             Data[key] = token.Value<string>() ?? string.Empty;
                         }
@@ -117,9 +167,7 @@ namespace enp_unity_extensions.Runtime.Scripts.Language
                             if (list.Count > 0)
                             {
                                 if (Arrays.ContainsKey(key))
-                                {
                                     LogWarning($"[Language] Array key '{key}' overwritten by '{ta.name}' in '{path}'.");
-                                }
 
                                 Arrays[key] = list.ToArray();
                             }
@@ -138,57 +186,6 @@ namespace enp_unity_extensions.Runtime.Scripts.Language
                 {
                     LogError($"[Language] Failed to parse '{ta?.name ?? "<null>"}' in '{path}': {ex.Message}");
                 }
-            }
-        }
-
-        private static string GetLanguageFolderName(SystemLanguage language)
-        {
-            switch (language)
-            {
-                case SystemLanguage.Afrikaans: return "afrikaans";
-                case SystemLanguage.Arabic: return "arabic";
-                case SystemLanguage.Basque: return "basque";
-                case SystemLanguage.Belarusian: return "belarusian";
-                case SystemLanguage.Bulgarian: return "bulgarian";
-                case SystemLanguage.Catalan: return "catalan";
-                case SystemLanguage.Chinese: return "chinese";
-                case SystemLanguage.ChineseSimplified: return "chinese_simplified";
-                case SystemLanguage.ChineseTraditional: return "chinese_traditional";
-                case SystemLanguage.Czech: return "czech";
-                case SystemLanguage.Danish: return "danish";
-                case SystemLanguage.Dutch: return "dutch";
-                case SystemLanguage.English: return "english";
-                case SystemLanguage.Estonian: return "estonian";
-                case SystemLanguage.Faroese: return "faroese";
-                case SystemLanguage.Finnish: return "finnish";
-                case SystemLanguage.French: return "french";
-                case SystemLanguage.German: return "german";
-                case SystemLanguage.Greek: return "greek";
-                case SystemLanguage.Hebrew: return "hebrew";
-                case SystemLanguage.Hungarian: return "hungarian";
-                case SystemLanguage.Icelandic: return "icelandic";
-                case SystemLanguage.Indonesian: return "indonesian";
-                case SystemLanguage.Italian: return "italian";
-                case SystemLanguage.Japanese: return "japanese";
-                case SystemLanguage.Korean: return "korean";
-                case SystemLanguage.Latvian: return "latvian";
-                case SystemLanguage.Lithuanian: return "lithuanian";
-                case SystemLanguage.Norwegian: return "norwegian";
-                case SystemLanguage.Polish: return "polish";
-                case SystemLanguage.Portuguese: return "portuguese";
-                case SystemLanguage.Romanian: return "romanian";
-                case SystemLanguage.Russian: return "russian";
-                case SystemLanguage.SerboCroatian: return "serbo_croatian";
-                case SystemLanguage.Slovak: return "slovak";
-                case SystemLanguage.Slovenian: return "slovenian";
-                case SystemLanguage.Spanish: return "spanish";
-                case SystemLanguage.Swedish: return "swedish";
-                case SystemLanguage.Thai: return "thai";
-                case SystemLanguage.Turkish: return "turkish";
-                case SystemLanguage.Ukrainian: return "ukrainian";
-                case SystemLanguage.Vietnamese: return "vietnamese";
-                case SystemLanguage.Hindi: return "hindi";
-                default: return "english";
             }
         }
 
