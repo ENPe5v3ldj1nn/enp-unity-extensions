@@ -2,7 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using enp_unity_extensions.Editor.Language;
 using enp_unity_extensions.Runtime.Scripts.Language;
+using enp_unity_extensions.Scripts.Language;
 using UnityEditor;
 using UnityEngine;
 
@@ -169,7 +171,7 @@ namespace enp_unity_extensions.Editor.LanguageSettings
 
         private void CreateFolder(LanguageId language)
         {
-            var folderName = LanguageIdExtensions.ToFolderName(language);
+            var folderName = Scripts.Language.LanguageIdExtensions.ToFolderName(language);
             if (string.IsNullOrEmpty(folderName))
             {
                 _host.SetStatus($"Unsupported language value: {language}", MessageType.Error);
@@ -275,7 +277,7 @@ namespace enp_unity_extensions.Editor.LanguageSettings
             var existing = new HashSet<string>(_folders, StringComparer.OrdinalIgnoreCase);
             foreach (LanguageId language in Enum.GetValues(typeof(LanguageId)))
             {
-                var folder = LanguageIdExtensions.ToFolderName(language);
+                var folder = Scripts.Language.LanguageIdExtensions.ToFolderName(language);
                 if (string.IsNullOrEmpty(folder)) continue;
                 if (existing.Contains(folder)) continue;
                 yield return language;
@@ -299,7 +301,7 @@ namespace enp_unity_extensions.Editor.LanguageSettings
         {
             foreach (LanguageId lang in Enum.GetValues(typeof(LanguageId)))
             {
-                if (string.Equals(LanguageIdExtensions.ToFolderName(lang), folderName, StringComparison.OrdinalIgnoreCase))
+                if (string.Equals(Scripts.Language.LanguageIdExtensions.ToFolderName(lang), folderName, StringComparison.OrdinalIgnoreCase))
                 {
                     language = lang;
                     return true;

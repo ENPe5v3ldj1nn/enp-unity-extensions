@@ -5,7 +5,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.EventSystems;
 
-namespace enp_unity_extensions.Runtime.Scripts.UI.Button
+namespace enp_unity_extensions.Scripts.UI.Button
 {
     public class AnimatedButton : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IPointerClickHandler
     {

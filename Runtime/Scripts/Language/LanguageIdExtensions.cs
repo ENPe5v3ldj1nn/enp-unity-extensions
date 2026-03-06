@@ -1,60 +1,8 @@
 using System;
+using enp_unity_extensions.Scripts.Language;
 
-namespace enp_unity_extensions.Scripts.Language
+namespace enp_unity_extensions.Runtime.Scripts.Language
 {
-    public enum LanguageId
-    {
-        Afrikaans,
-        Amharic,
-        Bulgarian,
-        Catalan,
-        Croatian,
-        Czech,
-        Danish,
-        German,
-        Greek,
-        EnglishUS,
-        EnglishUK,
-        SpanishSpain,
-        SpanishLatinAmerica,
-        Estonian,
-        Finnish,
-        Filipino,
-        FrenchCanada,
-        FrenchFrance,
-        Hebrew,
-        Hindi,
-        Hungarian,
-        Icelandic,
-        Indonesian,
-        Italian,
-        Japanese,
-        Korean,
-        Lithuanian,
-        Latvian,
-        Malay,
-        Dutch,
-        Norwegian,
-        Polish,
-        PortugueseBrazil,
-        PortuguesePortugal,
-        Romanian,
-        Russian,
-        Slovak,
-        Slovenian,
-        Serbian,
-        Swedish,
-        Swahili,
-        Thai,
-        Turkish,
-        Ukrainian,
-        ChinesePRC,
-        ChineseTaiwan,
-        ChineseHongKong,
-        Zulu,
-        Vietnamese
-    }
-
     public static class LanguageIdExtensions
     {
         public static string ToCode(this LanguageId id)

@@ -1,7 +1,7 @@
 using System;
 using Newtonsoft.Json;
 
-namespace enp_unity_extensions.Runtime.Scripts.Storage
+namespace enp_unity_extensions.Scripts.Storage
 {
     [Serializable]
     public class StorgeJsonHandler

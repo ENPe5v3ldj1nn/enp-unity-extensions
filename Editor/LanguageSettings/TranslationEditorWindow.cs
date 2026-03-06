@@ -2,11 +2,12 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using enp_unity_extensions.Editor.LanguageSettings;
 using Newtonsoft.Json.Linq;
 using UnityEditor;
 using UnityEngine;
 
-namespace enp_unity_extensions.Editor.LanguageSettings
+namespace enp_unity_extensions.Editor.Language
 {
     internal class TranslationEditorView
     {

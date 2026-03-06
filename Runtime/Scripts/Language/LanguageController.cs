@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
 
-namespace enp_unity_extensions.Runtime.Scripts.Language
+namespace enp_unity_extensions.Scripts.Language
 {
     public static class LanguageController
     {
