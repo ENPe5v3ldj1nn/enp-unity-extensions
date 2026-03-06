@@ -1,6 +1,6 @@
 using System;
 
-namespace enp_unity_extensions.Scripts.Language
+namespace enp_unity_extensions.Runtime.Scripts.Language
 {
     public enum LanguageId
     {

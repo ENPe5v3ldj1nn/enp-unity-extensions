@@ -1,6 +1,5 @@
 ﻿using System.Runtime.CompilerServices;
 using System.Text;
-using enp_unity_extensions.Scripts.Language;
 using TMPro;
 
 namespace enp_unity_extensions.Runtime.Scripts.Language
