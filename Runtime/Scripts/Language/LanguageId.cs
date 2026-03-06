@@ -170,5 +170,120 @@ namespace enp_unity_extensions.Runtime.Scripts.Language
                 default: throw new ArgumentOutOfRangeException(nameof(id), id, null);
             }
         }
+
+        public static bool TryFromLocaleCode(string localeCode, out LanguageId id)
+        {
+            if (string.IsNullOrWhiteSpace(localeCode))
+            {
+                id = LanguageId.EnglishUS;
+                return false;
+            }
+
+            var s = localeCode.Trim().Replace('_', '-');
+            var dash = s.IndexOf('-');
+            string primary;
+            string region;
+
+            if (dash < 0)
+            {
+                primary = s;
+                region = null;
+            }
+            else
+            {
+                primary = s.Substring(0, dash);
+                region = dash + 1 < s.Length ? s.Substring(dash + 1) : null;
+            }
+
+            primary = primary.ToLowerInvariant();
+            if (!string.IsNullOrEmpty(region)) region = region.ToUpperInvariant();
+
+            if (primary == "en")
+            {
+                id = region == "GB" ? LanguageId.EnglishUK : LanguageId.EnglishUS;
+                return true;
+            }
+
+            if (primary == "fr")
+            {
+                id = region == "CA" ? LanguageId.FrenchCanada : LanguageId.FrenchFrance;
+                return true;
+            }
+
+            if (primary == "pt")
+            {
+                id = region == "BR" ? LanguageId.PortugueseBrazil : LanguageId.PortuguesePortugal;
+                return true;
+            }
+
+            if (primary == "es")
+            {
+                id = region == "ES" ? LanguageId.SpanishSpain : LanguageId.SpanishLatinAmerica;
+                return true;
+            }
+
+            if (primary == "zh")
+            {
+                if (region == "HK" || region == "MO")
+                {
+                    id = LanguageId.ChineseHongKong;
+                    return true;
+                }
+
+                if (region == "TW")
+                {
+                    id = LanguageId.ChineseTaiwan;
+                    return true;
+                }
+
+                id = LanguageId.ChinesePRC;
+                return true;
+            }
+
+            switch (primary)
+            {
+                case "af": id = LanguageId.Afrikaans; return true;
+                case "am": id = LanguageId.Amharic; return true;
+                case "bg": id = LanguageId.Bulgarian; return true;
+                case "ca": id = LanguageId.Catalan; return true;
+                case "hr": id = LanguageId.Croatian; return true;
+                case "cs": id = LanguageId.Czech; return true;
+                case "da": id = LanguageId.Danish; return true;
+                case "de": id = LanguageId.German; return true;
+                case "el": id = LanguageId.Greek; return true;
+                case "et": id = LanguageId.Estonian; return true;
+                case "fi": id = LanguageId.Finnish; return true;
+                case "fil": id = LanguageId.Filipino; return true;
+                case "he": id = LanguageId.Hebrew; return true;
+                case "hi": id = LanguageId.Hindi; return true;
+                case "hu": id = LanguageId.Hungarian; return true;
+                case "is": id = LanguageId.Icelandic; return true;
+                case "id": id = LanguageId.Indonesian; return true;
+                case "it": id = LanguageId.Italian; return true;
+                case "ja": id = LanguageId.Japanese; return true;
+                case "ko": id = LanguageId.Korean; return true;
+                case "lt": id = LanguageId.Lithuanian; return true;
+                case "lv": id = LanguageId.Latvian; return true;
+                case "ms": id = LanguageId.Malay; return true;
+                case "nl": id = LanguageId.Dutch; return true;
+                case "no": id = LanguageId.Norwegian; return true;
+                case "pl": id = LanguageId.Polish; return true;
+                case "ro": id = LanguageId.Romanian; return true;
+                case "ru": id = LanguageId.Russian; return true;
+                case "sk": id = LanguageId.Slovak; return true;
+                case "sl": id = LanguageId.Slovenian; return true;
+                case "sr": id = LanguageId.Serbian; return true;
+                case "sv": id = LanguageId.Swedish; return true;
+                case "sw": id = LanguageId.Swahili; return true;
+                case "th": id = LanguageId.Thai; return true;
+                case "tr": id = LanguageId.Turkish; return true;
+                case "uk": id = LanguageId.Ukrainian; return true;
+                case "zu": id = LanguageId.Zulu; return true;
+                case "vi": id = LanguageId.Vietnamese; return true;
+                default:
+                    id = LanguageId.EnglishUS;
+                    return false;
+            }
+        }
     }
 }
