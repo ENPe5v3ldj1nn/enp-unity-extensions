@@ -33,4 +33,11 @@ public class UIGradient : BaseMeshEffect
             }
         }
     }
+    
+    public void SetColors(Color top, Color bottom)
+    {
+        m_color1 = top;
+        m_color2 = bottom;
+        graphic.SetVerticesDirty();
+    }
 }
