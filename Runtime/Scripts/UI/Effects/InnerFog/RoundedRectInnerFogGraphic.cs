@@ -133,7 +133,8 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.InnerFog
             ApplyVisualState(false);
         }
 
-        public void SetShape(float coverage, float contrast, float softness, float noiseScale, float centerProtection, float edgeBoost, float cornerRoundness)
+        public void SetShape(float coverage, float contrast, float softness, float noiseScale, float centerProtection,
+            float edgeBoost, float cornerRoundness)
         {
             _baseTransitionActive = false;
             _baseState.Coverage = Mathf.Clamp01(coverage);
@@ -320,7 +321,8 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.InnerFog
 
             if (_shader == null)
             {
-                throw new InvalidOperationException($"{nameof(RoundedRectInnerFogGraphic)} requires shader '{ShaderName}'.");
+                throw new InvalidOperationException(
+                    $"{nameof(RoundedRectInnerFogGraphic)} requires shader '{ShaderName}'.");
             }
         }
 
@@ -461,6 +463,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.InnerFog
             return 1f - Mathf.Clamp01(time / _pulse.Decay);
         }
 
+#if UNITY_EDITOR
         protected override void OnValidate()
         {
             base.OnValidate();
@@ -485,5 +488,6 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.InnerFog
                 SetMaterialDirty();
             }
         }
+#endif
     }
 }

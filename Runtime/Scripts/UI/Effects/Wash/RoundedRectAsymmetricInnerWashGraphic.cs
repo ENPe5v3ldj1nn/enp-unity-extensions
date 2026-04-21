@@ -224,7 +224,8 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
 
             if (_shader == null)
             {
-                throw new InvalidOperationException($"{nameof(RoundedRectAsymmetricInnerWashGraphic)} requires shader '{ShaderName}'.");
+                throw new InvalidOperationException(
+                    $"{nameof(RoundedRectAsymmetricInnerWashGraphic)} requires shader '{ShaderName}'.");
             }
         }
 
@@ -235,7 +236,8 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
                 return;
             }
 
-            if (_initialState.TintColor == default && _initialState.TopColor == default && _initialState.BottomColor == default)
+            if (_initialState.TintColor == default && _initialState.TopColor == default &&
+                _initialState.BottomColor == default)
             {
                 _initialState = AsymmetricInnerWashState.CreateNeutralAmbient();
             }
@@ -302,6 +304,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
             _materialDirty = false;
         }
 
+#if UNITY_EDITOR
         protected override void OnValidate()
         {
             base.OnValidate();
@@ -316,5 +319,6 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
                 SetMaterialDirty();
             }
         }
+#endif
     }
 }

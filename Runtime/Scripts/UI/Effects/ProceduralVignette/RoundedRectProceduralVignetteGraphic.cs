@@ -179,7 +179,8 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.ProceduralVignette
             ApplyVisualState(false);
         }
 
-        public void SetDeformation(float warpAmount, float warpScale, float warpSpeed, float noiseAmount, float noiseScale, float noiseSpeed)
+        public void SetDeformation(float warpAmount, float warpScale, float warpSpeed, float noiseAmount,
+            float noiseScale, float noiseSpeed)
         {
             _baseTransitionActive = false;
             _baseState.WarpAmount = Mathf.Max(0f, warpAmount);
@@ -473,6 +474,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.ProceduralVignette
             return 1f - Mathf.Clamp01(time / _pulse.Decay);
         }
 
+#if UNITY_EDITOR
         protected override void OnValidate()
         {
             base.OnValidate();
@@ -486,5 +488,6 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.ProceduralVignette
                 SetMaterialDirty();
             }
         }
+#endif
     }
 }
