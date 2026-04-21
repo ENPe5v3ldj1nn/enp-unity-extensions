@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace ENP.ProceduralInnerWash.Runtime
+namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
 {
     [DisallowMultipleComponent]
     [AddComponentMenu("UI/ENP/Procedural Inner Wash Demo Bootstrap")]

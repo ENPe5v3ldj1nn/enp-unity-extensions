@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace ENP.ProceduralInnerWash.Runtime
+namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
 {
     [Serializable]
     public struct AsymmetricInnerWashState

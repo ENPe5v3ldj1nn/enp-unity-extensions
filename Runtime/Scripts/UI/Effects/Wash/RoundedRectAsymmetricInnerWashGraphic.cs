@@ -2,11 +2,12 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace ENP.ProceduralInnerWash.Runtime
+namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
 {
     [ExecuteAlways]
     [DisallowMultipleComponent]
     [AddComponentMenu("UI/ENP/Rounded Rect Asymmetric Inner Wash")]
+    [RequireComponent(typeof(CanvasRenderer))]
     public sealed class RoundedRectAsymmetricInnerWashGraphic : MaskableGraphic
     {
         private const string ShaderName = "UI/ENP/RoundedRectAsymmetricInnerWash";
