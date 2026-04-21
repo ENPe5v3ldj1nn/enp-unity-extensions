@@ -1,23 +1,21 @@
-﻿Shader "UI/ENP/RoundedRectInnerFog"
+Shader "UI/ENP/RoundedRectAsymmetricInnerWash"
 {
     Properties
     {
         [PerRendererData] _MainTex ("Sprite Texture", 2D) = "white" {}
         _Color ("Tint", Color) = (1,1,1,1)
-
+        _TintColor ("Base Tint", Color) = (1,1,1,1)
         _TopColor ("Top Color", Color) = (1,1,1,1)
         _BottomColor ("Bottom Color", Color) = (1,1,1,1)
-        _Intensity ("Intensity", Range(0,1)) = 0
-        _Coverage ("Coverage", Range(0,1)) = 0.45
-        _Contrast ("Contrast", Range(0,1)) = 0.45
-        _Softness ("Softness", Range(0,1)) = 0.65
-        _NoiseScale ("Noise Scale", Float) = 4
-        _WarpAmount ("Warp Amount", Range(0,1)) = 0.2
-        _WarpSpeed ("Warp Speed", Float) = 0.35
-        _CenterProtection ("Center Protection", Range(0,1)) = 0.35
-        _EdgeBoost ("Edge Boost", Range(0,1)) = 0.25
+        _Intensity ("Intensity", Range(0,1)) = 0.15
+        _Thickness ("Thickness", Range(0,1)) = 0.2
+        _Softness ("Softness", Range(0,1)) = 0.7
+        _CenterClear ("Center Clear", Range(0,1)) = 0.65
         _Roundness ("Roundness", Float) = 24
-        _AnimationTime ("Animation Time", Float) = 0
+        _TopStrength ("Top Strength", Range(0,2)) = 0.1
+        _BottomStrength ("Bottom Strength", Range(0,2)) = 0.5
+        _LeftStrength ("Left Strength", Range(0,2)) = 0.35
+        _RightStrength ("Right Strength", Range(0,2)) = 0.35
         _RectSize ("Rect Size", Vector) = (100,100,0,0)
         _RectCenter ("Rect Center", Vector) = (0,0,0,0)
 
@@ -59,7 +57,7 @@
 
         Pass
         {
-            Name "RoundedRectInnerFog"
+            Name "RoundedRectAsymmetricInnerWash"
 
             HLSLPROGRAM
             #pragma vertex vert
@@ -71,19 +69,18 @@
             sampler2D _MainTex;
 
             float4 _Color;
+            float4 _TintColor;
             float4 _TopColor;
             float4 _BottomColor;
             float _Intensity;
-            float _Coverage;
-            float _Contrast;
+            float _Thickness;
             float _Softness;
-            float _NoiseScale;
-            float _WarpAmount;
-            float _WarpSpeed;
-            float _CenterProtection;
-            float _EdgeBoost;
+            float _CenterClear;
             float _Roundness;
-            float _AnimationTime;
+            float _TopStrength;
+            float _BottomStrength;
+            float _LeftStrength;
+            float _RightStrength;
             float4 _RectSize;
             float4 _RectCenter;
             float4 _ClipRect;
@@ -113,52 +110,17 @@
                 return length(max(q, 0.0)) + min(max(q.x, q.y), 0.0) - radius;
             }
 
-            float Hash21(float2 p)
-            {
-                p = frac(p * float2(123.34, 345.45));
-                p += dot(p, p + 34.345);
-                return frac(p.x * p.y);
-            }
-
-            float ValueNoise(float2 p)
-            {
-                float2 i = floor(p);
-                float2 f = frac(p);
-                f = f * f * (3.0 - 2.0 * f);
-
-                float a = Hash21(i + float2(0.0, 0.0));
-                float b = Hash21(i + float2(1.0, 0.0));
-                float c = Hash21(i + float2(0.0, 1.0));
-                float d = Hash21(i + float2(1.0, 1.0));
-
-                float ab = lerp(a, b, f.x);
-                float cd = lerp(c, d, f.x);
-                return lerp(ab, cd, f.y);
-            }
-
-            float Fbm(float2 p)
-            {
-                float value = 0.0;
-                float amplitude = 0.5;
-
-                value += ValueNoise(p) * amplitude;
-                p = p * 2.03 + 17.13;
-                amplitude *= 0.5;
-
-                value += ValueNoise(p) * amplitude;
-                p = p * 2.01 + 9.71;
-                amplitude *= 0.5;
-
-                value += ValueNoise(p) * amplitude;
-
-                return value;
-            }
-
             float GetClipRectMask(float2 position, float4 clipRect)
             {
                 float2 insideMin = step(clipRect.xy, position);
                 float2 insideMax = step(position, clipRect.zw);
                 return insideMin.x * insideMin.y * insideMax.x * insideMax.y;
+            }
+
+            float EvaluateSide(float distanceToSide, float thicknessPx, float softness)
+            {
+                float feather = max(thicknessPx * lerp(0.08, 1.0, softness), 0.0001);
+                return 1.0 - smoothstep(0.0, thicknessPx + feather, distanceToSide);
             }
 
             v2f vert(appdata_t v)
@@ -186,41 +148,32 @@
                 float aa = max(fwidth(sd), 0.75);
                 float insideMask = saturate((-sd + aa) / aa);
 
-                float2 drift = float2(_AnimationTime * _WarpSpeed * 0.09, -_AnimationTime * _WarpSpeed * 0.07);
-                float2 noiseUv = uv * max(_NoiseScale, 0.001) + drift;
+                float thicknessPx = max(halfMin * _Thickness, 0.0001);
 
-                float2 warp;
-                warp.x = Fbm(noiseUv * 1.31 + 11.7) * 2.0 - 1.0;
-                warp.y = Fbm(noiseUv * 1.17 + 37.1) * 2.0 - 1.0;
+                float distLeft = p.x + halfSize.x;
+                float distRight = halfSize.x - p.x;
+                float distBottom = p.y + halfSize.y;
+                float distTop = halfSize.y - p.y;
 
-                float2 q = noiseUv + warp * (_WarpAmount * 1.35);
-                float primary = Fbm(q);
-                float secondary = Fbm(q * 1.93 + 23.4);
-                float noiseValue = lerp(primary, secondary, 0.35);
+                float leftBand = EvaluateSide(distLeft, thicknessPx, _Softness) * _LeftStrength;
+                float rightBand = EvaluateSide(distRight, thicknessPx, _Softness) * _RightStrength;
+                float bottomBand = EvaluateSide(distBottom, thicknessPx, _Softness) * _BottomStrength;
+                float topBand = EvaluateSide(distTop, thicknessPx, _Softness) * _TopStrength;
 
-                float threshold = lerp(0.82, 0.18, saturate(_Coverage));
-                float width = lerp(0.32, 0.05, saturate(_Contrast));
-                float cloud = smoothstep(threshold - width, threshold + width, noiseValue);
-                float density = pow(cloud, lerp(2.1, 0.75, saturate(_Softness)));
+                float sideMask = saturate(leftBand + rightBand + bottomBand + topBand);
+                sideMask = pow(sideMask, lerp(2.2, 0.85, _Softness));
 
                 float2 normalizedPos = abs(p) / max(halfSize, float2(1.0, 1.0));
                 float centerMetric = saturate(max(normalizedPos.x, normalizedPos.y));
-                float protectStart = lerp(0.0, 0.78, saturate(_CenterProtection));
-                float protectedMask = saturate((centerMetric - protectStart) / max(1.0 - protectStart, 0.0001));
-                float centerMask = lerp(1.0, protectedMask, saturate(_CenterProtection));
+                float centerStart = lerp(0.0, 0.86, _CenterClear);
+                float centerMask = saturate((centerMetric - centerStart) / max(1.0 - centerStart, 0.0001));
 
-                float distanceInside = max(-sd, 0.0);
-                float edgeMask = 1.0 - saturate(distanceInside / max(halfMin * 0.72, 0.0001));
-                float edgeBoost = lerp(1.0, lerp(0.55, 1.0, edgeMask), saturate(_EdgeBoost));
+                float wash = saturate(_Intensity) * sideMask * centerMask * insideMask;
 
-                float gradientT = saturate(uv.y);
-                float4 gradient = lerp(_BottomColor, _TopColor, gradientT);
-
-                float alpha = saturate(_Intensity) * insideMask * density * centerMask * edgeBoost;
-
+                float4 gradient = lerp(_BottomColor, _TopColor, uv.y) * _TintColor;
                 float4 col = gradient * i.color * _Color;
-                col.rgb *= alpha;
-                col.a *= alpha;
+                col.rgb *= wash;
+                col.a *= wash;
 
                 #ifdef UNITY_UI_CLIP_RECT
                 col.a *= GetClipRectMask(i.worldPosition.xy, _ClipRect);
