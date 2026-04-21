@@ -1,16 +1,16 @@
-using System;
+﻿using System;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.EdgeGlow
+namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.ProceduralVignette
 {
     [ExecuteAlways]
     [DisallowMultipleComponent]
-    [AddComponentMenu("UI/ENP/Rounded Rect Edge Glow")]
+    [AddComponentMenu("UI/ENP/Rounded Rect Procedural Vignette")]
     [RequireComponent(typeof(CanvasRenderer))]
-    public sealed class RoundedRectEdgeGlowGraphic : MaskableGraphic
+    public sealed class RoundedRectProceduralVignetteGraphic : MaskableGraphic
     {
-        private const string ShaderName = "UI/ENP/RoundedRectEdgeGlow";
+        private const string ShaderName = "UI/ENP/RoundedRectProceduralVignette";
 
         private static readonly int _topColorId = Shader.PropertyToID("_TopColor");
         private static readonly int _bottomColorId = Shader.PropertyToID("_BottomColor");
@@ -19,18 +19,28 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.EdgeGlow
         private static readonly int _softnessId = Shader.PropertyToID("_Softness");
         private static readonly int _roundnessId = Shader.PropertyToID("_Roundness");
         private static readonly int _centerClearId = Shader.PropertyToID("_CenterClear");
+        private static readonly int _warpAmountId = Shader.PropertyToID("_WarpAmount");
+        private static readonly int _warpScaleId = Shader.PropertyToID("_WarpScale");
+        private static readonly int _warpSpeedId = Shader.PropertyToID("_WarpSpeed");
+        private static readonly int _noiseAmountId = Shader.PropertyToID("_NoiseAmount");
+        private static readonly int _noiseScaleId = Shader.PropertyToID("_NoiseScale");
+        private static readonly int _noiseSpeedId = Shader.PropertyToID("_NoiseSpeed");
+        private static readonly int _topEdgeStrengthId = Shader.PropertyToID("_TopEdgeStrength");
+        private static readonly int _bottomEdgeStrengthId = Shader.PropertyToID("_BottomEdgeStrength");
+        private static readonly int _leftEdgeStrengthId = Shader.PropertyToID("_LeftEdgeStrength");
+        private static readonly int _rightEdgeStrengthId = Shader.PropertyToID("_RightEdgeStrength");
         private static readonly int _rectSizeId = Shader.PropertyToID("_RectSize");
         private static readonly int _rectCenterId = Shader.PropertyToID("_RectCenter");
 
-        [SerializeField] private EdgeGlowState _initialState = default;
-        [SerializeField] private EdgeGlowState _neutralState = default;
+        [SerializeField] private ProceduralVignetteState _initialState = default;
+        [SerializeField] private ProceduralVignetteState _neutralState = default;
         [SerializeField] private bool _useUnscaledTime = true;
 
         private Material _runtimeMaterial;
-        private EdgeGlowState _baseState;
-        private EdgeGlowState _transitionFromState;
-        private EdgeGlowState _transitionToState;
-        private EdgeGlowPulse _pulse;
+        private ProceduralVignetteState _baseState;
+        private ProceduralVignetteState _transitionFromState;
+        private ProceduralVignetteState _transitionToState;
+        private ProceduralVignettePulse _pulse;
         private Vector2 _lastRectSize;
         private Vector2 _lastRectCenter;
         private bool _baseTransitionActive;
@@ -44,7 +54,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.EdgeGlow
 
         public override Texture mainTexture => Texture2D.whiteTexture;
 
-        public EdgeGlowState BaseState => _baseState;
+        public ProceduralVignetteState BaseState => _baseState;
 
         public bool IsPulseActive => _pulseActive;
 
@@ -133,10 +143,10 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.EdgeGlow
             ApplyVisualState(false);
         }
 
-        public void SetState(EdgeGlowState state)
+        public void SetState(ProceduralVignetteState state)
         {
             _baseTransitionActive = false;
-            _baseState = EdgeGlowState.Sanitize(state);
+            _baseState = ProceduralVignetteState.Sanitize(state);
             _materialStateDirty = true;
             ApplyVisualState(false);
         }
@@ -169,9 +179,33 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.EdgeGlow
             ApplyVisualState(false);
         }
 
-        public void AnimateState(EdgeGlowState targetState, float duration)
+        public void SetDeformation(float warpAmount, float warpScale, float warpSpeed, float noiseAmount, float noiseScale, float noiseSpeed)
         {
-            targetState = EdgeGlowState.Sanitize(targetState);
+            _baseTransitionActive = false;
+            _baseState.WarpAmount = Mathf.Max(0f, warpAmount);
+            _baseState.WarpScale = Mathf.Max(0f, warpScale);
+            _baseState.WarpSpeed = Mathf.Max(0f, warpSpeed);
+            _baseState.NoiseAmount = Mathf.Max(0f, noiseAmount);
+            _baseState.NoiseScale = Mathf.Max(0f, noiseScale);
+            _baseState.NoiseSpeed = Mathf.Max(0f, noiseSpeed);
+            _materialStateDirty = true;
+            ApplyVisualState(false);
+        }
+
+        public void SetEdgeStrengths(float top, float bottom, float left, float right)
+        {
+            _baseTransitionActive = false;
+            _baseState.TopEdgeStrength = Mathf.Max(0f, top);
+            _baseState.BottomEdgeStrength = Mathf.Max(0f, bottom);
+            _baseState.LeftEdgeStrength = Mathf.Max(0f, left);
+            _baseState.RightEdgeStrength = Mathf.Max(0f, right);
+            _materialStateDirty = true;
+            ApplyVisualState(false);
+        }
+
+        public void AnimateState(ProceduralVignetteState targetState, float duration)
+        {
+            targetState = ProceduralVignetteState.Sanitize(targetState);
 
             if (duration <= 0f)
             {
@@ -188,9 +222,9 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.EdgeGlow
             ApplyVisualState(false);
         }
 
-        public void PlayPulse(EdgeGlowPulse pulse)
+        public void PlayPulse(ProceduralVignettePulse pulse)
         {
-            _pulse = EdgeGlowPulse.Sanitize(pulse);
+            _pulse = ProceduralVignettePulse.Sanitize(pulse);
             _pulseElapsed = 0f;
             _pulseDuration = _pulse.Duration;
             _pulseActive = _pulseDuration > 0f;
@@ -215,8 +249,8 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.EdgeGlow
 
         private void Reset()
         {
-            _initialState = EdgeGlowState.CreateDefault();
-            _neutralState = EdgeGlowState.CreateNeutral();
+            _initialState = ProceduralVignetteState.CreateDefault();
+            _neutralState = ProceduralVignetteState.CreateNeutral();
             color = Color.white;
             raycastTarget = false;
             SyncPreviewStateFromInitial();
@@ -232,7 +266,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.EdgeGlow
 
         private void Update()
         {
-            if (!_materialStateDirty && !_baseTransitionActive && !_pulseActive)
+            if (!_materialStateDirty && !_baseTransitionActive && !_pulseActive && Application.isPlaying)
             {
                 return;
             }
@@ -248,7 +282,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.EdgeGlow
                     ? 1f
                     : Mathf.Clamp01(_baseTransitionElapsed / _baseTransitionDuration);
 
-                _baseState = EdgeGlowState.Lerp(_transitionFromState, _transitionToState, t);
+                _baseState = ProceduralVignetteState.Lerp(_transitionFromState, _transitionToState, t);
                 changed = true;
 
                 if (t >= 1f)
@@ -285,35 +319,45 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.EdgeGlow
 
             if (IsZeroState(_initialState))
             {
-                _initialState = EdgeGlowState.CreateDefault();
+                _initialState = ProceduralVignetteState.CreateDefault();
             }
 
             if (IsZeroState(_neutralState))
             {
-                _neutralState = EdgeGlowState.CreateNeutral();
+                _neutralState = ProceduralVignetteState.CreateNeutral();
             }
 
             SyncPreviewStateFromInitial();
-            _neutralState = EdgeGlowState.Sanitize(_neutralState);
+            _neutralState = ProceduralVignetteState.Sanitize(_neutralState);
             _stateInitialized = true;
             _materialStateDirty = true;
         }
 
-        private static bool IsZeroState(EdgeGlowState state)
+        private static bool IsZeroState(ProceduralVignetteState state)
         {
             return state.Intensity <= 0f
                    && state.Thickness <= 0f
                    && state.Softness <= 0f
                    && state.CornerRoundness <= 0f
                    && state.CenterClear <= 0f
+                   && state.WarpAmount <= 0f
+                   && state.WarpScale <= 0f
+                   && state.WarpSpeed <= 0f
+                   && state.NoiseAmount <= 0f
+                   && state.NoiseScale <= 0f
+                   && state.NoiseSpeed <= 0f
+                   && state.TopEdgeStrength <= 0f
+                   && state.BottomEdgeStrength <= 0f
+                   && state.LeftEdgeStrength <= 0f
+                   && state.RightEdgeStrength <= 0f
                    && state.TopColor == default
                    && state.BottomColor == default;
         }
 
         private void SyncPreviewStateFromInitial()
         {
-            _initialState = EdgeGlowState.Sanitize(_initialState);
-            _neutralState = EdgeGlowState.Sanitize(_neutralState);
+            _initialState = ProceduralVignetteState.Sanitize(_initialState);
+            _neutralState = ProceduralVignetteState.Sanitize(_neutralState);
             _baseState = _initialState;
             _transitionFromState = _baseState;
             _transitionToState = _baseState;
@@ -377,10 +421,10 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.EdgeGlow
             if (_pulseActive)
             {
                 var pulseWeight = EvaluatePulseWeight();
-                effectiveState = EdgeGlowState.Compose(_baseState, _pulse, pulseWeight);
+                effectiveState = ProceduralVignetteState.Compose(_baseState, _pulse, pulseWeight);
             }
 
-            effectiveState = EdgeGlowState.Sanitize(effectiveState);
+            effectiveState = ProceduralVignetteState.Sanitize(effectiveState);
 
             _runtimeMaterial.SetColor(_topColorId, effectiveState.TopColor);
             _runtimeMaterial.SetColor(_bottomColorId, effectiveState.BottomColor);
@@ -389,6 +433,16 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.EdgeGlow
             _runtimeMaterial.SetFloat(_softnessId, effectiveState.Softness);
             _runtimeMaterial.SetFloat(_roundnessId, effectiveState.CornerRoundness);
             _runtimeMaterial.SetFloat(_centerClearId, effectiveState.CenterClear);
+            _runtimeMaterial.SetFloat(_warpAmountId, effectiveState.WarpAmount);
+            _runtimeMaterial.SetFloat(_warpScaleId, effectiveState.WarpScale);
+            _runtimeMaterial.SetFloat(_warpSpeedId, effectiveState.WarpSpeed);
+            _runtimeMaterial.SetFloat(_noiseAmountId, effectiveState.NoiseAmount);
+            _runtimeMaterial.SetFloat(_noiseScaleId, effectiveState.NoiseScale);
+            _runtimeMaterial.SetFloat(_noiseSpeedId, effectiveState.NoiseSpeed);
+            _runtimeMaterial.SetFloat(_topEdgeStrengthId, effectiveState.TopEdgeStrength);
+            _runtimeMaterial.SetFloat(_bottomEdgeStrengthId, effectiveState.BottomEdgeStrength);
+            _runtimeMaterial.SetFloat(_leftEdgeStrengthId, effectiveState.LeftEdgeStrength);
+            _runtimeMaterial.SetFloat(_rightEdgeStrengthId, effectiveState.RightEdgeStrength);
 
             _materialStateDirty = false;
         }
@@ -419,7 +473,6 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.EdgeGlow
             return 1f - Mathf.Clamp01(time / _pulse.Decay);
         }
 
-#if UNITY_EDITOR
         protected override void OnValidate()
         {
             base.OnValidate();
@@ -433,6 +486,5 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.EdgeGlow
                 SetMaterialDirty();
             }
         }
-#endif
     }
 }
