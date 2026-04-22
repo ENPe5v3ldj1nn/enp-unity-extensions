@@ -83,63 +83,88 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
 
         public void SetState(AsymmetricInnerWashState state)
         {
+            InitializeStateIfNeeded();
             _state = AsymmetricInnerWashState.Sanitize(state);
             _materialDirty = true;
-            ApplyVisualState(false);
+            ApplyVisualState(true);
+            SetMaterialDirty();
         }
 
         public void SetIntensity(float intensity)
         {
+            InitializeStateIfNeeded();
             _state.Intensity = Mathf.Clamp01(intensity);
             _materialDirty = true;
             ApplyVisualState(false);
+            SetMaterialDirty();
         }
 
         public void SetThickness(float thickness)
         {
+            InitializeStateIfNeeded();
             _state.Thickness = Mathf.Clamp01(thickness);
             _materialDirty = true;
             ApplyVisualState(false);
+            SetMaterialDirty();
         }
 
         public void SetSoftness(float softness)
         {
+            InitializeStateIfNeeded();
             _state.Softness = Mathf.Clamp01(softness);
             _materialDirty = true;
             ApplyVisualState(false);
+            SetMaterialDirty();
         }
 
         public void SetCenterClear(float centerClear)
         {
+            InitializeStateIfNeeded();
             _state.CenterClear = Mathf.Clamp01(centerClear);
             _materialDirty = true;
             ApplyVisualState(false);
+            SetMaterialDirty();
         }
 
         public void SetRoundness(float roundness)
         {
+            InitializeStateIfNeeded();
             _state.CornerRoundness = Mathf.Max(0f, roundness);
             _materialDirty = true;
             ApplyVisualState(false);
+            SetMaterialDirty();
         }
 
         public void SetEdgeStrengths(float top, float bottom, float left, float right)
         {
+            InitializeStateIfNeeded();
             _state.TopStrength = Mathf.Clamp(top, 0f, 2f);
             _state.BottomStrength = Mathf.Clamp(bottom, 0f, 2f);
             _state.LeftStrength = Mathf.Clamp(left, 0f, 2f);
             _state.RightStrength = Mathf.Clamp(right, 0f, 2f);
             _materialDirty = true;
             ApplyVisualState(false);
+            SetMaterialDirty();
         }
 
         public void SetColors(Color tintColor, Color topColor, Color bottomColor)
         {
+            InitializeStateIfNeeded();
             _state.TintColor = tintColor;
             _state.TopColor = topColor;
             _state.BottomColor = bottomColor;
             _materialDirty = true;
             ApplyVisualState(false);
+            SetMaterialDirty();
+        }
+
+        protected override void OnRectTransformDimensionsChange()
+        {
+            base.OnRectTransformDimensionsChange();
+            _materialDirty = true;
+            SetVerticesDirty();
+            ApplyVisualState(false);
+            SetMaterialDirty();
         }
 
         [ContextMenu("Apply Neutral Ambient Preset")]
@@ -187,14 +212,6 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
 
             vh.AddTriangle(0, 1, 2);
             vh.AddTriangle(2, 3, 0);
-        }
-
-        protected override void OnRectTransformDimensionsChange()
-        {
-            base.OnRectTransformDimensionsChange();
-            _materialDirty = true;
-            SetVerticesDirty();
-            ApplyVisualState(false);
         }
 
         private void Reset()
