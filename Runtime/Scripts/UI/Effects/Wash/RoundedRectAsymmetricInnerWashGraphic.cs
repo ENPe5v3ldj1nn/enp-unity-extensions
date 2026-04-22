@@ -40,6 +40,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
         public override Texture mainTexture => Texture2D.whiteTexture;
 
         public AsymmetricInnerWashState State => _state;
+        public AsymmetricInnerWashState ConfiguredInitialState => AsymmetricInnerWashState.Sanitize(_initialState);
 
         protected override void Awake()
         {
@@ -67,13 +68,9 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
             if (_runtimeMaterial != null)
             {
                 if (Application.isPlaying)
-                {
                     Destroy(_runtimeMaterial);
-                }
                 else
-                {
                     DestroyImmediate(_runtimeMaterial);
-                }
 
                 _runtimeMaterial = null;
             }
@@ -158,6 +155,19 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
             SetMaterialDirty();
         }
 
+        public void SetRuntimeAnimatedValues(Color bottomColor, float intensity, float bottomStrength, float leftStrength, float rightStrength)
+        {
+            InitializeStateIfNeeded();
+            _state.BottomColor = bottomColor;
+            _state.Intensity = Mathf.Clamp01(intensity);
+            _state.TopStrength = 0f;
+            _state.BottomStrength = Mathf.Clamp(bottomStrength, 0f, 2f);
+            _state.LeftStrength = Mathf.Clamp(leftStrength, 0f, 2f);
+            _state.RightStrength = Mathf.Clamp(rightStrength, 0f, 2f);
+            _materialDirty = true;
+            ApplyVisualState(false);
+        }
+
         protected override void OnRectTransformDimensionsChange()
         {
             base.OnRectTransformDimensionsChange();
@@ -233,31 +243,21 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
         private void EnsureShader()
         {
             if (_shader != null)
-            {
                 return;
-            }
 
             _shader = Shader.Find(ShaderName);
 
             if (_shader == null)
-            {
-                throw new InvalidOperationException(
-                    $"{nameof(RoundedRectAsymmetricInnerWashGraphic)} requires shader '{ShaderName}'.");
-            }
+                throw new InvalidOperationException($"{nameof(RoundedRectAsymmetricInnerWashGraphic)} requires shader '{ShaderName}'.");
         }
 
         private void InitializeStateIfNeeded()
         {
             if (_stateInitialized)
-            {
                 return;
-            }
 
-            if (_initialState.TintColor == default && _initialState.TopColor == default &&
-                _initialState.BottomColor == default)
-            {
+            if (_initialState.TintColor == default && _initialState.TopColor == default && _initialState.BottomColor == default)
                 _initialState = AsymmetricInnerWashState.CreateNeutralAmbient();
-            }
 
             _state = AsymmetricInnerWashState.Sanitize(_initialState);
             _stateInitialized = true;
@@ -268,9 +268,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
             if (_runtimeMaterial != null)
             {
                 if (material != _runtimeMaterial)
-                {
                     material = _runtimeMaterial;
-                }
 
                 return;
             }
@@ -285,9 +283,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
         private void ApplyVisualState(bool forceRectRefresh)
         {
             if (!IsActive())
-            {
                 return;
-            }
 
             EnsureMaterial();
 
