@@ -7,6 +7,7 @@ Shader "UI/ENP/RoundedRectAsymmetricInnerWash"
         _TintColor ("Base Tint", Color) = (1,1,1,1)
         _TopColor ("Top Color", Color) = (1,1,1,1)
         _BottomColor ("Bottom Color", Color) = (1,1,1,1)
+        _BottomAccentColor ("Bottom Accent Color", Color) = (1,1,1,1)
         _Intensity ("Intensity", Range(0,1)) = 0.15
         _Thickness ("Thickness", Range(0,1)) = 0.2
         _Softness ("Softness", Range(0,1)) = 0.7
@@ -18,6 +19,15 @@ Shader "UI/ENP/RoundedRectAsymmetricInnerWash"
         _RightStrength ("Right Strength", Range(0,2)) = 0.35
         _RectSize ("Rect Size", Vector) = (100,100,0,0)
         _RectCenter ("Rect Center", Vector) = (0,0,0,0)
+
+        _BottomSegmentsA ("Bottom Segments A", Vector) = (0,0,0,0)
+        _BottomSegmentsB ("Bottom Segments B", Vector) = (0,0,0,0)
+        _LeftSegments ("Left Segments", Vector) = (0,0,0,0)
+        _RightSegments ("Right Segments", Vector) = (0,0,0,0)
+        _BottomAccentA ("Bottom Accent A", Vector) = (0,0,0,0)
+        _BottomAccentB ("Bottom Accent B", Vector) = (0,0,0,0)
+        _LeftAccent ("Left Accent", Vector) = (0,0,0,0)
+        _RightAccent ("Right Accent", Vector) = (0,0,0,0)
 
         _StencilComp ("Stencil Comparison", Float) = 8
         _Stencil ("Stencil ID", Float) = 0
@@ -72,6 +82,7 @@ Shader "UI/ENP/RoundedRectAsymmetricInnerWash"
             float4 _TintColor;
             float4 _TopColor;
             float4 _BottomColor;
+            float4 _BottomAccentColor;
             float _Intensity;
             float _Thickness;
             float _Softness;
@@ -83,6 +94,14 @@ Shader "UI/ENP/RoundedRectAsymmetricInnerWash"
             float _RightStrength;
             float4 _RectSize;
             float4 _RectCenter;
+            float4 _BottomSegmentsA;
+            float4 _BottomSegmentsB;
+            float4 _LeftSegments;
+            float4 _RightSegments;
+            float4 _BottomAccentA;
+            float4 _BottomAccentB;
+            float4 _LeftAccent;
+            float4 _RightAccent;
             float4 _ClipRect;
 
             float4x4 unity_ObjectToWorld;
@@ -123,6 +142,64 @@ Shader "UI/ENP/RoundedRectAsymmetricInnerWash"
                 return 1.0 - smoothstep(0.0, thicknessPx + feather, distanceToSide);
             }
 
+            float Select3(float4 values, int index)
+            {
+                if (index <= 0)
+                    return values.x;
+
+                if (index == 1)
+                    return values.y;
+
+                return values.z;
+            }
+
+            float Select5(float4 valuesA, float4 valuesB, int index)
+            {
+                if (index <= 0)
+                    return valuesA.x;
+
+                if (index == 1)
+                    return valuesA.y;
+
+                if (index == 2)
+                    return valuesA.z;
+
+                if (index == 3)
+                    return valuesA.w;
+
+                return valuesB.x;
+            }
+
+            float SampleSegment3(float coord, float4 values)
+            {
+                float scaled = saturate(coord) * 2.0;
+                int index = (int)floor(scaled);
+                float blend = scaled - index;
+                blend = blend * blend * (3.0 - 2.0 * blend);
+
+                if (index >= 2)
+                    return values.z;
+
+                float a = Select3(values, index);
+                float b = Select3(values, index + 1);
+                return lerp(a, b, blend);
+            }
+
+            float SampleSegment5(float coord, float4 valuesA, float4 valuesB)
+            {
+                float scaled = saturate(coord) * 4.0;
+                int index = (int)floor(scaled);
+                float blend = scaled - index;
+                blend = blend * blend * (3.0 - 2.0 * blend);
+
+                if (index >= 4)
+                    return valuesB.x;
+
+                float a = Select5(valuesA, valuesB, index);
+                float b = Select5(valuesA, valuesB, index + 1);
+                return lerp(a, b, blend);
+            }
+
             v2f vert(appdata_t v)
             {
                 v2f o;
@@ -155,10 +232,32 @@ Shader "UI/ENP/RoundedRectAsymmetricInnerWash"
                 float distBottom = p.y + halfSize.y;
                 float distTop = halfSize.y - p.y;
 
-                float leftBand = EvaluateSide(distLeft, thicknessPx, _Softness) * _LeftStrength;
-                float rightBand = EvaluateSide(distRight, thicknessPx, _Softness) * _RightStrength;
-                float bottomBand = EvaluateSide(distBottom, thicknessPx, _Softness) * _BottomStrength;
-                float topBand = EvaluateSide(distTop, thicknessPx, _Softness) * _TopStrength;
+                float leftEval = EvaluateSide(distLeft, thicknessPx, _Softness);
+                float rightEval = EvaluateSide(distRight, thicknessPx, _Softness);
+                float bottomEval = EvaluateSide(distBottom, thicknessPx, _Softness);
+                float topEval = EvaluateSide(distTop, thicknessPx, _Softness);
+
+                float segmentedBottomStrength = SampleSegment5(uv.x, _BottomSegmentsA, _BottomSegmentsB);
+                float segmentedLeftStrength = SampleSegment3(uv.y, _LeftSegments);
+                float segmentedRightStrength = SampleSegment3(uv.y, _RightSegments);
+
+                float segmentedBottomAccent = SampleSegment5(uv.x, _BottomAccentA, _BottomAccentB);
+                float segmentedLeftAccent = SampleSegment3(uv.y, _LeftAccent);
+                float segmentedRightAccent = SampleSegment3(uv.y, _RightAccent);
+
+                float bottomStrength = max(_BottomStrength, segmentedBottomStrength);
+                float leftStrength = max(_LeftStrength, segmentedLeftStrength);
+                float rightStrength = max(_RightStrength, segmentedRightStrength);
+                float topStrength = _TopStrength;
+
+                float bottomAccent = saturate(segmentedBottomAccent);
+                float leftAccent = saturate(segmentedLeftAccent);
+                float rightAccent = saturate(segmentedRightAccent);
+
+                float leftBand = leftEval * leftStrength * (1.0 + leftAccent * 0.16);
+                float rightBand = rightEval * rightStrength * (1.0 + rightAccent * 0.16);
+                float bottomBand = bottomEval * bottomStrength * (1.0 + bottomAccent * 0.22);
+                float topBand = topEval * topStrength;
 
                 float sideMask = saturate(leftBand + rightBand + bottomBand + topBand);
                 sideMask = pow(sideMask, lerp(2.2, 0.85, _Softness));
@@ -170,7 +269,17 @@ Shader "UI/ENP/RoundedRectAsymmetricInnerWash"
 
                 float wash = saturate(_Intensity) * sideMask * centerMask * insideMask;
 
-                float4 gradient = lerp(_BottomColor, _TopColor, uv.y) * _TintColor;
+                float4 baseGradient = lerp(_BottomColor, _TopColor, uv.y) * _TintColor;
+                float4 accentGradient = lerp(_BottomAccentColor, _TopColor, saturate(uv.y * 1.15)) * _TintColor;
+
+                float sideAccentMask = max(leftEval * leftAccent, rightEval * rightAccent);
+                float accentMask = saturate(bottomEval * bottomAccent + sideAccentMask * 0.85);
+                accentMask *= saturate(1.0 - uv.y * 0.55);
+                accentMask *= insideMask;
+
+                float4 gradient = lerp(baseGradient, accentGradient, accentMask);
+                gradient.rgb *= 1.0 + accentMask * 0.12;
+
                 float4 col = gradient * i.color * _Color;
                 col.rgb *= wash;
                 col.a *= wash;

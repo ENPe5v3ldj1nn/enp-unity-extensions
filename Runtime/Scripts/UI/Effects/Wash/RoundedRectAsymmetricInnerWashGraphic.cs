@@ -27,6 +27,16 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
         private static readonly int _rectSizeId = Shader.PropertyToID("_RectSize");
         private static readonly int _rectCenterId = Shader.PropertyToID("_RectCenter");
 
+        private static readonly int _bottomSegmentsAId = Shader.PropertyToID("_BottomSegmentsA");
+        private static readonly int _bottomSegmentsBId = Shader.PropertyToID("_BottomSegmentsB");
+        private static readonly int _leftSegmentsId = Shader.PropertyToID("_LeftSegments");
+        private static readonly int _rightSegmentsId = Shader.PropertyToID("_RightSegments");
+        private static readonly int _bottomAccentAId = Shader.PropertyToID("_BottomAccentA");
+        private static readonly int _bottomAccentBId = Shader.PropertyToID("_BottomAccentB");
+        private static readonly int _leftAccentId = Shader.PropertyToID("_LeftAccent");
+        private static readonly int _rightAccentId = Shader.PropertyToID("_RightAccent");
+        private static readonly int _bottomAccentColorId = Shader.PropertyToID("_BottomAccentColor");
+
         [SerializeField] private AsymmetricInnerWashState _initialState;
 
         private Material _runtimeMaterial;
@@ -36,6 +46,17 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
         private Vector2 _lastRectCenter;
         private bool _materialDirty;
         private bool _stateInitialized;
+
+        private bool _segmentedRuntimeActive;
+        private Color _runtimeBottomAccentColor;
+        private Vector4 _runtimeBottomSegmentsA;
+        private Vector4 _runtimeBottomSegmentsB;
+        private Vector4 _runtimeLeftSegments;
+        private Vector4 _runtimeRightSegments;
+        private Vector4 _runtimeBottomAccentA;
+        private Vector4 _runtimeBottomAccentB;
+        private Vector4 _runtimeLeftAccent;
+        private Vector4 _runtimeRightAccent;
 
         public override Texture mainTexture => Texture2D.whiteTexture;
 
@@ -81,6 +102,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
         public void SetState(AsymmetricInnerWashState state)
         {
             InitializeStateIfNeeded();
+            _segmentedRuntimeActive = false;
             _state = AsymmetricInnerWashState.Sanitize(state);
             _materialDirty = true;
             ApplyVisualState(true);
@@ -90,6 +112,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
         public void SetIntensity(float intensity)
         {
             InitializeStateIfNeeded();
+            _segmentedRuntimeActive = false;
             _state.Intensity = Mathf.Clamp01(intensity);
             _materialDirty = true;
             ApplyVisualState(false);
@@ -99,6 +122,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
         public void SetThickness(float thickness)
         {
             InitializeStateIfNeeded();
+            _segmentedRuntimeActive = false;
             _state.Thickness = Mathf.Clamp01(thickness);
             _materialDirty = true;
             ApplyVisualState(false);
@@ -108,6 +132,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
         public void SetSoftness(float softness)
         {
             InitializeStateIfNeeded();
+            _segmentedRuntimeActive = false;
             _state.Softness = Mathf.Clamp01(softness);
             _materialDirty = true;
             ApplyVisualState(false);
@@ -117,6 +142,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
         public void SetCenterClear(float centerClear)
         {
             InitializeStateIfNeeded();
+            _segmentedRuntimeActive = false;
             _state.CenterClear = Mathf.Clamp01(centerClear);
             _materialDirty = true;
             ApplyVisualState(false);
@@ -126,6 +152,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
         public void SetRoundness(float roundness)
         {
             InitializeStateIfNeeded();
+            _segmentedRuntimeActive = false;
             _state.CornerRoundness = Mathf.Max(0f, roundness);
             _materialDirty = true;
             ApplyVisualState(false);
@@ -135,6 +162,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
         public void SetEdgeStrengths(float top, float bottom, float left, float right)
         {
             InitializeStateIfNeeded();
+            _segmentedRuntimeActive = false;
             _state.TopStrength = Mathf.Clamp(top, 0f, 2f);
             _state.BottomStrength = Mathf.Clamp(bottom, 0f, 2f);
             _state.LeftStrength = Mathf.Clamp(left, 0f, 2f);
@@ -147,6 +175,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
         public void SetColors(Color tintColor, Color topColor, Color bottomColor)
         {
             InitializeStateIfNeeded();
+            _segmentedRuntimeActive = false;
             _state.TintColor = tintColor;
             _state.TopColor = topColor;
             _state.BottomColor = bottomColor;
@@ -158,6 +187,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
         public void SetRuntimeAnimatedValues(Color bottomColor, float intensity, float bottomStrength, float leftStrength, float rightStrength)
         {
             InitializeStateIfNeeded();
+            _segmentedRuntimeActive = false;
             _state.BottomColor = bottomColor;
             _state.Intensity = Mathf.Clamp01(intensity);
             _state.TopStrength = 0f;
@@ -166,6 +196,60 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
             _state.RightStrength = Mathf.Clamp(rightStrength, 0f, 2f);
             _materialDirty = true;
             ApplyVisualState(false);
+        }
+
+        public void SetSegmentedRuntimeAnimatedValues(
+            Color bottomColor,
+            Color accentBottomColor,
+            float intensity,
+            float[] bottomStrengths,
+            float[] leftStrengths,
+            float[] rightStrengths,
+            float[] bottomAccents,
+            float[] leftAccents,
+            float[] rightAccents)
+        {
+            if (bottomStrengths == null || bottomStrengths.Length != 5)
+                throw new ArgumentException(nameof(bottomStrengths));
+
+            if (leftStrengths == null || leftStrengths.Length != 3)
+                throw new ArgumentException(nameof(leftStrengths));
+
+            if (rightStrengths == null || rightStrengths.Length != 3)
+                throw new ArgumentException(nameof(rightStrengths));
+
+            if (bottomAccents == null || bottomAccents.Length != 5)
+                throw new ArgumentException(nameof(bottomAccents));
+
+            if (leftAccents == null || leftAccents.Length != 3)
+                throw new ArgumentException(nameof(leftAccents));
+
+            if (rightAccents == null || rightAccents.Length != 3)
+                throw new ArgumentException(nameof(rightAccents));
+
+            InitializeStateIfNeeded();
+
+            _state.BottomColor = bottomColor;
+            _state.Intensity = Mathf.Clamp01(intensity);
+            _state.TopStrength = 0f;
+            _state.BottomStrength = 0f;
+            _state.LeftStrength = 0f;
+            _state.RightStrength = 0f;
+
+            _runtimeBottomAccentColor = accentBottomColor;
+            _runtimeBottomSegmentsA = new Vector4(bottomStrengths[0], bottomStrengths[1], bottomStrengths[2], bottomStrengths[3]);
+            _runtimeBottomSegmentsB = new Vector4(bottomStrengths[4], 0f, 0f, 0f);
+            _runtimeLeftSegments = new Vector4(leftStrengths[0], leftStrengths[1], leftStrengths[2], 0f);
+            _runtimeRightSegments = new Vector4(rightStrengths[0], rightStrengths[1], rightStrengths[2], 0f);
+            _runtimeBottomAccentA = new Vector4(bottomAccents[0], bottomAccents[1], bottomAccents[2], bottomAccents[3]);
+            _runtimeBottomAccentB = new Vector4(bottomAccents[4], 0f, 0f, 0f);
+            _runtimeLeftAccent = new Vector4(leftAccents[0], leftAccents[1], leftAccents[2], 0f);
+            _runtimeRightAccent = new Vector4(rightAccents[0], rightAccents[1], rightAccents[2], 0f);
+
+            _segmentedRuntimeActive = true;
+            _materialDirty = true;
+            ApplyVisualState(false);
+            SetMaterialDirty();
         }
 
         protected override void OnRectTransformDimensionsChange()
@@ -230,6 +314,8 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
             color = Color.white;
             raycastTarget = false;
             _state = AsymmetricInnerWashState.Sanitize(_initialState);
+            _stateInitialized = true;
+            _segmentedRuntimeActive = false;
             _materialDirty = true;
 
             if (isActiveAndEnabled)
@@ -314,6 +400,31 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
             _runtimeMaterial.SetFloat(_leftStrengthId, _state.LeftStrength);
             _runtimeMaterial.SetFloat(_rightStrengthId, _state.RightStrength);
 
+            if (_segmentedRuntimeActive)
+            {
+                _runtimeMaterial.SetColor(_bottomAccentColorId, _runtimeBottomAccentColor);
+                _runtimeMaterial.SetVector(_bottomSegmentsAId, _runtimeBottomSegmentsA);
+                _runtimeMaterial.SetVector(_bottomSegmentsBId, _runtimeBottomSegmentsB);
+                _runtimeMaterial.SetVector(_leftSegmentsId, _runtimeLeftSegments);
+                _runtimeMaterial.SetVector(_rightSegmentsId, _runtimeRightSegments);
+                _runtimeMaterial.SetVector(_bottomAccentAId, _runtimeBottomAccentA);
+                _runtimeMaterial.SetVector(_bottomAccentBId, _runtimeBottomAccentB);
+                _runtimeMaterial.SetVector(_leftAccentId, _runtimeLeftAccent);
+                _runtimeMaterial.SetVector(_rightAccentId, _runtimeRightAccent);
+            }
+            else
+            {
+                _runtimeMaterial.SetColor(_bottomAccentColorId, _state.BottomColor);
+                _runtimeMaterial.SetVector(_bottomSegmentsAId, Vector4.zero);
+                _runtimeMaterial.SetVector(_bottomSegmentsBId, Vector4.zero);
+                _runtimeMaterial.SetVector(_leftSegmentsId, Vector4.zero);
+                _runtimeMaterial.SetVector(_rightSegmentsId, Vector4.zero);
+                _runtimeMaterial.SetVector(_bottomAccentAId, Vector4.zero);
+                _runtimeMaterial.SetVector(_bottomAccentBId, Vector4.zero);
+                _runtimeMaterial.SetVector(_leftAccentId, Vector4.zero);
+                _runtimeMaterial.SetVector(_rightAccentId, Vector4.zero);
+            }
+
             _materialDirty = false;
         }
 
@@ -323,6 +434,8 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
             base.OnValidate();
             _initialState = AsymmetricInnerWashState.Sanitize(_initialState);
             _state = _initialState;
+            _stateInitialized = true;
+            _segmentedRuntimeActive = false;
             _materialDirty = true;
 
             if (isActiveAndEnabled)
