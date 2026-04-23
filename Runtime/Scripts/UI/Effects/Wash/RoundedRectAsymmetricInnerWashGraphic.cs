@@ -47,13 +47,13 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
         [SerializeField] private bool _usePreviewAccentColorOverride;
         [SerializeField] private Color _previewBottomAccentColor = new Color(0.66f, 0.78f, 1f, 1f);
 
-        [SerializeField] private float[] _previewBottomStrengths = new float[5];
-        [SerializeField] private float[] _previewLeftStrengths = new float[3];
-        [SerializeField] private float[] _previewRightStrengths = new float[3];
+        [SerializeField] private FiveSegmentValues _previewBottomStrengths;
+        [SerializeField] private ThreeSegmentValues _previewLeftStrengths;
+        [SerializeField] private ThreeSegmentValues _previewRightStrengths;
 
-        [SerializeField] private float[] _previewBottomAccents = new float[5];
-        [SerializeField] private float[] _previewLeftAccents = new float[3];
-        [SerializeField] private float[] _previewRightAccents = new float[3];
+        [SerializeField] private FiveSegmentValues _previewBottomAccents;
+        [SerializeField] private ThreeSegmentValues _previewLeftAccents;
+        [SerializeField] private ThreeSegmentValues _previewRightAccents;
 
         private Material _runtimeMaterial;
         private Shader _shader;
@@ -409,13 +409,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
             _usePreviewAccentColorOverride = false;
             _previewBottomAccentColor = new Color(0.66f, 0.78f, 1f, 1f);
 
-            EnsurePreviewArrays();
-            FillStrengthArray(_previewBottomStrengths, 5, _baseState.BottomStrength);
-            FillStrengthArray(_previewLeftStrengths, 3, _baseState.LeftStrength);
-            FillStrengthArray(_previewRightStrengths, 3, _baseState.RightStrength);
-            FillZeroArray(_previewBottomAccents, 5);
-            FillZeroArray(_previewLeftAccents, 3);
-            FillZeroArray(_previewRightAccents, 3);
+            ResetPreviewValues();
 
             color = Color.white;
             raycastTarget = false;
@@ -458,7 +452,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
 
             _baseState = AsymmetricInnerWashState.Sanitize(_baseState);
             _state = _baseState;
-            EnsurePreviewArrays();
+            SanitizePreviewValues();
             _stateInitialized = true;
         }
 
@@ -541,53 +535,15 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
             {
                 Color accentColor = _usePreviewAccentColorOverride ? _previewBottomAccentColor : _state.BottomColor;
 
-                Vector4 bottomSegmentsA = new Vector4(
-                    GetPreviewStrength(_previewBottomStrengths, 0, _baseState.BottomStrength),
-                    GetPreviewStrength(_previewBottomStrengths, 1, _baseState.BottomStrength),
-                    GetPreviewStrength(_previewBottomStrengths, 2, _baseState.BottomStrength),
-                    GetPreviewStrength(_previewBottomStrengths, 3, _baseState.BottomStrength));
+                Vector4 bottomSegmentsA = _previewBottomStrengths.ToStrengthVectorA(_previewUsesAbsoluteStrengths, _baseState.BottomStrength);
+                Vector4 bottomSegmentsB = _previewBottomStrengths.ToStrengthVectorB(_previewUsesAbsoluteStrengths, _baseState.BottomStrength);
+                Vector4 leftSegments = _previewLeftStrengths.ToStrengthVector(_previewUsesAbsoluteStrengths, _baseState.LeftStrength);
+                Vector4 rightSegments = _previewRightStrengths.ToStrengthVector(_previewUsesAbsoluteStrengths, _baseState.RightStrength);
 
-                Vector4 bottomSegmentsB = new Vector4(
-                    GetPreviewStrength(_previewBottomStrengths, 4, _baseState.BottomStrength),
-                    0f,
-                    0f,
-                    0f);
-
-                Vector4 leftSegments = new Vector4(
-                    GetPreviewStrength(_previewLeftStrengths, 0, _baseState.LeftStrength),
-                    GetPreviewStrength(_previewLeftStrengths, 1, _baseState.LeftStrength),
-                    GetPreviewStrength(_previewLeftStrengths, 2, _baseState.LeftStrength),
-                    0f);
-
-                Vector4 rightSegments = new Vector4(
-                    GetPreviewStrength(_previewRightStrengths, 0, _baseState.RightStrength),
-                    GetPreviewStrength(_previewRightStrengths, 1, _baseState.RightStrength),
-                    GetPreviewStrength(_previewRightStrengths, 2, _baseState.RightStrength),
-                    0f);
-
-                Vector4 bottomAccentA = new Vector4(
-                    GetPreviewAccent(_previewBottomAccents, 0),
-                    GetPreviewAccent(_previewBottomAccents, 1),
-                    GetPreviewAccent(_previewBottomAccents, 2),
-                    GetPreviewAccent(_previewBottomAccents, 3));
-
-                Vector4 bottomAccentB = new Vector4(
-                    GetPreviewAccent(_previewBottomAccents, 4),
-                    0f,
-                    0f,
-                    0f);
-
-                Vector4 leftAccent = new Vector4(
-                    GetPreviewAccent(_previewLeftAccents, 0),
-                    GetPreviewAccent(_previewLeftAccents, 1),
-                    GetPreviewAccent(_previewLeftAccents, 2),
-                    0f);
-
-                Vector4 rightAccent = new Vector4(
-                    GetPreviewAccent(_previewRightAccents, 0),
-                    GetPreviewAccent(_previewRightAccents, 1),
-                    GetPreviewAccent(_previewRightAccents, 2),
-                    0f);
+                Vector4 bottomAccentA = _previewBottomAccents.ToAccentVectorA();
+                Vector4 bottomAccentB = _previewBottomAccents.ToAccentVectorB();
+                Vector4 leftAccent = _previewLeftAccents.ToAccentVector();
+                Vector4 rightAccent = _previewRightAccents.ToAccentVector();
 
                 ApplyPackedSegmentData(
                     accentColor,
@@ -641,80 +597,26 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
             _runtimeMaterial.SetVector(_rightAccentId, Vector4.zero);
         }
 
-        private float GetPreviewStrength(float[] values, int index, float baseStrength)
+        private void ResetPreviewValues()
         {
-            float raw = values[index];
+            _previewBottomStrengths.SetAll(_baseState.BottomStrength);
+            _previewLeftStrengths.SetAll(_baseState.LeftStrength);
+            _previewRightStrengths.SetAll(_baseState.RightStrength);
 
-            if (_previewUsesAbsoluteStrengths)
-            {
-                return Mathf.Clamp(raw, 0f, 2f);
-            }
-
-            return Mathf.Clamp(baseStrength + raw, 0f, 2f);
+            _previewBottomAccents.SetAll(0f);
+            _previewLeftAccents.SetAll(0f);
+            _previewRightAccents.SetAll(0f);
         }
 
-        private static float GetPreviewAccent(float[] values, int index)
+        private void SanitizePreviewValues()
         {
-            return Mathf.Clamp01(values[index]);
-        }
+            _previewBottomStrengths.Clamp(-2f, 2f);
+            _previewLeftStrengths.Clamp(-2f, 2f);
+            _previewRightStrengths.Clamp(-2f, 2f);
 
-        private void EnsurePreviewArrays()
-        {
-            EnsureStrengthArray(ref _previewBottomStrengths, 5, _baseState.BottomStrength);
-            EnsureStrengthArray(ref _previewLeftStrengths, 3, _baseState.LeftStrength);
-            EnsureStrengthArray(ref _previewRightStrengths, 3, _baseState.RightStrength);
-
-            EnsureAccentArray(ref _previewBottomAccents, 5);
-            EnsureAccentArray(ref _previewLeftAccents, 3);
-            EnsureAccentArray(ref _previewRightAccents, 3);
-        }
-
-        private static void EnsureStrengthArray(ref float[] values, int expectedLength, float defaultValue)
-        {
-            if (values == null || values.Length != expectedLength)
-            {
-                values = new float[expectedLength];
-                FillStrengthArray(values, expectedLength, defaultValue);
-                return;
-            }
-
-            for (int i = 0; i < expectedLength; i++)
-            {
-                values[i] = Mathf.Clamp(values[i], -2f, 2f);
-            }
-        }
-
-        private static void EnsureAccentArray(ref float[] values, int expectedLength)
-        {
-            if (values == null || values.Length != expectedLength)
-            {
-                values = new float[expectedLength];
-                FillZeroArray(values, expectedLength);
-                return;
-            }
-
-            for (int i = 0; i < expectedLength; i++)
-            {
-                values[i] = Mathf.Clamp01(values[i]);
-            }
-        }
-
-        private static void FillStrengthArray(float[] values, int count, float value)
-        {
-            float clamped = Mathf.Clamp(value, -2f, 2f);
-
-            for (int i = 0; i < count; i++)
-            {
-                values[i] = clamped;
-            }
-        }
-
-        private static void FillZeroArray(float[] values, int count)
-        {
-            for (int i = 0; i < count; i++)
-            {
-                values[i] = 0f;
-            }
+            _previewBottomAccents.Clamp(0f, 1f);
+            _previewLeftAccents.Clamp(0f, 1f);
+            _previewRightAccents.Clamp(0f, 1f);
         }
 
         private static void ValidateArray(float[] values, int expectedLength, string paramName)
@@ -737,7 +639,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
                 _baseState = AsymmetricInnerWashState.CreateNeutralAmbient();
             }
 
-            EnsurePreviewArrays();
+            SanitizePreviewValues();
 
             if (!_runtimeSegmentedActive)
             {

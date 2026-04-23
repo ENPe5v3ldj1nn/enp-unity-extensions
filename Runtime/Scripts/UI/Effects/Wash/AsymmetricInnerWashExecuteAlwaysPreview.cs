@@ -29,8 +29,6 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
         private int _lastSeed;
         private double _lastTime;
         private bool _timeInitialized;
-        private bool _pendingReset;
-        private bool _pendingEditorApply;
         private bool _previewWasApplied;
 
         public float CurrentPreviewStreak01 => _autoAnimateStreak
@@ -50,75 +48,34 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
             TryCacheReferences();
             EnsureGenerator(_resetMotionOnEnable);
             ResetTime();
-            _pendingReset = false;
-            _pendingEditorApply = true;
             _previewWasApplied = false;
-
-#if UNITY_EDITOR
-            EditorApplication.update -= EditorTick;
-            EditorApplication.update += EditorTick;
-#endif
         }
 
         private void OnDisable()
         {
-#if UNITY_EDITOR
-            EditorApplication.update -= EditorTick;
-#endif
-
             RestoreGraphicIfNeeded();
             _timeInitialized = false;
-            _pendingReset = false;
-            _pendingEditorApply = false;
             _previewWasApplied = false;
         }
 
         private void Update()
         {
-            if (!Application.isPlaying)
-            {
-                return;
-            }
-
-            Tick(GetCurrentTime());
-        }
-
-#if UNITY_EDITOR
-        private void EditorTick()
-        {
             if (Application.isPlaying)
             {
+                Tick(GetCurrentTime());
                 return;
             }
 
-            if (!isActiveAndEnabled)
-            {
-                return;
-            }
-
-            if (!TryCacheReferences())
-            {
-                return;
-            }
-
+#if UNITY_EDITOR
             if (!_previewInEditMode)
             {
                 RestoreGraphicIfNeeded();
                 return;
             }
 
-            if (_pendingReset)
-            {
-                EnsureGenerator(true);
-                ResetTime();
-                _pendingReset = false;
-            }
-
             Tick(EditorApplication.timeSinceStartup);
-            _pendingEditorApply = false;
-            EditorApplication.QueuePlayerLoopUpdate();
-        }
 #endif
+        }
 
         private void Tick(double currentTime)
         {
@@ -155,6 +112,14 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
             _motionGenerator.Update(deltaTime, streak01, baseState);
             _motionGenerator.ApplyTo(_graphic);
             _previewWasApplied = true;
+
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+            {
+                SceneView.RepaintAll();
+                UnityEditorInternal.InternalEditorUtility.RepaintAllViews();
+            }
+#endif
         }
 
         private AsymmetricInnerWashState GetEffectiveBaseState()
@@ -284,22 +249,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
             }
 
             EnsureOverrideStateDefaults();
-
-            _pendingReset = true;
-            _pendingEditorApply = true;
-
-            if (!Application.isPlaying)
-            {
-                if (!_previewInEditMode)
-                {
-                    if (TryCacheReferences())
-                    {
-                        RestoreGraphicIfNeeded();
-                    }
-                }
-
-                EditorApplication.QueuePlayerLoopUpdate();
-            }
+            ResetTime();
         }
 
         private void Reset()
@@ -307,8 +257,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
             _graphic = GetComponent<RoundedRectAsymmetricInnerWashGraphic>();
             _overrideBaseState = AsymmetricInnerWashState.CreateNeutralAmbient();
             _useGraphicBaseState = true;
-            _pendingReset = true;
-            _pendingEditorApply = true;
+            ResetTime();
         }
 #endif
     }
