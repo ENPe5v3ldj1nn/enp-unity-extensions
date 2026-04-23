@@ -11,6 +11,42 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
     [RequireComponent(typeof(RoundedRectLivingInnerWashGraphic))]
     public sealed class LivingInnerWashMotionController : MonoBehaviour
     {
+        [System.Serializable]
+        public struct MotionTuning
+        {
+            public bool MotionEnabled;
+            public bool UseUnscaledTime;
+            public float GlobalMotionSpeed;
+            public float IntensityBreathAmplitude;
+            public float ThicknessBreathAmplitude;
+            public float BottomSegmentMotionAmplitude;
+            public float SideSegmentMotionAmplitude;
+            public float AccentMotionAmplitude;
+            public float AccentMotionSpeed;
+            public float SegmentFrequencyMin;
+            public float SegmentFrequencyMax;
+            public float SegmentSmoothing;
+            public float MultiZoneBlend;
+            public int Seed;
+
+            public static MotionTuning Sanitize(MotionTuning tuning)
+            {
+                tuning.GlobalMotionSpeed = Mathf.Max(0f, tuning.GlobalMotionSpeed);
+                tuning.IntensityBreathAmplitude = Mathf.Clamp(tuning.IntensityBreathAmplitude, 0f, 0.2f);
+                tuning.ThicknessBreathAmplitude = Mathf.Clamp(tuning.ThicknessBreathAmplitude, 0f, 0.2f);
+                tuning.BottomSegmentMotionAmplitude = Mathf.Clamp01(tuning.BottomSegmentMotionAmplitude);
+                tuning.SideSegmentMotionAmplitude = Mathf.Clamp01(tuning.SideSegmentMotionAmplitude);
+                tuning.AccentMotionAmplitude = Mathf.Clamp01(tuning.AccentMotionAmplitude);
+                tuning.AccentMotionSpeed = Mathf.Max(0f, tuning.AccentMotionSpeed);
+                tuning.SegmentFrequencyMin = Mathf.Max(0.01f, tuning.SegmentFrequencyMin);
+                tuning.SegmentFrequencyMax = Mathf.Max(tuning.SegmentFrequencyMin, tuning.SegmentFrequencyMax);
+                tuning.SegmentSmoothing = Mathf.Clamp01(tuning.SegmentSmoothing);
+                tuning.MultiZoneBlend = Mathf.Clamp01(tuning.MultiZoneBlend);
+                tuning.Seed = Mathf.Max(1, tuning.Seed);
+                return tuning;
+            }
+        }
+
         private const int BottomCount = 5;
         private const int SideCount = 3;
         private const int TotalCount = 11;
@@ -71,35 +107,102 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
         private readonly float[] _sideAccentProfile = new float[SideCount] { 0.08f, 0.66f, 0.18f };
 
         private RoundedRectLivingInnerWashGraphic _graphic;
+        private LivingInnerWashState _runtimeOverrideState;
+        private MotionTuning _runtimeOverrideTuning;
         private int _lastSeed;
         private double _lastTime;
+        private float _motionTime;
         private bool _initialized;
         private bool _timeInitialized;
+        private bool _runtimeOverrideActive;
 
         public LivingInnerWashState State => _state;
+        public MotionTuning CurrentTuning => new MotionTuning
+        {
+            MotionEnabled = _motionEnabled,
+            UseUnscaledTime = _useUnscaledTime,
+            GlobalMotionSpeed = _globalMotionSpeed,
+            IntensityBreathAmplitude = _intensityBreathAmplitude,
+            ThicknessBreathAmplitude = _thicknessBreathAmplitude,
+            BottomSegmentMotionAmplitude = _bottomSegmentMotionAmplitude,
+            SideSegmentMotionAmplitude = _sideSegmentMotionAmplitude,
+            AccentMotionAmplitude = _accentMotionAmplitude,
+            AccentMotionSpeed = _accentMotionSpeed,
+            SegmentFrequencyMin = _segmentFrequencyMin,
+            SegmentFrequencyMax = _segmentFrequencyMax,
+            SegmentSmoothing = _segmentSmoothing,
+            MultiZoneBlend = _multiZoneBlend,
+            Seed = _seed
+        };
         public bool MotionEnabled
         {
             get => _motionEnabled;
             set => _motionEnabled = value;
         }
 
+        public void ApplyDebugConfiguration(LivingInnerWashState state, MotionTuning tuning)
+        {
+            _runtimeOverrideState = LivingInnerWashState.Sanitize(state);
+            _runtimeOverrideTuning = MotionTuning.Sanitize(tuning);
+            _runtimeOverrideActive = true;
+        }
+
+        public void ClearDebugConfiguration()
+        {
+            _runtimeOverrideActive = false;
+
+            if (_graphic != null)
+            {
+                _graphic.SetState(_state);
+            }
+        }
+
         private static void ApplyDefaultConfiguration(LivingInnerWashMotionController controller)
         {
             controller._state = LivingInnerWashState.Default();
-            controller._motionEnabled = DefaultMotionEnabled;
-            controller._useUnscaledTime = DefaultUseUnscaledTime;
-            controller._globalMotionSpeed = DefaultGlobalMotionSpeed;
-            controller._intensityBreathAmplitude = DefaultIntensityBreathAmplitude;
-            controller._thicknessBreathAmplitude = DefaultThicknessBreathAmplitude;
-            controller._bottomSegmentMotionAmplitude = DefaultBottomSegmentMotionAmplitude;
-            controller._sideSegmentMotionAmplitude = DefaultSideSegmentMotionAmplitude;
-            controller._accentMotionAmplitude = DefaultAccentMotionAmplitude;
-            controller._accentMotionSpeed = DefaultAccentMotionSpeed;
-            controller._segmentFrequencyMin = DefaultSegmentFrequencyMin;
-            controller._segmentFrequencyMax = DefaultSegmentFrequencyMax;
-            controller._segmentSmoothing = DefaultSegmentSmoothing;
-            controller._multiZoneBlend = DefaultMultiZoneBlend;
-            controller._seed = DefaultSeed;
+            controller.ApplyTuning(new MotionTuning
+            {
+                MotionEnabled = DefaultMotionEnabled,
+                UseUnscaledTime = DefaultUseUnscaledTime,
+                GlobalMotionSpeed = DefaultGlobalMotionSpeed,
+                IntensityBreathAmplitude = DefaultIntensityBreathAmplitude,
+                ThicknessBreathAmplitude = DefaultThicknessBreathAmplitude,
+                BottomSegmentMotionAmplitude = DefaultBottomSegmentMotionAmplitude,
+                SideSegmentMotionAmplitude = DefaultSideSegmentMotionAmplitude,
+                AccentMotionAmplitude = DefaultAccentMotionAmplitude,
+                AccentMotionSpeed = DefaultAccentMotionSpeed,
+                SegmentFrequencyMin = DefaultSegmentFrequencyMin,
+                SegmentFrequencyMax = DefaultSegmentFrequencyMax,
+                SegmentSmoothing = DefaultSegmentSmoothing,
+                MultiZoneBlend = DefaultMultiZoneBlend,
+                Seed = DefaultSeed
+            });
+        }
+
+        private void ApplyTuning(MotionTuning tuning)
+        {
+            tuning = MotionTuning.Sanitize(tuning);
+            bool seedChanged = _seed != tuning.Seed;
+            _motionEnabled = tuning.MotionEnabled;
+            _useUnscaledTime = tuning.UseUnscaledTime;
+            _globalMotionSpeed = tuning.GlobalMotionSpeed;
+            _intensityBreathAmplitude = tuning.IntensityBreathAmplitude;
+            _thicknessBreathAmplitude = tuning.ThicknessBreathAmplitude;
+            _bottomSegmentMotionAmplitude = tuning.BottomSegmentMotionAmplitude;
+            _sideSegmentMotionAmplitude = tuning.SideSegmentMotionAmplitude;
+            _accentMotionAmplitude = tuning.AccentMotionAmplitude;
+            _accentMotionSpeed = tuning.AccentMotionSpeed;
+            _segmentFrequencyMin = tuning.SegmentFrequencyMin;
+            _segmentFrequencyMax = tuning.SegmentFrequencyMax;
+            _segmentSmoothing = tuning.SegmentSmoothing;
+            _multiZoneBlend = tuning.MultiZoneBlend;
+            _seed = tuning.Seed;
+
+            if (_initialized && seedChanged)
+            {
+                InitializeWaves();
+                _lastSeed = _seed;
+            }
         }
 
         private void Awake()
@@ -120,6 +223,8 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
                 _graphic.RestoreBase();
             }
 
+            _runtimeOverrideActive = false;
+            _motionTime = 0f;
             _timeInitialized = false;
         }
 
@@ -132,9 +237,12 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
                 return;
             }
 
-            if (!_motionEnabled)
+            LivingInnerWashState activeState = GetActiveState();
+            MotionTuning activeTuning = GetActiveTuning();
+
+            if (!activeTuning.MotionEnabled)
             {
-                _graphic.SetState(_state);
+                _graphic.SetState(activeState);
                 return;
             }
 
@@ -149,8 +257,8 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
             float deltaTime = Mathf.Clamp((float)(now - _lastTime), 0f, 0.05f);
             _lastTime = now;
 
-            float time = (float)now * Mathf.Max(0f, _globalMotionSpeed);
-            Tick(time, deltaTime);
+            _motionTime += deltaTime * Mathf.Max(0f, activeTuning.GlobalMotionSpeed);
+            Tick(activeState, activeTuning, _motionTime, deltaTime);
 
 #if UNITY_EDITOR
             if (!Application.isPlaying)
@@ -164,7 +272,8 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
         public void SetState(LivingInnerWashState state)
         {
             _state = LivingInnerWashState.Sanitize(state);
-            CaptureBaseValues();
+            _runtimeOverrideActive = false;
+            CaptureBaseValues(_state);
             CopyBaseToCurrent();
 
             if (_graphic != null)
@@ -186,8 +295,9 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
 
             if (!_initialized)
             {
-                CaptureBaseValues();
+                CaptureBaseValues(_state);
                 CopyBaseToCurrent();
+                _motionTime = 0f;
                 _initialized = true;
             }
 
@@ -206,29 +316,29 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
             }
         }
 
-        private void Tick(float time, float deltaTime)
+        private void Tick(LivingInnerWashState activeState, MotionTuning activeTuning, float time, float deltaTime)
         {
-            CaptureBaseValues();
+            CaptureBaseValues(activeState);
 
             float intensityBreath = EvaluateBreath(time, 0.23f, 0.71f, 0.17f);
             float thicknessBreath = EvaluateBreath(time, 0.19f, 0.47f, 0.29f);
-            float intensity = Mathf.Clamp01(_state.Intensity + intensityBreath * _intensityBreathAmplitude);
-            float thickness = Mathf.Clamp01(_state.Thickness + thicknessBreath * _thicknessBreathAmplitude);
+            float intensity = Mathf.Clamp01(activeState.Intensity + intensityBreath * activeTuning.IntensityBreathAmplitude);
+            float thickness = Mathf.Clamp01(activeState.Thickness + thicknessBreath * activeTuning.ThicknessBreathAmplitude);
 
-            EvaluateGroup(time, _baseBottom, _bottomTarget, _baseBottomAccent, _bottomAccentTarget, _bottomAccentProfile, 0, BottomCount, _bottomSegmentMotionAmplitude, _accentMotionAmplitude, 1f);
-            EvaluateGroup(time, _baseLeft, _leftTarget, _baseLeftAccent, _leftAccentTarget, _sideAccentProfile, BottomCount, SideCount, _sideSegmentMotionAmplitude, _accentMotionAmplitude * 0.44f, 0.52f);
-            EvaluateGroup(time, _baseRight, _rightTarget, _baseRightAccent, _rightAccentTarget, _sideAccentProfile, BottomCount + SideCount, SideCount, _sideSegmentMotionAmplitude, _accentMotionAmplitude * 0.44f, 0.52f);
+            EvaluateGroup(time, activeTuning, _baseBottom, _bottomTarget, _baseBottomAccent, _bottomAccentTarget, _bottomAccentProfile, 0, BottomCount, activeTuning.BottomSegmentMotionAmplitude, activeTuning.AccentMotionAmplitude, 1f);
+            EvaluateGroup(time, activeTuning, _baseLeft, _leftTarget, _baseLeftAccent, _leftAccentTarget, _sideAccentProfile, BottomCount, SideCount, activeTuning.SideSegmentMotionAmplitude, activeTuning.AccentMotionAmplitude * 0.44f, 0.52f);
+            EvaluateGroup(time, activeTuning, _baseRight, _rightTarget, _baseRightAccent, _rightAccentTarget, _sideAccentProfile, BottomCount + SideCount, SideCount, activeTuning.SideSegmentMotionAmplitude, activeTuning.AccentMotionAmplitude * 0.44f, 0.52f);
 
-            SmoothArray(_bottom, _bottomTarget, BottomCount, deltaTime);
-            SmoothArray(_left, _leftTarget, SideCount, deltaTime);
-            SmoothArray(_right, _rightTarget, SideCount, deltaTime);
-            SmoothArray(_bottomAccent, _bottomAccentTarget, BottomCount, deltaTime);
-            SmoothArray(_leftAccent, _leftAccentTarget, SideCount, deltaTime);
-            SmoothArray(_rightAccent, _rightAccentTarget, SideCount, deltaTime);
+            SmoothArray(activeTuning, _bottom, _bottomTarget, BottomCount, deltaTime);
+            SmoothArray(activeTuning, _left, _leftTarget, SideCount, deltaTime);
+            SmoothArray(activeTuning, _right, _rightTarget, SideCount, deltaTime);
+            SmoothArray(activeTuning, _bottomAccent, _bottomAccentTarget, BottomCount, deltaTime);
+            SmoothArray(activeTuning, _leftAccent, _leftAccentTarget, SideCount, deltaTime);
+            SmoothArray(activeTuning, _rightAccent, _rightAccentTarget, SideCount, deltaTime);
 
             float accentLift = MaxValue(_bottomAccent, BottomCount) * 0.16f;
-            Color bottomColor = Color.LerpUnclamped(_state.BottomColor, Color.white, accentLift * 0.32f);
-            Color accentColor = Color.LerpUnclamped(_state.AccentColor, Color.white, accentLift);
+            Color bottomColor = Color.LerpUnclamped(activeState.BottomColor, Color.white, accentLift * 0.32f);
+            Color accentColor = Color.LerpUnclamped(activeState.AccentColor, Color.white, accentLift);
 
             _graphic.SetAnimatedValues(
                 bottomColor,
@@ -245,6 +355,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
 
         private void EvaluateGroup(
             float time,
+            MotionTuning activeTuning,
             float[] baseValues,
             float[] targetValues,
             float[] baseAccents,
@@ -262,12 +373,12 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
                 float local = EvaluateWave(time, wave);
                 float previous = i > 0 ? EvaluateWave(time, _waves[waveOffset + i - 1]) : local;
                 float next = i < count - 1 ? EvaluateWave(time, _waves[waveOffset + i + 1]) : local;
-                float blended = Mathf.Lerp(local, (previous + local + next) / 3f, _multiZoneBlend);
+                float blended = Mathf.Lerp(local, (previous + local + next) / 3f, activeTuning.MultiZoneBlend);
 
-                float accentWave = EvaluateAccentWave(time, wave);
-                float previousAccent = i > 0 ? EvaluateAccentWave(time, _waves[waveOffset + i - 1]) : accentWave;
-                float nextAccent = i < count - 1 ? EvaluateAccentWave(time, _waves[waveOffset + i + 1]) : accentWave;
-                float accentBlended = Mathf.Lerp(accentWave, Mathf.Max(accentWave, (previousAccent + accentWave + nextAccent) / 3f), _multiZoneBlend * 0.72f);
+                float accentWave = EvaluateAccentWave(time, activeTuning, wave);
+                float previousAccent = i > 0 ? EvaluateAccentWave(time, activeTuning, _waves[waveOffset + i - 1]) : accentWave;
+                float nextAccent = i < count - 1 ? EvaluateAccentWave(time, activeTuning, _waves[waveOffset + i + 1]) : accentWave;
+                float accentBlended = Mathf.Lerp(accentWave, Mathf.Max(accentWave, (previousAccent + accentWave + nextAccent) / 3f), activeTuning.MultiZoneBlend * 0.72f);
                 float accentWeight = accentProfile[i];
                 float accentValue = baseAccents[i] + Mathf.Max(0f, accentBlended) * accentAmplitude * groupScale * accentWeight;
                 float segmentValue = baseValues[i] * (1f + blended * segmentAmplitude * groupScale);
@@ -285,9 +396,9 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
             return (a * 0.54f + b * 0.31f + c * 0.15f) * wave.Amplitude + wave.Bias;
         }
 
-        private float EvaluateAccentWave(float time, SegmentWave wave)
+        private float EvaluateAccentWave(float time, MotionTuning activeTuning, SegmentWave wave)
         {
-            float a = Mathf.Sin(time * wave.AccentFrequency * Mathf.Max(0f, _accentMotionSpeed) + wave.AccentPhase) * 0.5f + 0.5f;
+            float a = Mathf.Sin(time * wave.AccentFrequency * Mathf.Max(0f, activeTuning.AccentMotionSpeed) + wave.AccentPhase) * 0.5f + 0.5f;
             float b = Mathf.Sin(time * wave.FrequencyB * 0.67f + wave.PhaseC) * 0.5f + 0.5f;
             float value = Mathf.Lerp(a, a * b, 0.42f);
             return value * value * (3f - 2f * value);
@@ -300,9 +411,9 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
             return a * 0.68f + b * 0.32f;
         }
 
-        private void SmoothArray(float[] current, float[] target, int count, float deltaTime)
+        private void SmoothArray(MotionTuning activeTuning, float[] current, float[] target, int count, float deltaTime)
         {
-            float response = Mathf.Lerp(4.5f, 18f, _segmentSmoothing);
+            float response = Mathf.Lerp(4.5f, 18f, activeTuning.SegmentSmoothing);
             float t = 1f - Mathf.Exp(-response * Mathf.Max(0f, deltaTime));
 
             for (int i = 0; i < count; i++)
@@ -311,15 +422,15 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
             }
         }
 
-        private void CaptureBaseValues()
+        private void CaptureBaseValues(LivingInnerWashState state)
         {
-            _state = LivingInnerWashState.Sanitize(_state);
-            _state.BottomSegments.ToArray(_baseBottom);
-            _state.LeftSegments.ToArray(_baseLeft);
-            _state.RightSegments.ToArray(_baseRight);
-            _state.BottomAccents.ToArray(_baseBottomAccent);
-            _state.LeftAccents.ToArray(_baseLeftAccent);
-            _state.RightAccents.ToArray(_baseRightAccent);
+            state = LivingInnerWashState.Sanitize(state);
+            state.BottomSegments.ToArray(_baseBottom);
+            state.LeftSegments.ToArray(_baseLeft);
+            state.RightSegments.ToArray(_baseRight);
+            state.BottomAccents.ToArray(_baseBottomAccent);
+            state.LeftAccents.ToArray(_baseLeftAccent);
+            state.RightAccents.ToArray(_baseRightAccent);
         }
 
         private void CopyBaseToCurrent()
@@ -357,6 +468,16 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
             }
         }
 
+        private LivingInnerWashState GetActiveState()
+        {
+            return _runtimeOverrideActive ? _runtimeOverrideState : _state;
+        }
+
+        private MotionTuning GetActiveTuning()
+        {
+            return _runtimeOverrideActive ? _runtimeOverrideTuning : CurrentTuning;
+        }
+
         private double GetCurrentTime()
         {
 #if UNITY_EDITOR
@@ -371,6 +492,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
         private void ResetTime()
         {
             _lastTime = GetCurrentTime();
+            _motionTime = 0f;
             _timeInitialized = false;
         }
 
