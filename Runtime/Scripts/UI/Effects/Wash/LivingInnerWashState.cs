@@ -48,9 +48,9 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
                 BottomSegments = new LivingInnerWashFiveSegments(0.45f, 0.6f, 0.9f, 0.6f, 0.45f),
                 LeftSegments = new LivingInnerWashThreeSegments(0.18f, 0.26f, 0.22f),
                 RightSegments = new LivingInnerWashThreeSegments(0.18f, 0.26f, 0.22f),
-                BottomAccents = new LivingInnerWashFiveSegments(0.04f, 0.1f, 0.14f, 0.1f, 0.04f),
-                LeftAccents = new LivingInnerWashThreeSegments(0.01f, 0.025f, 0.018f),
-                RightAccents = new LivingInnerWashThreeSegments(0.01f, 0.025f, 0.018f)
+                BottomAccents = new LivingInnerWashFiveSegments(0.025f, 0.12f, 0.16f, 0.12f, 0.025f),
+                LeftAccents = new LivingInnerWashThreeSegments(0.005f, 0.045f, 0.015f),
+                RightAccents = new LivingInnerWashThreeSegments(0.005f, 0.045f, 0.015f)
             };
         }
 

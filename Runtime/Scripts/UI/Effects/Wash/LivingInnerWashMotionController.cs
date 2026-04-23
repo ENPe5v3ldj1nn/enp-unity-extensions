@@ -19,17 +19,17 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
         [SerializeField] private LivingInnerWashState _state = LivingInnerWashState.Default();
         [SerializeField] private bool _motionEnabled = true;
         [SerializeField] private bool _useUnscaledTime = true;
-        [SerializeField] [Min(0f)] private float _globalMotionSpeed = 1.25f;
-        [SerializeField] [Range(0f, 0.2f)] private float _intensityBreathAmplitude = 0.035f;
-        [SerializeField] [Range(0f, 0.2f)] private float _thicknessBreathAmplitude = 0.055f;
-        [SerializeField] [Range(0f, 1f)] private float _bottomSegmentMotionAmplitude = 0.22f;
-        [SerializeField] [Range(0f, 1f)] private float _sideSegmentMotionAmplitude = 0.075f;
-        [SerializeField] [Range(0f, 1f)] private float _accentMotionAmplitude = 0.18f;
-        [SerializeField] [Min(0f)] private float _accentMotionSpeed = 1.18f;
-        [SerializeField] [Min(0.01f)] private float _segmentFrequencyMin = 0.18f;
-        [SerializeField] [Min(0.01f)] private float _segmentFrequencyMax = 0.58f;
+        [SerializeField] [Min(0f)] private float _globalMotionSpeed = 1.45f;
+        [SerializeField] [Range(0f, 0.2f)] private float _intensityBreathAmplitude = 0.052f;
+        [SerializeField] [Range(0f, 0.2f)] private float _thicknessBreathAmplitude = 0.085f;
+        [SerializeField] [Range(0f, 1f)] private float _bottomSegmentMotionAmplitude = 0.32f;
+        [SerializeField] [Range(0f, 1f)] private float _sideSegmentMotionAmplitude = 0.11f;
+        [SerializeField] [Range(0f, 1f)] private float _accentMotionAmplitude = 0.3f;
+        [SerializeField] [Min(0f)] private float _accentMotionSpeed = 1.45f;
+        [SerializeField] [Min(0.01f)] private float _segmentFrequencyMin = 0.26f;
+        [SerializeField] [Min(0.01f)] private float _segmentFrequencyMax = 0.82f;
         [SerializeField] [Range(0f, 1f)] private float _segmentSmoothing = 0.86f;
-        [SerializeField] [Range(0f, 1f)] private float _multiZoneBlend = 0.44f;
+        [SerializeField] [Range(0f, 1f)] private float _multiZoneBlend = 0.62f;
         [SerializeField] private int _seed = 3917;
 
         private readonly float[] _baseBottom = new float[BottomCount];
@@ -54,6 +54,8 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
         private readonly float[] _rightAccentTarget = new float[SideCount];
 
         private readonly SegmentWave[] _waves = new SegmentWave[TotalCount];
+        private readonly float[] _bottomAccentProfile = new float[BottomCount] { 0.22f, 1f, 1.12f, 1f, 0.22f };
+        private readonly float[] _sideAccentProfile = new float[SideCount] { 0.08f, 0.66f, 0.18f };
 
         private RoundedRectLivingInnerWashGraphic _graphic;
         private int _lastSeed;
@@ -181,9 +183,9 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
             float intensity = Mathf.Clamp01(_state.Intensity + intensityBreath * _intensityBreathAmplitude);
             float thickness = Mathf.Clamp01(_state.Thickness + thicknessBreath * _thicknessBreathAmplitude);
 
-            EvaluateGroup(time, _baseBottom, _bottomTarget, _baseBottomAccent, _bottomAccentTarget, 0, BottomCount, _bottomSegmentMotionAmplitude, _accentMotionAmplitude, 1f);
-            EvaluateGroup(time, _baseLeft, _leftTarget, _baseLeftAccent, _leftAccentTarget, BottomCount, SideCount, _sideSegmentMotionAmplitude, _accentMotionAmplitude * 0.45f, 0.52f);
-            EvaluateGroup(time, _baseRight, _rightTarget, _baseRightAccent, _rightAccentTarget, BottomCount + SideCount, SideCount, _sideSegmentMotionAmplitude, _accentMotionAmplitude * 0.45f, 0.52f);
+            EvaluateGroup(time, _baseBottom, _bottomTarget, _baseBottomAccent, _bottomAccentTarget, _bottomAccentProfile, 0, BottomCount, _bottomSegmentMotionAmplitude, _accentMotionAmplitude, 1f);
+            EvaluateGroup(time, _baseLeft, _leftTarget, _baseLeftAccent, _leftAccentTarget, _sideAccentProfile, BottomCount, SideCount, _sideSegmentMotionAmplitude, _accentMotionAmplitude * 0.44f, 0.52f);
+            EvaluateGroup(time, _baseRight, _rightTarget, _baseRightAccent, _rightAccentTarget, _sideAccentProfile, BottomCount + SideCount, SideCount, _sideSegmentMotionAmplitude, _accentMotionAmplitude * 0.44f, 0.52f);
 
             SmoothArray(_bottom, _bottomTarget, BottomCount, deltaTime);
             SmoothArray(_left, _leftTarget, SideCount, deltaTime);
@@ -215,6 +217,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
             float[] targetValues,
             float[] baseAccents,
             float[] targetAccents,
+            float[] accentProfile,
             int waveOffset,
             int count,
             float segmentAmplitude,
@@ -228,11 +231,16 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
                 float previous = i > 0 ? EvaluateWave(time, _waves[waveOffset + i - 1]) : local;
                 float next = i < count - 1 ? EvaluateWave(time, _waves[waveOffset + i + 1]) : local;
                 float blended = Mathf.Lerp(local, (previous + local + next) / 3f, _multiZoneBlend);
-                float segmentValue = baseValues[i] * (1f + blended * segmentAmplitude * groupScale);
-                targetValues[i] = Mathf.Clamp(segmentValue, 0f, 2f);
 
                 float accentWave = EvaluateAccentWave(time, wave);
-                float accentValue = baseAccents[i] + Mathf.Max(0f, accentWave) * accentAmplitude * groupScale;
+                float previousAccent = i > 0 ? EvaluateAccentWave(time, _waves[waveOffset + i - 1]) : accentWave;
+                float nextAccent = i < count - 1 ? EvaluateAccentWave(time, _waves[waveOffset + i + 1]) : accentWave;
+                float accentBlended = Mathf.Lerp(accentWave, Mathf.Max(accentWave, (previousAccent + accentWave + nextAccent) / 3f), _multiZoneBlend * 0.72f);
+                float accentWeight = accentProfile[i];
+                float accentValue = baseAccents[i] + Mathf.Max(0f, accentBlended) * accentAmplitude * groupScale * accentWeight;
+                float segmentValue = baseValues[i] * (1f + blended * segmentAmplitude * groupScale);
+                segmentValue += Mathf.Max(0f, accentBlended) * accentAmplitude * groupScale * accentWeight * 0.16f;
+                targetValues[i] = Mathf.Clamp(segmentValue, 0f, 2f);
                 targetAccents[i] = Mathf.Clamp01(accentValue);
             }
         }
@@ -410,17 +418,17 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
             _graphic = GetComponent<RoundedRectLivingInnerWashGraphic>();
             _motionEnabled = true;
             _useUnscaledTime = true;
-            _globalMotionSpeed = 1.25f;
-            _intensityBreathAmplitude = 0.035f;
-            _thicknessBreathAmplitude = 0.055f;
-            _bottomSegmentMotionAmplitude = 0.22f;
-            _sideSegmentMotionAmplitude = 0.075f;
-            _accentMotionAmplitude = 0.18f;
-            _accentMotionSpeed = 1.18f;
-            _segmentFrequencyMin = 0.18f;
-            _segmentFrequencyMax = 0.58f;
+            _globalMotionSpeed = 1.45f;
+            _intensityBreathAmplitude = 0.052f;
+            _thicknessBreathAmplitude = 0.085f;
+            _bottomSegmentMotionAmplitude = 0.32f;
+            _sideSegmentMotionAmplitude = 0.11f;
+            _accentMotionAmplitude = 0.3f;
+            _accentMotionSpeed = 1.45f;
+            _segmentFrequencyMin = 0.26f;
+            _segmentFrequencyMax = 0.82f;
             _segmentSmoothing = 0.86f;
-            _multiZoneBlend = 0.44f;
+            _multiZoneBlend = 0.62f;
             _seed = 3917;
             _initialized = false;
             InitializeIfNeeded(true);

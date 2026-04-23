@@ -297,11 +297,11 @@ Shader "UI/ENP/RoundedRectAsymmetricInnerWash"
                 float accentValue = saturate(bottomAccent * bottomWeight + sideAccentWeighted);
                 float accentBandEval = EvaluateBandProfile(
                     edgeDistance,
-                    reachPx * (1.0 + accentValue * 0.12),
+                    reachPx * (1.0 + accentValue * 0.18),
                     _Softness,
                     saturate(_BandTightness * 0.92));
 
-                float edgeMask = saturate(bandEval * blendedStrength * (1.0 + accentValue * 0.14));
+                float edgeMask = saturate(bandEval * blendedStrength * (1.0 + accentValue * 0.2));
                 edgeMask = pow(edgeMask, lerp(1.95, 0.96, _Softness));
 
                 float2 normalizedPos = abs(p) / max(halfSize, float2(1.0, 1.0));
@@ -319,7 +319,7 @@ Shader "UI/ENP/RoundedRectAsymmetricInnerWash"
                 accentMask *= insideMask;
 
                 float4 gradient = lerp(baseGradient, accentGradient, accentMask);
-                gradient.rgb *= 1.0 + accentMask * 0.10;
+                gradient.rgb *= 1.0 + accentMask * 0.16;
 
                 float4 col = gradient * i.color * _Color;
                 col.rgb *= wash;
