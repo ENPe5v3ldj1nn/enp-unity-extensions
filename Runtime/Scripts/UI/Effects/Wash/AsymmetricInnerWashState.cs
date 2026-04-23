@@ -12,6 +12,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
         [Range(0f, 1f)] public float Intensity;
         [Range(0f, 1f)] public float Thickness;
         [Range(0f, 1f)] public float Softness;
+        [Range(0f, 1f)] public float BandTightness;
         [Range(0f, 1f)] public float CenterClear;
         [Min(0f)] public float CornerRoundness;
         [Range(0f, 2f)] public float TopStrength;
@@ -24,17 +25,18 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
             return new AsymmetricInnerWashState
             {
                 TintColor = Color.white,
-                TopColor = new Color(0.85f, 0.92f, 1f, 1f),
-                BottomColor = new Color(0.50f, 0.66f, 0.92f, 1f),
-                Intensity = 0.14f,
+                TopColor = new Color(0.92f, 0.95f, 1f, 1f),
+                BottomColor = new Color(0.56f, 0.70f, 0.95f, 1f),
+                Intensity = 0.18f,
                 Thickness = 0.18f,
-                Softness = 0.72f,
-                CenterClear = 0.68f,
+                Softness = 0.68f,
+                BandTightness = 0.80f,
+                CenterClear = 0.04f,
                 CornerRoundness = 26f,
-                TopStrength = 0.08f,
-                BottomStrength = 0.45f,
-                LeftStrength = 0.32f,
-                RightStrength = 0.32f
+                TopStrength = 0.04f,
+                BottomStrength = 0.46f,
+                LeftStrength = 0.28f,
+                RightStrength = 0.28f
             };
         }
 
@@ -43,17 +45,18 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
             return new AsymmetricInnerWashState
             {
                 TintColor = Color.white,
-                TopColor = new Color(0.92f, 0.96f, 1f, 1f),
-                BottomColor = new Color(0.58f, 0.72f, 0.95f, 1f),
-                Intensity = 0.28f,
-                Thickness = 0.27f,
-                Softness = 0.76f,
-                CenterClear = 0.58f,
+                TopColor = new Color(0.96f, 0.97f, 1f, 1f),
+                BottomColor = new Color(0.62f, 0.76f, 0.97f, 1f),
+                Intensity = 0.30f,
+                Thickness = 0.22f,
+                Softness = 0.72f,
+                BandTightness = 0.78f,
+                CenterClear = 0.05f,
                 CornerRoundness = 30f,
-                TopStrength = 0.14f,
-                BottomStrength = 0.78f,
-                LeftStrength = 0.58f,
-                RightStrength = 0.58f
+                TopStrength = 0.06f,
+                BottomStrength = 0.74f,
+                LeftStrength = 0.46f,
+                RightStrength = 0.46f
             };
         }
 
@@ -61,18 +64,19 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
         {
             return new AsymmetricInnerWashState
             {
-                TintColor = new Color(1f, 0.98f, 0.94f, 1f),
-                TopColor = new Color(0.96f, 0.84f, 0.72f, 1f),
-                BottomColor = new Color(1f, 0.54f, 0.28f, 1f),
-                Intensity = 0.48f,
-                Thickness = 0.34f,
-                Softness = 0.74f,
-                CenterClear = 0.50f,
+                TintColor = new Color(1f, 0.985f, 0.955f, 1f),
+                TopColor = new Color(0.98f, 0.90f, 0.82f, 1f),
+                BottomColor = new Color(1f, 0.58f, 0.30f, 1f),
+                Intensity = 0.42f,
+                Thickness = 0.25f,
+                Softness = 0.76f,
+                BandTightness = 0.76f,
+                CenterClear = 0.06f,
                 CornerRoundness = 34f,
-                TopStrength = 0.18f,
-                BottomStrength = 1.00f,
-                LeftStrength = 0.72f,
-                RightStrength = 0.72f
+                TopStrength = 0.08f,
+                BottomStrength = 0.96f,
+                LeftStrength = 0.60f,
+                RightStrength = 0.60f
             };
         }
 
@@ -86,6 +90,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
             state.Intensity = Mathf.Clamp01(state.Intensity);
             state.Thickness = Mathf.Clamp01(state.Thickness);
             state.Softness = Mathf.Clamp01(state.Softness);
+            state.BandTightness = Mathf.Clamp01(state.BandTightness);
             state.CenterClear = Mathf.Clamp01(state.CenterClear);
             state.CornerRoundness = Mathf.Max(0f, state.CornerRoundness);
             state.TopStrength = Mathf.Clamp(state.TopStrength, 0f, 2f);
@@ -107,6 +112,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
                 Intensity = Mathf.LerpUnclamped(from.Intensity, to.Intensity, t),
                 Thickness = Mathf.LerpUnclamped(from.Thickness, to.Thickness, t),
                 Softness = Mathf.LerpUnclamped(from.Softness, to.Softness, t),
+                BandTightness = Mathf.LerpUnclamped(from.BandTightness, to.BandTightness, t),
                 CenterClear = Mathf.LerpUnclamped(from.CenterClear, to.CenterClear, t),
                 CornerRoundness = Mathf.LerpUnclamped(from.CornerRoundness, to.CornerRoundness, t),
                 TopStrength = Mathf.LerpUnclamped(from.TopStrength, to.TopStrength, t),

@@ -4,22 +4,22 @@ Shader "UI/ENP/RoundedRectAsymmetricInnerWash"
     {
         [PerRendererData] _MainTex ("Sprite Texture", 2D) = "white" {}
         _Color ("Tint", Color) = (1,1,1,1)
-        _TintColor ("Base Tint", Color) = (1,1,1,1)
-        _TopColor ("Top Color", Color) = (1,1,1,1)
-        _BottomColor ("Bottom Color", Color) = (1,1,1,1)
-        _BottomAccentColor ("Bottom Accent Color", Color) = (1,1,1,1)
-        _Intensity ("Intensity", Range(0,1)) = 0.15
-        _Thickness ("Thickness", Range(0,1)) = 0.2
-        _Softness ("Softness", Range(0,1)) = 0.7
-        _CenterClear ("Center Clear", Range(0,1)) = 0.65
-        _Roundness ("Roundness", Float) = 24
-        _TopStrength ("Top Strength", Range(0,2)) = 0.1
-        _BottomStrength ("Bottom Strength", Range(0,2)) = 0.5
-        _LeftStrength ("Left Strength", Range(0,2)) = 0.35
-        _RightStrength ("Right Strength", Range(0,2)) = 0.35
+        _TintColor ("Wash Tint Color", Color) = (1,1,1,1)
+        _TopColor ("Top Color", Color) = (0.9,0.95,1,1)
+        _BottomColor ("Bottom Color", Color) = (0.5,0.68,0.95,1)
+        _BottomAccentColor ("Bottom Accent Color", Color) = (0.65,0.78,1,1)
+        _Intensity ("Intensity", Range(0,1)) = 0.25
+        _Thickness ("Thickness", Range(0,1)) = 0.22
+        _Softness ("Softness", Range(0,1)) = 0.72
+        _BandTightness ("Band Tightness", Range(0,1)) = 0.8
+        _CenterClear ("Center Clear", Range(0,1)) = 0.06
+        _Roundness ("Roundness", Float) = 28
+        _TopStrength ("Top Strength", Range(0,2)) = 0.15
+        _BottomStrength ("Bottom Strength", Range(0,2)) = 0.85
+        _LeftStrength ("Left Strength", Range(0,2)) = 0.55
+        _RightStrength ("Right Strength", Range(0,2)) = 0.55
         _RectSize ("Rect Size", Vector) = (100,100,0,0)
         _RectCenter ("Rect Center", Vector) = (0,0,0,0)
-
         _BottomSegmentsA ("Bottom Segments A", Vector) = (0,0,0,0)
         _BottomSegmentsB ("Bottom Segments B", Vector) = (0,0,0,0)
         _LeftSegments ("Left Segments", Vector) = (0,0,0,0)
@@ -86,6 +86,7 @@ Shader "UI/ENP/RoundedRectAsymmetricInnerWash"
             float _Intensity;
             float _Thickness;
             float _Softness;
+            float _BandTightness;
             float _CenterClear;
             float _Roundness;
             float _TopStrength;
@@ -136,10 +137,26 @@ Shader "UI/ENP/RoundedRectAsymmetricInnerWash"
                 return insideMin.x * insideMin.y * insideMax.x * insideMax.y;
             }
 
-            float EvaluateSide(float distanceToSide, float thicknessPx, float softness)
+            float Smooth01(float value)
             {
-                float feather = max(thicknessPx * lerp(0.08, 1.0, softness), 0.0001);
-                return 1.0 - smoothstep(0.0, thicknessPx + feather, distanceToSide);
+                float t = saturate(value);
+                return t * t * (3.0 - 2.0 * t);
+            }
+
+            float EvaluateBandProfile(float edgeDistance, float reachPx, float softness, float bandTightness)
+            {
+                float safeReach = max(reachPx, 0.0001);
+                float normalized = saturate(1.0 - edgeDistance / safeReach);
+                float exponent = lerp(1.35, 5.75, saturate(bandTightness));
+                float featherThreshold = lerp(0.12, 0.46, saturate(softness));
+                float featherMask = smoothstep(0.0, featherThreshold, normalized);
+                return pow(normalized, exponent) * featherMask;
+            }
+
+            float ProximityWeight(float distanceToSide, float range)
+            {
+                float t = 1.0 - saturate(distanceToSide / max(range, 0.0001));
+                return Smooth01(t);
             }
 
             float Select3(float4 values, int index)
@@ -221,21 +238,20 @@ Shader "UI/ENP/RoundedRectAsymmetricInnerWash"
 
                 float halfMin = min(halfSize.x, halfSize.y);
                 float radius = min(max(_Roundness, 0.0), max(halfMin - 0.0001, 0.0));
+
                 float sd = SdRoundedBox(p, halfSize, radius);
                 float aa = max(fwidth(sd), 0.75);
                 float insideMask = saturate((-sd + aa) / aa);
 
-                float thicknessPx = max(halfMin * _Thickness, 0.0001);
+                float edgeDistance = max(-sd, 0.0);
+                float reachPx = max(halfMin * _Thickness, 0.0001);
+
+                float bandEval = EvaluateBandProfile(edgeDistance, reachPx, _Softness, _BandTightness);
 
                 float distLeft = p.x + halfSize.x;
                 float distRight = halfSize.x - p.x;
                 float distBottom = p.y + halfSize.y;
                 float distTop = halfSize.y - p.y;
-
-                float leftEval = EvaluateSide(distLeft, thicknessPx, _Softness);
-                float rightEval = EvaluateSide(distRight, thicknessPx, _Softness);
-                float bottomEval = EvaluateSide(distBottom, thicknessPx, _Softness);
-                float topEval = EvaluateSide(distTop, thicknessPx, _Softness);
 
                 float segmentedBottomStrength = SampleSegment5(uv.x, _BottomSegmentsA, _BottomSegmentsB);
                 float segmentedLeftStrength = SampleSegment3(uv.y, _LeftSegments);
@@ -254,31 +270,56 @@ Shader "UI/ENP/RoundedRectAsymmetricInnerWash"
                 float leftAccent = saturate(segmentedLeftAccent);
                 float rightAccent = saturate(segmentedRightAccent);
 
-                float leftBand = leftEval * leftStrength * (1.0 + leftAccent * 0.16);
-                float rightBand = rightEval * rightStrength * (1.0 + rightAccent * 0.16);
-                float bottomBand = bottomEval * bottomStrength * (1.0 + bottomAccent * 0.22);
-                float topBand = topEval * topStrength;
+                float weightRange = reachPx * 1.35;
 
-                float sideMask = saturate(leftBand + rightBand + bottomBand + topBand);
-                sideMask = pow(sideMask, lerp(2.2, 0.85, _Softness));
+                float rawLeftWeight = ProximityWeight(distLeft, weightRange) * 0.92;
+                float rawRightWeight = ProximityWeight(distRight, weightRange) * 0.92;
+                float rawBottomWeight = ProximityWeight(distBottom, weightRange) * 1.18;
+                float rawTopWeight = ProximityWeight(distTop, weightRange) * 0.18;
+
+                float weightSum = rawLeftWeight + rawRightWeight + rawBottomWeight + rawTopWeight + 0.0001;
+
+                float leftWeight = rawLeftWeight / weightSum;
+                float rightWeight = rawRightWeight / weightSum;
+                float bottomWeight = rawBottomWeight / weightSum;
+                float topWeight = rawTopWeight / weightSum;
+
+                float blendedStrength =
+                    leftStrength * leftWeight +
+                    rightStrength * rightWeight +
+                    bottomStrength * bottomWeight +
+                    topStrength * topWeight;
+
+                float sideAccentWeighted =
+                    leftAccent * leftWeight * 0.72 +
+                    rightAccent * rightWeight * 0.72;
+
+                float accentValue = saturate(bottomAccent * bottomWeight + sideAccentWeighted);
+                float accentBandEval = EvaluateBandProfile(
+                    edgeDistance,
+                    reachPx * (1.0 + accentValue * 0.12),
+                    _Softness,
+                    saturate(_BandTightness * 0.92));
+
+                float edgeMask = saturate(bandEval * blendedStrength * (1.0 + accentValue * 0.14));
+                edgeMask = pow(edgeMask, lerp(1.95, 0.96, _Softness));
 
                 float2 normalizedPos = abs(p) / max(halfSize, float2(1.0, 1.0));
                 float centerMetric = saturate(max(normalizedPos.x, normalizedPos.y));
-                float centerStart = lerp(0.0, 0.86, _CenterClear);
+                float centerStart = lerp(0.0, 0.92, _CenterClear);
                 float centerMask = saturate((centerMetric - centerStart) / max(1.0 - centerStart, 0.0001));
 
-                float wash = saturate(_Intensity) * sideMask * centerMask * insideMask;
+                float wash = saturate(_Intensity) * edgeMask * centerMask * insideMask;
 
                 float4 baseGradient = lerp(_BottomColor, _TopColor, uv.y) * _TintColor;
-                float4 accentGradient = lerp(_BottomAccentColor, _TopColor, saturate(uv.y * 1.15)) * _TintColor;
+                float4 accentGradient = lerp(_BottomAccentColor, _TopColor, saturate(uv.y * 1.12)) * _TintColor;
 
-                float sideAccentMask = max(leftEval * leftAccent, rightEval * rightAccent);
-                float accentMask = saturate(bottomEval * bottomAccent + sideAccentMask * 0.85);
+                float accentMask = accentBandEval * accentValue;
                 accentMask *= saturate(1.0 - uv.y * 0.55);
                 accentMask *= insideMask;
 
                 float4 gradient = lerp(baseGradient, accentGradient, accentMask);
-                gradient.rgb *= 1.0 + accentMask * 0.12;
+                gradient.rgb *= 1.0 + accentMask * 0.10;
 
                 float4 col = gradient * i.color * _Color;
                 col.rgb *= wash;
