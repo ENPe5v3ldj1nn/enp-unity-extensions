@@ -9,28 +9,41 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
     [ExecuteAlways]
     [DisallowMultipleComponent]
     [RequireComponent(typeof(RoundedRectLivingInnerWashGraphic))]
-    [AddComponentMenu("UI/ENP/Living Inner Wash Motion Controller")]
     public sealed class LivingInnerWashMotionController : MonoBehaviour
     {
         private const int BottomCount = 5;
         private const int SideCount = 3;
         private const int TotalCount = 11;
+        private const bool DefaultMotionEnabled = true;
+        private const bool DefaultUseUnscaledTime = true;
+        private const float DefaultGlobalMotionSpeed = 7f;
+        private const float DefaultIntensityBreathAmplitude = 0.04f;
+        private const float DefaultThicknessBreathAmplitude = 0.08f;
+        private const float DefaultBottomSegmentMotionAmplitude = 0.3f;
+        private const float DefaultSideSegmentMotionAmplitude = 0.11f;
+        private const float DefaultAccentMotionAmplitude = 0.18f;
+        private const float DefaultAccentMotionSpeed = 1.6f;
+        private const float DefaultSegmentFrequencyMin = 0.22f;
+        private const float DefaultSegmentFrequencyMax = 0.72f;
+        private const float DefaultSegmentSmoothing = 0.82f;
+        private const float DefaultMultiZoneBlend = 0.62f;
+        private const int DefaultSeed = 4059;
 
         [SerializeField] private LivingInnerWashState _state = LivingInnerWashState.Default();
-        [SerializeField] private bool _motionEnabled = true;
-        [SerializeField] private bool _useUnscaledTime = true;
-        [SerializeField] [Min(0f)] private float _globalMotionSpeed = 1.45f;
-        [SerializeField] [Range(0f, 0.2f)] private float _intensityBreathAmplitude = 0.052f;
-        [SerializeField] [Range(0f, 0.2f)] private float _thicknessBreathAmplitude = 0.085f;
-        [SerializeField] [Range(0f, 1f)] private float _bottomSegmentMotionAmplitude = 0.32f;
-        [SerializeField] [Range(0f, 1f)] private float _sideSegmentMotionAmplitude = 0.11f;
-        [SerializeField] [Range(0f, 1f)] private float _accentMotionAmplitude = 0.3f;
-        [SerializeField] [Min(0f)] private float _accentMotionSpeed = 1.45f;
-        [SerializeField] [Min(0.01f)] private float _segmentFrequencyMin = 0.26f;
-        [SerializeField] [Min(0.01f)] private float _segmentFrequencyMax = 0.82f;
-        [SerializeField] [Range(0f, 1f)] private float _segmentSmoothing = 0.86f;
-        [SerializeField] [Range(0f, 1f)] private float _multiZoneBlend = 0.62f;
-        [SerializeField] private int _seed = 3917;
+        [SerializeField] private bool _motionEnabled = DefaultMotionEnabled;
+        [SerializeField] private bool _useUnscaledTime = DefaultUseUnscaledTime;
+        [SerializeField] [Min(0f)] private float _globalMotionSpeed = DefaultGlobalMotionSpeed;
+        [SerializeField] [Range(0f, 0.2f)] private float _intensityBreathAmplitude = DefaultIntensityBreathAmplitude;
+        [SerializeField] [Range(0f, 0.2f)] private float _thicknessBreathAmplitude = DefaultThicknessBreathAmplitude;
+        [SerializeField] [Range(0f, 1f)] private float _bottomSegmentMotionAmplitude = DefaultBottomSegmentMotionAmplitude;
+        [SerializeField] [Range(0f, 1f)] private float _sideSegmentMotionAmplitude = DefaultSideSegmentMotionAmplitude;
+        [SerializeField] [Range(0f, 1f)] private float _accentMotionAmplitude = DefaultAccentMotionAmplitude;
+        [SerializeField] [Min(0f)] private float _accentMotionSpeed = DefaultAccentMotionSpeed;
+        [SerializeField] [Min(0.01f)] private float _segmentFrequencyMin = DefaultSegmentFrequencyMin;
+        [SerializeField] [Min(0.01f)] private float _segmentFrequencyMax = DefaultSegmentFrequencyMax;
+        [SerializeField] [Range(0f, 1f)] private float _segmentSmoothing = DefaultSegmentSmoothing;
+        [SerializeField] [Range(0f, 1f)] private float _multiZoneBlend = DefaultMultiZoneBlend;
+        [SerializeField] private int _seed = DefaultSeed;
 
         private readonly float[] _baseBottom = new float[BottomCount];
         private readonly float[] _baseLeft = new float[SideCount];
@@ -68,6 +81,25 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
         {
             get => _motionEnabled;
             set => _motionEnabled = value;
+        }
+
+        private static void ApplyDefaultConfiguration(LivingInnerWashMotionController controller)
+        {
+            controller._state = LivingInnerWashState.Default();
+            controller._motionEnabled = DefaultMotionEnabled;
+            controller._useUnscaledTime = DefaultUseUnscaledTime;
+            controller._globalMotionSpeed = DefaultGlobalMotionSpeed;
+            controller._intensityBreathAmplitude = DefaultIntensityBreathAmplitude;
+            controller._thicknessBreathAmplitude = DefaultThicknessBreathAmplitude;
+            controller._bottomSegmentMotionAmplitude = DefaultBottomSegmentMotionAmplitude;
+            controller._sideSegmentMotionAmplitude = DefaultSideSegmentMotionAmplitude;
+            controller._accentMotionAmplitude = DefaultAccentMotionAmplitude;
+            controller._accentMotionSpeed = DefaultAccentMotionSpeed;
+            controller._segmentFrequencyMin = DefaultSegmentFrequencyMin;
+            controller._segmentFrequencyMax = DefaultSegmentFrequencyMax;
+            controller._segmentSmoothing = DefaultSegmentSmoothing;
+            controller._multiZoneBlend = DefaultMultiZoneBlend;
+            controller._seed = DefaultSeed;
         }
 
         private void Awake()
@@ -414,22 +446,8 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
 
         private void Reset()
         {
-            _state = LivingInnerWashState.Default();
+            ApplyDefaultConfiguration(this);
             _graphic = GetComponent<RoundedRectLivingInnerWashGraphic>();
-            _motionEnabled = true;
-            _useUnscaledTime = true;
-            _globalMotionSpeed = 1.45f;
-            _intensityBreathAmplitude = 0.052f;
-            _thicknessBreathAmplitude = 0.085f;
-            _bottomSegmentMotionAmplitude = 0.32f;
-            _sideSegmentMotionAmplitude = 0.11f;
-            _accentMotionAmplitude = 0.3f;
-            _accentMotionSpeed = 1.45f;
-            _segmentFrequencyMin = 0.26f;
-            _segmentFrequencyMax = 0.82f;
-            _segmentSmoothing = 0.86f;
-            _multiZoneBlend = 0.62f;
-            _seed = 3917;
             _initialized = false;
             InitializeIfNeeded(true);
             ResetTime();

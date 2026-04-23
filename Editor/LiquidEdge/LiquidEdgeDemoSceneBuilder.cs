@@ -10,7 +10,6 @@ namespace enp_unity_extensions.Editor.LiquidEdge
 {
     public static class LiquidEdgeDemoSceneBuilder
     {
-        [MenuItem("ENP/Liquid Edge/Create Demo Scene")]
         public static void CreateDemoScene()
         {
             Scene scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);

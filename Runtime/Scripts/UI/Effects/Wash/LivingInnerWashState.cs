@@ -31,54 +31,56 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
         {
             return new LivingInnerWashState
             {
-                TintColor = Color.white,
-                TopColor = new Color(0.94f, 0.97f, 1f, 1f),
-                BottomColor = new Color(0.58f, 0.72f, 0.98f, 1f),
-                AccentColor = new Color(0.78f, 0.88f, 1f, 1f),
-                Intensity = 0.86f,
-                Thickness = 0.62f,
-                Softness = 0.9f,
-                BandTightness = 0f,
+                TintColor = Hex(0xF4, 0xF7, 0xFF),
+                TopColor = Hex(0xEA, 0xF2, 0xFF),
+                BottomColor = Hex(0xA8, 0xC4, 0xFF),
+                AccentColor = Hex(0xF3, 0xB6, 0x3F),
+                Intensity = 0.816f,
+                Thickness = 0.859f,
+                Softness = 0.615f,
+                BandTightness = 0.49f,
                 CenterClear = 0f,
-                CornerRoundness = 0f,
+                CornerRoundness = 80f,
                 TopStrength = 0f,
                 BottomStrength = 0f,
                 LeftStrength = 0f,
                 RightStrength = 0f,
-                BottomSegments = new LivingInnerWashFiveSegments(0.45f, 0.6f, 0.9f, 0.6f, 0.45f),
-                LeftSegments = new LivingInnerWashThreeSegments(0.18f, 0.26f, 0.22f),
-                RightSegments = new LivingInnerWashThreeSegments(0.18f, 0.26f, 0.22f),
-                BottomAccents = new LivingInnerWashFiveSegments(0.025f, 0.12f, 0.16f, 0.12f, 0.025f),
-                LeftAccents = new LivingInnerWashThreeSegments(0.005f, 0.045f, 0.015f),
-                RightAccents = new LivingInnerWashThreeSegments(0.005f, 0.045f, 0.015f)
+                BottomSegments = new LivingInnerWashFiveSegments(0.60f, 0.68f, 0.78f, 0.68f, 0.60f),
+                LeftSegments = new LivingInnerWashThreeSegments(0.22f, 0.28f, 0.10f),
+                RightSegments = new LivingInnerWashThreeSegments(0.22f, 0.28f, 0.10f),
+                BottomAccents = new LivingInnerWashFiveSegments(0.08f, 0.14f, 0.18f, 0.14f, 0.08f),
+                LeftAccents = new LivingInnerWashThreeSegments(0.02f, 0.05f, 0.03f),
+                RightAccents = new LivingInnerWashThreeSegments(0.02f, 0.05f, 0.03f)
             };
         }
 
         public static LivingInnerWashState Sanitize(LivingInnerWashState state)
         {
+            LivingInnerWashState defaults = Default();
+
             if (state.TintColor == default)
             {
-                state.TintColor = Color.white;
+                state.TintColor = defaults.TintColor;
             }
 
             if (state.TopColor == default)
             {
-                state.TopColor = new Color(0.94f, 0.97f, 1f, 1f);
+                state.TopColor = defaults.TopColor;
             }
 
             if (state.BottomColor == default)
             {
-                state.BottomColor = new Color(0.58f, 0.72f, 0.98f, 1f);
+                state.BottomColor = defaults.BottomColor;
             }
 
             if (state.AccentColor == default)
             {
-                state.AccentColor = new Color(0.78f, 0.88f, 1f, 1f);
+                state.AccentColor = defaults.AccentColor;
             }
 
             state.Intensity = Mathf.Clamp01(state.Intensity);
-            state.Thickness = Mathf.Clamp01(state.Thickness <= 0f ? 0.62f : state.Thickness);
-            state.Softness = Mathf.Clamp01(state.Softness <= 0f ? 0.9f : state.Softness);
+            state.Thickness = Mathf.Clamp01(state.Thickness <= 0f ? defaults.Thickness : state.Thickness);
+            state.Softness = Mathf.Clamp01(state.Softness <= 0f ? defaults.Softness : state.Softness);
             state.BandTightness = Mathf.Clamp01(state.BandTightness);
             state.CenterClear = Mathf.Clamp01(state.CenterClear);
             state.CornerRoundness = Mathf.Max(0f, state.CornerRoundness);
@@ -93,6 +95,11 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
             state.LeftAccents.Clamp(0f, 1f);
             state.RightAccents.Clamp(0f, 1f);
             return state;
+        }
+
+        private static Color Hex(byte r, byte g, byte b)
+        {
+            return new Color(r / 255f, g / 255f, b / 255f, 1f);
         }
     }
 
