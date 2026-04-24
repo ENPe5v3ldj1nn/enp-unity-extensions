@@ -207,7 +207,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Form
         {
             const int width = 256;
             const int height = 2;
-            var texture = new Texture2D(width, height, TextureFormat.RGBA32, false, true);
+            var texture = new Texture2D(width, height, TextureFormat.RGBA32, false, false);
             texture.wrapMode = TextureWrapMode.Clamp;
             texture.filterMode = FilterMode.Bilinear;
             texture.hideFlags = HideFlags.HideAndDontSave;
