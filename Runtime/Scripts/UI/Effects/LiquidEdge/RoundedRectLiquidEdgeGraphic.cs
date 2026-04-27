@@ -188,7 +188,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.LiquidEdge
             ApplySegmentData(_state.SegmentStrengths.ToArray(), CreateZeroSegments(), CreateZeroSegments(), 0f);
             SetMaterialDirty();
         }
-
+#if UNITY_EDITOR
         protected override void Reset()
         {
             base.Reset();
@@ -204,6 +204,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.LiquidEdge
                 SetMaterialDirty();
             }
         }
+        #endif
 
         private void InitializeStateIfNeeded()
         {

@@ -152,6 +152,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.LiquidEdge
             _runtimeMaterial.SetVectorArray(PatchBId, patchB);
         }
 
+#if UNITY_EDITOR
         protected override void Reset()
         {
             base.Reset();
@@ -167,6 +168,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.LiquidEdge
                 SetMaterialDirty();
             }
         }
+#endif
 
         private void InitializeStateIfNeeded()
         {

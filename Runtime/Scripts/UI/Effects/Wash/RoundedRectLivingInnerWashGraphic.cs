@@ -171,7 +171,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
             ApplyVisualState(false);
             SetMaterialDirty();
         }
-
+#if UNITY_EDITOR
         protected override void Reset()
         {
             base.Reset();
@@ -188,7 +188,7 @@ namespace enp_unity_extensions.Runtime.Scripts.UI.Effects.Wash
                 SetMaterialDirty();
             }
         }
-
+#endif
         private void InitializeStateIfNeeded()
         {
             if (_stateInitialized)
