@@ -1,0 +1,31 @@
+{
+  "name": "com.enope.unity.extensions",
+  "version": "1.0.3",
+  "displayName": "Unity Extensions",
+  "description": "A set of useful scripts for Unity projects",
+  "author": {
+    "name": "ENPe5v3ldj1nn",
+    "url": "https://github.com/ENPe5v3ldj1nn"
+  },
+  "dependencies": {
+    "com.unity.textmeshpro": "3.0.6",
+    "com.unity.nuget.newtonsoft-json": "3.0.2"
+  },
+  "documentationUrl": "https://github.com/ENPe5v3ldj1nn/enp-unity-extensions#readme",
+  "changelogUrl": "https://github.com/ENPe5v3ldj1nn/enp-unity-extensions/blob/main/CHANGELOG.md",
+  "licensesUrl": "https://github.com/ENPe5v3ldj1nn/enp-unity-extensions/blob/main/LICENSE",
+  "keywords": [
+    "dotween",
+    "enp",
+    "extensions",
+    "language",
+    "localization",
+    "runtime",
+    "storage",
+    "tmp",
+    "ui",
+    "unirx",
+    "utilities"
+  ],
+  "unity": "2021.3"
+}

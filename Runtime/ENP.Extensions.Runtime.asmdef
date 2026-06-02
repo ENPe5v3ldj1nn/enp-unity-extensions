@@ -1,0 +1,31 @@
+{
+    "name": "ENP.Extensions.Runtime",
+    "rootNamespace": "",
+    "references": [
+        "Unity.TextMeshPro",
+        "UniRx",
+        "DOTween.Modules",
+        "Unity.InputSystem",
+        "Google.Play.Review",
+        "Google.Play.Common",
+        "Google.Play.Core"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "DOTween.dll",
+        "Newtonsoft.Json.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [
+        {
+            "name": "com.google.play.review",
+            "expression": "1.0.0",
+            "define": "PLAY_REVIEW"
+        }
+    ],
+    "noEngineReferences": false
+}

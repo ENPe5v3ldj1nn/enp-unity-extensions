@@ -1,0 +1,10 @@
+namespace ENP.UnityExtensions.Editor.LanguageSettings
+{
+    internal interface ILanguageSettingsTab
+    {
+        string Title { get; }
+        void OnEnable(LanguageSettingsWindow host);
+        void OnDisable();
+        void OnGUI();
+    }
+}

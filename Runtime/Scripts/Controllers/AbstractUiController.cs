@@ -1,0 +1,180 @@
+using System;
+using System.Collections.Generic;
+using ENP.UnityExtensions.Runtime.Scripts.UI.Windows;
+using UnityEngine;
+using UnityEngine.Events;
+using static ENP.UnityExtensions.Runtime.Scripts.UI.Windows.AnimatedWindowAnimation;
+
+namespace ENP.UnityExtensions.Runtime.Scripts.Controllers
+{
+    [AddComponentMenu("")]
+    public abstract class AbstractUiController : MonoBehaviour
+    {
+        private static AbstractUiController _instance;
+        private readonly Dictionary<Type, AnimatedWindow> _windowsMap = new();
+
+        public static AnimatedWindow CurrentWindow
+        {
+            get => WindowHistory.CurrentWindow;
+            private set => WindowHistory.CurrentWindow = value;
+        }
+
+        public static AnimatedWindow LastWindow
+        {
+            get => WindowHistory.LastWindow;
+            private set => WindowHistory.LastWindow = value;
+        }
+
+        public static Type CurrentWindowType => CurrentWindow != null ? CurrentWindow.GetType() : null;
+        public static Type LastWindowType => LastWindow != null ? LastWindow.GetType() : null;
+
+        protected virtual void Initialize()
+        {
+            _instance = this;
+            _windowsMap.Clear();
+            SetupMap(_windowsMap);
+            WindowHistory.Reset();
+        }
+
+        protected abstract void SetupMap(Dictionary<Type, AnimatedWindow> windowsMap);
+
+        protected void RegisterWindow(AnimatedWindow window)
+        {
+            _windowsMap[window.GetType()] = window;
+        }
+        
+        protected void CloseAll()
+        {
+            foreach (var keyValuePair in _windowsMap)
+                keyValuePair.Value.gameObject.SetActive(false);
+        }
+
+
+        protected void AutoRegisterWindows(Dictionary<Type, AnimatedWindow> windowsMap, bool includeInactive = true)
+        {
+            var windows = GetComponentsInChildren<AnimatedWindow>(includeInactive);
+            for (int i = 0; i < windows.Length; i++)
+            {
+                var w = windows[i];
+                var t = w.GetType();
+
+                if (windowsMap.TryGetValue(t, out var existing) && existing != w)
+                    throw new InvalidOperationException($"Duplicate window type registration: {t.Name}. Instances: {existing.name} and {w.name}");
+
+                windowsMap[t] = w;
+            }
+        }
+
+        public static T ShowExclusive<T>(UnityAction onClose = null) where T : AnimatedWindow
+        {
+            return ShowExclusive<T>(WindowDirection.Middle, onClose);
+        }
+
+        public static T ShowExclusive<T>(WindowDirection direction, UnityAction onClose = null) where T : AnimatedWindow
+        {
+            var target = GetWindow<T>();
+            OpenNext(target, direction, onClose);
+            return target;
+        }
+
+        public static void ShowLastWindow(UnityAction onClose = null)
+        {
+            ShowLastWindow(WindowDirection.Middle, onClose);
+        }
+
+        public static void ShowLastWindow(WindowDirection direction, UnityAction onClose = null)
+        {
+            var target = LastWindow;
+            if (target == null)
+                return;
+            
+            OpenNext(target, direction, onClose);
+        }
+
+        public static T GetWindow<T>() where T : AnimatedWindow
+        {
+            return (T)GetWindowInternal(typeof(T));
+        }
+
+        private static AnimatedWindow GetWindowInternal(Type windowType)
+        {
+            if (windowType == null)
+                throw new ArgumentNullException(nameof(windowType));
+
+            if (_instance._windowsMap.TryGetValue(windowType, out var exact))
+                return exact;
+
+            AnimatedWindow candidate = null;
+            Type candidateType = null;
+
+            foreach (var kv in _instance._windowsMap)
+            {
+                if (!windowType.IsAssignableFrom(kv.Key))
+                    continue;
+
+                if (candidate != null)
+                    throw new InvalidOperationException($"Multiple windows match requested type {windowType.Name}. Matches: {candidateType.Name}, {kv.Key.Name}");
+
+                candidate = kv.Value;
+                candidateType = kv.Key;
+            }
+
+            if (candidate == null)
+                throw new KeyNotFoundException($"Window type {windowType.Name} not registered in {_instance.GetType().Name}.");
+
+            return candidate;
+        }
+
+        protected static void OpenNext(AnimatedWindow window, WindowDirection direction, UnityAction onClose = null)
+        {
+            var (close, open) = ResolveDirection(direction);
+            OpenNext(window, close, open, onClose);
+        }
+
+        protected static void OpenNext(AnimatedWindow window, AnimatedWindowAnimation close, AnimatedWindowAnimation open, UnityAction onClose = null)
+        {
+            var active = CurrentWindow;
+            if (active == null)
+            {
+                onClose?.Invoke();
+                window.Open(open);
+                CurrentWindow = window;
+                return;
+            }
+
+            if (active != window)
+                LastWindow = active;
+
+            active.Close(close, () =>
+            {
+                onClose?.Invoke();
+                window.Open(open);
+                CurrentWindow = window;
+            });
+        }
+
+        private static (AnimatedWindowAnimation close, AnimatedWindowAnimation open) ResolveDirection(WindowDirection direction)
+        {
+            return direction switch
+            {
+                WindowDirection.Left => (CloseRight, OpenLeft),
+                WindowDirection.Right => (CloseLeft, OpenRight),
+                WindowDirection.Middle => (CloseMiddle, OpenMiddle),
+                WindowDirection.SmoothLeft => (CloseSmoothRight, OpenSmoothLeft),
+                WindowDirection.SmoothRight => (CloseSmoothLeft, OpenSmoothRight),
+                WindowDirection.PopupCard => (ClosePopupCard, OpenPopupCard),
+                _ => (CloseMiddle, OpenMiddle)
+            };
+        }
+    }
+
+    public enum WindowDirection
+    {
+        Middle,
+        Left,
+        Right,
+        SmoothLeft,
+        SmoothRight,
+        PopupCard
+    }
+}
