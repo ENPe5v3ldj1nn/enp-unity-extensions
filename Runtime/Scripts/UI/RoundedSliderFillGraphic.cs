@@ -142,57 +142,69 @@ namespace ENP.UnityExtensions.Runtime.Scripts.UI
         private void BuildLeadingRoundedShape(VertexHelper vh, float originX, float originY, float totalWidth, float fillWidth, float height, bool roundedLeft, bool roundBothEnds)
         {
             var halfHeight = height * 0.5f;
-            var circleDiameter = Mathf.Min(height, totalWidth);
-            var isCircle = fillWidth <= height;
-            var visualWidth = isCircle ? circleDiameter : fillWidth;
-            var radius = ResolveRadius(visualWidth, height);
-            var circleOriginX = roundedLeft ? originX : originX + totalWidth - circleDiameter;
-            var center = new Vector2((isCircle ? circleOriginX + circleDiameter * 0.5f : originX + visualWidth * 0.5f), originY);
 
             s_Points.Clear();
 
-            if (_roundFullCaps || roundBothEnds)
+            if (fillWidth <= height)
             {
-                AddRoundedRectHorizontal(s_Points, isCircle ? circleOriginX : originX, originY, visualWidth, height, radius, _cornerSegments);
+                var diameter = Mathf.Min(height, totalWidth);
+                var radius = diameter * 0.5f;
+                var center = new Vector2(roundedLeft ? originX + radius : originX + totalWidth - radius, originY);
+                AddCircle(s_Points, center, radius, _cornerSegments);
+                EmitFan(vh, s_Points, center, color);
+                return;
+            }
+            else if (_roundFullCaps || roundBothEnds)
+            {
+                var radius = ResolveRadius(fillWidth, height);
+                AddRoundedRectHorizontal(s_Points, originX, originY, fillWidth, height, radius, _cornerSegments);
             }
             else if (roundedLeft)
             {
-                AddLeadingRoundRightFlat(s_Points, originX, originY, visualWidth, halfHeight, radius, _cornerSegments);
+                var radius = ResolveRadius(fillWidth, height);
+                AddLeadingRoundRightFlat(s_Points, originX, originY, fillWidth, halfHeight, radius, _cornerSegments);
             }
             else
             {
-                AddLeadingRoundLeftFlat(s_Points, originX, originY, visualWidth, halfHeight, radius, _cornerSegments);
+                var radius = ResolveRadius(fillWidth, height);
+                AddLeadingRoundLeftFlat(s_Points, originX, originY, fillWidth, halfHeight, radius, _cornerSegments);
             }
 
-            EmitFan(vh, s_Points, center, color);
+            EmitFan(vh, s_Points, new Vector2(originX + fillWidth * 0.5f, originY), color);
         }
 
         private void BuildLeadingRoundedShapeVertical(VertexHelper vh, float originX, float originY, float totalHeight, float width, float fillHeight, bool roundedBottom, bool roundBothEnds)
         {
             var halfWidth = width * 0.5f;
-            var circleDiameter = Mathf.Min(width, totalHeight);
-            var isCircle = fillHeight <= width;
-            var visualHeight = isCircle ? circleDiameter : fillHeight;
-            var radius = ResolveRadius(visualHeight, width);
-            var circleOriginY = roundedBottom ? originY : originY + totalHeight - circleDiameter;
-            var center = new Vector2(originX, (isCircle ? circleOriginY + circleDiameter * 0.5f : originY + visualHeight * 0.5f));
 
             s_Points.Clear();
 
-            if (_roundFullCaps || roundBothEnds)
+            if (fillHeight <= width)
             {
-                AddRoundedRectVertical(s_Points, originX, isCircle ? circleOriginY : originY, width, visualHeight, radius, _cornerSegments);
+                var diameter = Mathf.Min(width, totalHeight);
+                var radius = diameter * 0.5f;
+                var center = new Vector2(originX, roundedBottom ? originY + radius : originY + totalHeight - radius);
+                AddCircle(s_Points, center, radius, _cornerSegments);
+                EmitFan(vh, s_Points, center, color);
+                return;
+            }
+            else if (_roundFullCaps || roundBothEnds)
+            {
+                var radius = ResolveRadius(fillHeight, width);
+                AddRoundedRectVertical(s_Points, originX, originY, width, fillHeight, radius, _cornerSegments);
             }
             else if (roundedBottom)
             {
-                AddLeadingRoundTopFlat(s_Points, originX, originY, visualHeight, halfWidth, radius, _cornerSegments);
+                var radius = ResolveRadius(fillHeight, width);
+                AddLeadingRoundTopFlat(s_Points, originX, originY, fillHeight, halfWidth, radius, _cornerSegments);
             }
             else
             {
-                AddLeadingRoundBottomFlat(s_Points, originX, originY, visualHeight, halfWidth, radius, _cornerSegments);
+                var radius = ResolveRadius(fillHeight, width);
+                AddLeadingRoundBottomFlat(s_Points, originX, originY, fillHeight, halfWidth, radius, _cornerSegments);
             }
 
-            EmitFan(vh, s_Points, center, color);
+            EmitFan(vh, s_Points, new Vector2(originX, originY + fillHeight * 0.5f), color);
         }
 
         private float ResolveRadius(float fillLength, float thickness)
@@ -231,6 +243,16 @@ namespace ENP.UnityExtensions.Runtime.Scripts.UI
             points.Add(new Vector2(right, top));
             AppendArc(points, new Vector2(originX, top), radius, 0f, 180f, segments);
             points.Add(new Vector2(left, top));
+        }
+
+        private static void AddCircle(List<Vector2> points, Vector2 center, float radius, int segments)
+        {
+            segments = Mathf.Max(8, segments);
+            for (var i = 0; i < segments; i++)
+            {
+                var angle = (i / (float)segments) * Mathf.PI * 2f;
+                points.Add(new Vector2(center.x + Mathf.Cos(angle) * radius, center.y + Mathf.Sin(angle) * radius));
+            }
         }
 
         private static void AddLeadingRoundRightFlat(List<Vector2> points, float originX, float originY, float width, float halfHeight, float radius, int segments)
