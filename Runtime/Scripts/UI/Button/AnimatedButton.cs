@@ -11,6 +11,7 @@ namespace ENP.UnityExtensions.Runtime.Scripts.UI.Button
     [DisallowMultipleComponent]
     [RequireComponent(typeof(CanvasGroup))]
     [RequireComponent(typeof(RectTransform))]
+    [RequireComponent(typeof(AnimatedButtonAnimation))]
     public sealed class AnimatedButton : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IPointerClickHandler
     {
         [Header("Visual")]
