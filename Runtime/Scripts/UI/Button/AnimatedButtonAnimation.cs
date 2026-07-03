@@ -5,7 +5,6 @@ namespace ENP.UnityExtensions.Runtime.Scripts.UI.Button
 {
     [AddComponentMenu("UI/Animated Button Animation")]
     [DisallowMultipleComponent]
-    [RequireComponent(typeof(AnimatedButton))]
     [RequireComponent(typeof(RectTransform))]
     public sealed class AnimatedButtonAnimation : MonoBehaviour
     {
