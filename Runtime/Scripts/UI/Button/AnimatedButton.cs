@@ -174,7 +174,7 @@ namespace ENP.UnityExtensions.Runtime.Scripts.UI.Button
             ApplyInteractableVisual();
         }
 
-        private void CacheReferences()
+        public void CacheReferences()
         {
             _canvasGroup = GetComponent<CanvasGroup>();
             Debug.Assert(_canvasGroup != null, "AnimatedButton requires a CanvasGroup.");
