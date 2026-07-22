@@ -57,6 +57,10 @@ ExportedObj/
 # Unity3D generated file on crash reports
 sysinfo.txt
 
+# macOS folder attribute files
+.DS_Store
+*.DS_Store
+
 # Builds
 *.apk
 *.aab
