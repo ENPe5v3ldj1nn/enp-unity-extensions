@@ -5,7 +5,7 @@ using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.Serialization;
 
-namespace ENP.UnityExtensions.Runtime.Scripts.UI.Button
+namespace ENP.UnityExtensions.Runtime
 {
     [AddComponentMenu("UI/Animated Button")]
     [DisallowMultipleComponent]

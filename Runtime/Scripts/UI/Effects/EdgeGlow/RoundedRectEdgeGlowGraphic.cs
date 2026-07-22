@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace ENP.UnityExtensions.Runtime.Scripts.UI.Effects.EdgeGlow
+namespace ENP.UnityExtensions.Runtime
 {
     [ExecuteAlways]
     [DisallowMultipleComponent]

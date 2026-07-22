@@ -4,7 +4,7 @@ using UnityEditor;
 using UnityEngine;
 using Object = UnityEngine.Object;
 
-namespace ENP.UnityExtensions.Runtime.Scripts.Hierarchy
+namespace ENP.UnityExtensions.Runtime
 {
     [InitializeOnLoad]
     internal static class HierarchyHoverToggle

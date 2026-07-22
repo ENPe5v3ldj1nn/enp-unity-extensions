@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEditor;
 #endif
 
-namespace ENP.UnityExtensions.Runtime.Scripts.UI.Effects.Wash
+namespace ENP.UnityExtensions.Runtime
 {
     [ExecuteAlways]
     [DisallowMultipleComponent]

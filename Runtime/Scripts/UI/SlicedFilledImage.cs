@@ -1,4 +1,4 @@
-namespace _main.Scripts.UI
+namespace ENP.UnityExtensions.Runtime
 {
     using System;
     using System.Collections.Generic;

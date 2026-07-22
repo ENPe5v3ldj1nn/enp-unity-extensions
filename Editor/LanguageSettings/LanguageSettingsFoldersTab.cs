@@ -2,11 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using ENP.UnityExtensions.Runtime.Scripts.Language;
+using ENP.UnityExtensions.Runtime;
 using UnityEditor;
 using UnityEngine;
 
-namespace ENP.UnityExtensions.Editor.LanguageSettings
+namespace ENP.UnityExtensions.Editor
 {
     internal class LanguageSettingsFoldersTab : ILanguageSettingsTab
     {

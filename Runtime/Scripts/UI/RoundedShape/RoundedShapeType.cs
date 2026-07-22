@@ -1,4 +1,4 @@
-namespace ENP.UnityExtensions.Runtime.Scripts.UI.RoundedShape
+namespace ENP.UnityExtensions.Runtime
 {
     public enum RoundedShapeType
     {

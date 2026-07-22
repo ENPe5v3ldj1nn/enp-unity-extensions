@@ -6,7 +6,7 @@ using Newtonsoft.Json.Linq;
 using UnityEditor;
 using UnityEngine;
 
-namespace ENP.UnityExtensions.Editor.LanguageSettings
+namespace ENP.UnityExtensions.Editor
 {
     internal class TranslationEditorView
     {

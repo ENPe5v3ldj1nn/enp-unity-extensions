@@ -2,7 +2,7 @@ using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace ENP.UnityExtensions.Runtime.Scripts.UI.Windows
+namespace ENP.UnityExtensions.Runtime
 {
     public class AnimatedWindow : MonoBehaviour
     {

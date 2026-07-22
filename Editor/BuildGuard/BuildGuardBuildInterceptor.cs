@@ -6,7 +6,7 @@ using UnityEditor;
 using UnityEditor.Build;
 using UnityEngine;
 
-namespace ENP.UnityExtensions.Editor.BuildGuard
+namespace ENP.UnityExtensions.Editor
 {
     public static class BuildGuardBuildInterceptor
     {

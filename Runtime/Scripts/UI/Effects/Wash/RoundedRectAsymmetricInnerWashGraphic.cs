@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.UI;
 
-namespace ENP.UnityExtensions.Runtime.Scripts.UI.Effects.Wash
+namespace ENP.UnityExtensions.Runtime
 {
     [ExecuteAlways]
     [DisallowMultipleComponent]

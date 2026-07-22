@@ -1,6 +1,6 @@
 using System;
 
-namespace ENP.UnityExtensions.Runtime.Scripts.Language
+namespace ENP.UnityExtensions.Runtime
 {
     public enum LanguageId
     {

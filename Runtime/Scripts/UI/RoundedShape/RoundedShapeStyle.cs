@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace ENP.UnityExtensions.Runtime.Scripts.UI.RoundedShape
+namespace ENP.UnityExtensions.Runtime
 {
     [CreateAssetMenu(menuName = "UI/Rounded Shape Style", fileName = "RoundedShapeStyle")]
     public sealed class RoundedShapeStyle : ScriptableObject

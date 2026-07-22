@@ -1,7 +1,7 @@
 using DG.Tweening;
 using UnityEngine;
 
-namespace ENP.UnityExtensions.Runtime.Scripts.UI.Button
+namespace ENP.UnityExtensions.Runtime
 {
     [AddComponentMenu("UI/Animated Button Animation")]
     [DisallowMultipleComponent]

@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace ENP.UnityExtensions.Runtime.Scripts.UI.Effects.Wash
+namespace ENP.UnityExtensions.Runtime
 {
     public sealed class AsymmetricInnerWashMotionGenerator
     {

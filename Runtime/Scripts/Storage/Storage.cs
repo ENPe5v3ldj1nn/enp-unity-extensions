@@ -2,7 +2,7 @@ using System.IO;
 using Newtonsoft.Json;
 using UnityEngine;
 
-namespace ENP.UnityExtensions.Runtime.Scripts.Storage
+namespace ENP.UnityExtensions.Runtime
 {
     public static class Storage
     {

@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using ENP.UnityExtensions.Runtime.Scripts.Language;
+using ENP.UnityExtensions.Runtime;
 using UnityEditor;
 using UnityEngine;
 
-namespace ENP.UnityExtensions.Editor.LanguageSettings
+namespace ENP.UnityExtensions.Editor
 {
     public class LanguageSettingsWindow : EditorWindow
     {

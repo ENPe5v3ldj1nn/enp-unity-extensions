@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace ENP.UnityExtensions.Runtime.Scripts.UI
+namespace ENP.UnityExtensions.Runtime
 {
     /// <summary>
     /// Drives a slider-like bar by resizing a rounded fill instead of cropping it.

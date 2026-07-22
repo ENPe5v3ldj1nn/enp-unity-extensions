@@ -1,11 +1,10 @@
 using System;
 using System.Collections.Generic;
-using ENP.UnityExtensions.Runtime.Scripts.UI.Windows;
 using UnityEngine;
 using UnityEngine.Events;
-using static ENP.UnityExtensions.Runtime.Scripts.UI.Windows.AnimatedWindowAnimation;
+using static ENP.UnityExtensions.Runtime.AnimatedWindowAnimation;
 
-namespace ENP.UnityExtensions.Runtime.Scripts.Controllers
+namespace ENP.UnityExtensions.Runtime
 {
     [AddComponentMenu("")]
     public abstract class AbstractUiController : MonoBehaviour

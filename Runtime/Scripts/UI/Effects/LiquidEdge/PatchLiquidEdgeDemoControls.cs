@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace ENP.UnityExtensions.Runtime.Scripts.UI.Effects.LiquidEdge
+namespace ENP.UnityExtensions.Runtime
 {
     public sealed class PatchLiquidEdgeDemoControls : MonoBehaviour
     {

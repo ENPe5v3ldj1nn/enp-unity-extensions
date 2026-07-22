@@ -1,4 +1,4 @@
-namespace ENP.UnityExtensions.Runtime.Scripts.UI.Effects.LiquidEdge
+namespace ENP.UnityExtensions.Runtime
 {
     public enum LiquidEdgePreset
     {

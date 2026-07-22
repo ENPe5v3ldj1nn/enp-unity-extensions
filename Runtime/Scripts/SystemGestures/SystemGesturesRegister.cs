@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace ENP.UnityExtensions.Runtime.Scripts.SystemGestures
+namespace ENP.UnityExtensions.Runtime
 {
     public static class SystemGesturesRegister
     {

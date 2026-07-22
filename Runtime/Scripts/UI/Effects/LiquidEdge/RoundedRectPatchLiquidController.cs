@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace ENP.UnityExtensions.Runtime.Scripts.UI.Effects.LiquidEdge
+namespace ENP.UnityExtensions.Runtime
 {
     [ExecuteAlways]
     [DisallowMultipleComponent]

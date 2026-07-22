@@ -1,9 +1,8 @@
 using System;
-using ENP.UnityExtensions.Runtime.Scripts.UI.Windows;
 using UnityEngine;
-using static ENP.UnityExtensions.Runtime.Scripts.UI.Windows.AnimatedWindowAnimation;
+using static ENP.UnityExtensions.Runtime.AnimatedWindowAnimation;
 
-namespace ENP.UnityExtensions.Runtime.Scripts.UI.Popup
+namespace ENP.UnityExtensions.Runtime
 {
     public abstract class PopupWindow : AnimatedWindow
     {

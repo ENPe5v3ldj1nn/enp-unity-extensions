@@ -1,7 +1,7 @@
 using System;
 using Newtonsoft.Json;
 
-namespace ENP.UnityExtensions.Runtime.Scripts.Storage
+namespace ENP.UnityExtensions.Runtime
 {
     [Serializable]
     public class JsonSerializableBase

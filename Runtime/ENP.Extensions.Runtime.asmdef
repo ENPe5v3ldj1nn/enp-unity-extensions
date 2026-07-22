@@ -1,6 +1,6 @@
 {
     "name": "ENP.Extensions.Runtime",
-    "rootNamespace": "",
+    "rootNamespace": "ENP.UnityExtensions.Runtime",
     "references": [
         "Unity.TextMeshPro",
         "UniRx",

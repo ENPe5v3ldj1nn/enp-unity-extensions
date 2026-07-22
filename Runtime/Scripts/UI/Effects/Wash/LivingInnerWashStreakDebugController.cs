@@ -1,7 +1,6 @@
-using ENP.UnityExtensions.Runtime.Scripts.UI.Effects.Wash;
 using UnityEngine;
 
-namespace ENP.UnityExtensions.Runtime.Scripts.UI.Effects.Wash
+namespace ENP.UnityExtensions.Runtime
 {
     [DisallowMultipleComponent]
     public sealed class LivingInnerWashStreakDebugController : MonoBehaviour

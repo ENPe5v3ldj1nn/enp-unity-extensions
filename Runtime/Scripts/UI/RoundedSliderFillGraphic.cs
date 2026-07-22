@@ -1,9 +1,8 @@
 using System.Collections.Generic;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace ENP.UnityExtensions.Runtime.Scripts.UI
+namespace ENP.UnityExtensions.Runtime
 {
     [ExecuteAlways]
     [AddComponentMenu("UI/Rounded Slider Fill Graphic")]

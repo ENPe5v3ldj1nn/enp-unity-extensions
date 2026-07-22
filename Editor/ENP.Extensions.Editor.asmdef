@@ -1,6 +1,6 @@
 {
   "name": "ENP.Extensions.Editor",
-  "rootNamespace": "enp_unity_extensions.Editor",
+  "rootNamespace": "ENP.UnityExtensions.Editor",
   "references": [
     "ENP.Extensions.Runtime"
   ],

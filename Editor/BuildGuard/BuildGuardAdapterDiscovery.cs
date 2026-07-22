@@ -5,7 +5,7 @@ using System.Reflection;
 using UnityEditor;
 using UnityEditor.Build;
 
-namespace ENP.UnityExtensions.Editor.BuildGuard
+namespace ENP.UnityExtensions.Editor
 {
     public static class BuildGuardAdapterDiscovery
     {

@@ -1,4 +1,4 @@
-using ENP.UnityExtensions.Runtime.Scripts.UI.Effects.Wash;
+using ENP.UnityExtensions.Runtime;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -6,7 +6,7 @@ using UnityEngine.EventSystems;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 
-namespace ENP.UnityExtensions.Editor.LiquidEdge
+namespace ENP.UnityExtensions.Editor
 {
     public static class LiquidEdgeDemoSceneBuilder
     {

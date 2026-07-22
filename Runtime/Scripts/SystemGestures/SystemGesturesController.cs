@@ -1,10 +1,9 @@
 using System.Collections.Generic;
-using ENP.UnityExtensions.Runtime.Scripts.UI.Windows;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.InputSystem;
 
-namespace ENP.UnityExtensions.Runtime.Scripts.SystemGestures
+namespace ENP.UnityExtensions.Runtime
 {
     public class SystemGesturesController : MonoBehaviour
     {

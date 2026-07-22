@@ -1,4 +1,4 @@
-namespace ENP.UnityExtensions.Editor.BuildGuard
+namespace ENP.UnityExtensions.Editor
 {
     public enum BuildMode
     {

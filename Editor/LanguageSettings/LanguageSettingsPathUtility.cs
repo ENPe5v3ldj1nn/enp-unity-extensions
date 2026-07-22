@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 
-namespace ENP.UnityExtensions.Editor.LanguageSettings
+namespace ENP.UnityExtensions.Editor
 {
     internal static class LanguageSettingsPathUtility
     {

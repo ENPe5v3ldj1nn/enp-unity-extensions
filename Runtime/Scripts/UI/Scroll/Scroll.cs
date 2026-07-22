@@ -3,7 +3,7 @@ using UniRx;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
-namespace ENP.UnityExtensions.Runtime.Scripts.UI.Scroll
+namespace ENP.UnityExtensions.Runtime
 {
     [DisallowMultipleComponent]
     public sealed class Scroll : MonoBehaviour,

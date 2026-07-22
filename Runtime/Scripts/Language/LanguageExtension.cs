@@ -2,7 +2,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using TMPro;
 
-namespace ENP.UnityExtensions.Runtime.Scripts.Language
+namespace ENP.UnityExtensions.Runtime
 {
     public static class LanguageExtension
     {

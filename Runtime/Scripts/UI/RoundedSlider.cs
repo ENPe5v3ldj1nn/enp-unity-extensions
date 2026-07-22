@@ -3,7 +3,7 @@ using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-namespace ENP.UnityExtensions.Runtime.Scripts.UI
+namespace ENP.UnityExtensions.Runtime
 {
     [ExecuteAlways]
     [DisallowMultipleComponent]

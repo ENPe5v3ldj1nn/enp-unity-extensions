@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace ENP.UnityExtensions.Runtime.Scripts.UI.Effects.EdgeGlow
+namespace ENP.UnityExtensions.Runtime
 {
     [Serializable]
     public struct EdgeGlowState

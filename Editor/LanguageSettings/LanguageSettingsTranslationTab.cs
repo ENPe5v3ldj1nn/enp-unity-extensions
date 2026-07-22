@@ -1,4 +1,4 @@
-namespace ENP.UnityExtensions.Editor.LanguageSettings
+namespace ENP.UnityExtensions.Editor
 {
     internal class LanguageSettingsTranslationTab : ILanguageSettingsTab
     {

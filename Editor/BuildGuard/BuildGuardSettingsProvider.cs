@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using UnityEditor;
 
-namespace ENP.UnityExtensions.Editor.BuildGuard
+namespace ENP.UnityExtensions.Editor
 {
     public static class BuildGuardSettingsProvider
     {

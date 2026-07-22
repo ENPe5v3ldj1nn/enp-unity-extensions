@@ -1,6 +1,6 @@
 using System;
 
-namespace ENP.UnityExtensions.Runtime.Scripts.Utilities
+namespace ENP.UnityExtensions.Runtime
 {
     /// <summary>
     /// Cached enum values and names to avoid allocations when enumerating.

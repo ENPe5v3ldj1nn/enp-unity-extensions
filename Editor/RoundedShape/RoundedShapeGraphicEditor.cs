@@ -1,8 +1,8 @@
-using ENP.UnityExtensions.Runtime.Scripts.UI.RoundedShape;
+using ENP.UnityExtensions.Runtime;
 using UnityEditor;
 using UnityEngine;
 
-namespace ENP.UnityExtensions.Editor.RoundedShape
+namespace ENP.UnityExtensions.Editor
 {
     [CustomEditor(typeof(RoundedShapeGraphic))]
     [CanEditMultipleObjects]

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace ENP.UnityExtensions.Runtime.Scripts.UI.RoundedShape
+namespace ENP.UnityExtensions.Runtime
 {
     [RequireComponent(typeof(RoundedShapeGraphic))]
     public sealed class RoundedShapeGradientController : MonoBehaviour

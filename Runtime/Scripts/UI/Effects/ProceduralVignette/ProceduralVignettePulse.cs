@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace ENP.UnityExtensions.Runtime.Scripts.UI.Effects.ProceduralVignette
+namespace ENP.UnityExtensions.Runtime
 {
     [Serializable]
     public struct ProceduralVignettePulse

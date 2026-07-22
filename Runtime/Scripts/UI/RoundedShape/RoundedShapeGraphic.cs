@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace ENP.UnityExtensions.Runtime.Scripts.UI.RoundedShape
+namespace ENP.UnityExtensions.Runtime
 {
     [ExecuteAlways]
     [AddComponentMenu("UI/Rounded Shape Graphic")]

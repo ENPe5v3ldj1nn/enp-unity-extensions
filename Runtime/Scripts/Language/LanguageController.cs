@@ -4,7 +4,7 @@ using System.Globalization;
 using Newtonsoft.Json.Linq;
 using UnityEngine;
 
-namespace ENP.UnityExtensions.Runtime.Scripts.Language
+namespace ENP.UnityExtensions.Runtime
 {
     public static class LanguageController
     {

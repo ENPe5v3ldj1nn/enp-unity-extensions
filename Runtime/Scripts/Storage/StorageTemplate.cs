@@ -1,8 +1,8 @@
 using System.IO;
 using UnityEngine;
-using static ENP.UnityExtensions.Runtime.Scripts.Storage.Storage;
+using static ENP.UnityExtensions.Runtime.Storage;
 
-namespace ENP.UnityExtensions.Runtime.Scripts.Storage
+namespace ENP.UnityExtensions.Runtime
 {
     public class StorageTemplate
     {

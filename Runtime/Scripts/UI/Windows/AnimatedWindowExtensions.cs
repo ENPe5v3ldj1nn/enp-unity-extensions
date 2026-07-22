@@ -1,7 +1,7 @@
 using UnityEngine.Events;
-using static ENP.UnityExtensions.Runtime.Scripts.UI.Windows.AnimatedWindowAnimation;
+using static ENP.UnityExtensions.Runtime.AnimatedWindowAnimation;
 
-namespace ENP.UnityExtensions.Runtime.Scripts.UI.Windows
+namespace ENP.UnityExtensions.Runtime
 {
     public static class AnimatedWindowExtensions
     {

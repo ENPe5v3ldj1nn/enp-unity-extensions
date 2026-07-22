@@ -1,8 +1,8 @@
-using ENP.UnityExtensions.Runtime.Scripts.UI;
+using ENP.UnityExtensions.Runtime;
 using UnityEditor;
 using UnityEngine;
 
-namespace ENP.UnityExtensions.Editor.UI
+namespace ENP.UnityExtensions.Editor
 {
     [CustomEditor(typeof(RoundedSlider))]
     public sealed class RoundedSliderEditor : UnityEditor.Editor

@@ -1,7 +1,7 @@
 using UnityEngine;
 using UnityEngine.Events;
 
-namespace ENP.UnityExtensions.Runtime.Scripts.SystemGestures
+namespace ENP.UnityExtensions.Runtime
 {
     [DisallowMultipleComponent]
     public class BackActionBinder : MonoBehaviour

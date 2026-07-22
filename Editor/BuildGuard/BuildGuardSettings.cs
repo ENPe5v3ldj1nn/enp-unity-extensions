@@ -1,7 +1,7 @@
 using UnityEditor;
 using UnityEngine;
 
-namespace ENP.UnityExtensions.Editor.BuildGuard
+namespace ENP.UnityExtensions.Editor
 {
     [FilePath("ProjectSettings/BuildGuardSettings.asset", FilePathAttribute.Location.ProjectFolder)]
     public sealed class BuildGuardSettings : ScriptableSingleton<BuildGuardSettings>

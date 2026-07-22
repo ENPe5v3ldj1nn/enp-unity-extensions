@@ -1,4 +1,4 @@
-namespace ENP.UnityExtensions.Runtime.Scripts.UI.Windows
+namespace ENP.UnityExtensions.Runtime
 {
     public static class WindowHistory
     {

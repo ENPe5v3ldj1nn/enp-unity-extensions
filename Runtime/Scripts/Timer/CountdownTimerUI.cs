@@ -2,7 +2,7 @@ using System;
 using TMPro;
 using UnityEngine;
 
-namespace ENP.UnityExtensions.Runtime.Scripts.Timer
+namespace ENP.UnityExtensions.Runtime
 {
     public abstract class CountdownTimerUI : MonoBehaviour
     {

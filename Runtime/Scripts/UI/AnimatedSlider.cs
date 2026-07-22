@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
 
-namespace ENP.UnityExtensions.Runtime.Scripts.UI
+namespace ENP.UnityExtensions.Runtime
 {
     public class AnimatedSlider : MonoBehaviour
     {

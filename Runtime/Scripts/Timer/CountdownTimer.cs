@@ -3,7 +3,7 @@ using System.Collections;
 using TMPro;
 using UnityEngine;
 
-namespace ENP.UnityExtensions.Runtime.Scripts.Timer
+namespace ENP.UnityExtensions.Runtime
 {
     public sealed class CountdownTimer
     {

@@ -1,12 +1,11 @@
 using System.Collections.Generic;
 using DG.Tweening;
-using ENP.UnityExtensions.Runtime.Scripts.UI.Windows;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
-using static ENP.UnityExtensions.Runtime.Scripts.UI.Windows.AnimatedWindowAnimation;
+using static ENP.UnityExtensions.Runtime.AnimatedWindowAnimation;
 
-namespace ENP.UnityExtensions.Runtime.Scripts.UI.Popup
+namespace ENP.UnityExtensions.Runtime
 {
     public class PopupController : MonoBehaviour
     {
