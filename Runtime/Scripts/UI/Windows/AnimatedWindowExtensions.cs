@@ -1,23 +1,16 @@
 using UnityEngine.Events;
-using static ENP.UnityExtensions.Runtime.AnimatedWindowAnimation;
 
 namespace ENP.UnityExtensions.Runtime
 {
     public static class AnimatedWindowExtensions
     {
-        public static void Open(this AnimatedWindow window, AnimatedWindowAnimation animName)
-        {
-            window.Open(animName.ToString());
-        }
-
-        public static void Close(this AnimatedWindow window, AnimatedWindowAnimation animName, UnityAction onComplete)
-        {
-            window.Close(animName.ToString(), onComplete);
-        }
-
+        /// <summary>
+        /// Starts the close animation but does not wait for it — invokes onComplete immediately.
+        /// Use when the caller must proceed without waiting for the exit tween.
+        /// </summary>
         public static void CloseFast(this AnimatedWindow window, AnimatedWindowAnimation animName, UnityAction onComplete)
         {
-            window.Close(animName.ToString(), null);
+            window.Close(animName, null);
             onComplete?.Invoke();
         }
     }

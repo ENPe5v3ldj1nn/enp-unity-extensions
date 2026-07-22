@@ -4,6 +4,7 @@
     "references": [
         "Unity.TextMeshPro",
         "UniRx",
+        "UniTask",
         "DOTween.Modules",
         "Unity.InputSystem",
         "Google.Play.Review",

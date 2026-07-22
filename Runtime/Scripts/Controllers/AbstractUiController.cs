@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Events;
 using static ENP.UnityExtensions.Runtime.AnimatedWindowAnimation;
@@ -10,7 +12,13 @@ namespace ENP.UnityExtensions.Runtime
     public abstract class AbstractUiController : MonoBehaviour
     {
         private static AbstractUiController _instance;
-        private readonly Dictionary<Type, AnimatedWindow> _windowsMap = new();
+        private static CancellationTokenSource _transitionCts;
+
+        // Built once on Initialize (no runtime additions), then queried by a fast linear scan.
+        // An array of tuples (not a Dictionary) so several windows of the same type can coexist,
+        // disambiguated by gameObject name.
+        private (Type type, AnimatedWindow window)[] _windows;
+        private List<(Type type, AnimatedWindow window)> _building;
 
         public static AnimatedWindow CurrentWindow
         {
@@ -30,38 +38,24 @@ namespace ENP.UnityExtensions.Runtime
         protected virtual void Initialize()
         {
             _instance = this;
-            _windowsMap.Clear();
-            SetupMap(_windowsMap);
+            _building = new List<(Type, AnimatedWindow)>();
+            SetupMap(_building);
+            _windows = _building.ToArray();
+            _building = null;
             WindowHistory.Reset();
         }
 
-        protected abstract void SetupMap(Dictionary<Type, AnimatedWindow> windowsMap);
+        protected abstract void SetupMap(List<(Type type, AnimatedWindow window)> windows);
 
         protected void RegisterWindow(AnimatedWindow window)
         {
-            _windowsMap[window.GetType()] = window;
+            _building.Add((window.GetType(), window));
         }
-        
+
         protected void CloseAll()
         {
-            foreach (var keyValuePair in _windowsMap)
-                keyValuePair.Value.gameObject.SetActive(false);
-        }
-
-
-        protected void AutoRegisterWindows(Dictionary<Type, AnimatedWindow> windowsMap, bool includeInactive = true)
-        {
-            var windows = GetComponentsInChildren<AnimatedWindow>(includeInactive);
-            for (int i = 0; i < windows.Length; i++)
-            {
-                var w = windows[i];
-                var t = w.GetType();
-
-                if (windowsMap.TryGetValue(t, out var existing) && existing != w)
-                    throw new InvalidOperationException($"Duplicate window type registration: {t.Name}. Instances: {existing.name} and {w.name}");
-
-                windowsMap[t] = w;
-            }
+            for (int i = 0; i < _windows.Length; i++)
+                _windows[i].window.gameObject.SetActive(false);
         }
 
         public static T ShowExclusive<T>(UnityAction onClose = null) where T : AnimatedWindow
@@ -72,6 +66,13 @@ namespace ENP.UnityExtensions.Runtime
         public static T ShowExclusive<T>(WindowDirection direction, UnityAction onClose = null) where T : AnimatedWindow
         {
             var target = GetWindow<T>();
+            OpenNext(target, direction, onClose);
+            return target;
+        }
+
+        public static T ShowExclusive<T>(string name, WindowDirection direction = WindowDirection.Middle, UnityAction onClose = null) where T : AnimatedWindow
+        {
+            var target = GetWindow<T>(name);
             OpenNext(target, direction, onClose);
             return target;
         }
@@ -90,36 +91,52 @@ namespace ENP.UnityExtensions.Runtime
             OpenNext(target, direction, onClose);
         }
 
-        public static T GetWindow<T>() where T : AnimatedWindow
+        public static T GetWindow<T>(string name = null) where T : AnimatedWindow
         {
-            return (T)GetWindowInternal(typeof(T));
+            return (T)GetWindowInternal(typeof(T), name);
         }
 
-        private static AnimatedWindow GetWindowInternal(Type windowType)
+        private static AnimatedWindow GetWindowInternal(Type windowType, string name = null)
         {
             if (windowType == null)
                 throw new ArgumentNullException(nameof(windowType));
 
-            if (_instance._windowsMap.TryGetValue(windowType, out var exact))
-                return exact;
+            var windows = _instance._windows;
 
             AnimatedWindow candidate = null;
             Type candidateType = null;
 
-            foreach (var kv in _instance._windowsMap)
+            for (int i = 0; i < windows.Length; i++)
             {
-                if (!windowType.IsAssignableFrom(kv.Key))
+                var (type, window) = windows[i];
+                
+                // When a name is provided it disambiguates directly — return the first match.
+                if (name != null)
+                {
+                    if (name == window.gameObject.name)
+                        return window;
+
                     continue;
+                }
+
+                // Exact type wins immediately over assignable subtypes.
+                if (type == windowType)
+                    return window;
 
                 if (candidate != null)
-                    throw new InvalidOperationException($"Multiple windows match requested type {windowType.Name}. Matches: {candidateType.Name}, {kv.Key.Name}");
+                    throw new InvalidOperationException($"Multiple windows match requested type {windowType.Name}. Matches: {candidateType.Name}, {type.Name}");
 
-                candidate = kv.Value;
-                candidateType = kv.Key;
+                candidate = window;
+                candidateType = type;
             }
 
             if (candidate == null)
+            {
+                if (name != null)
+                    throw new KeyNotFoundException($"Window of type {windowType.Name} with name '{name}' not registered in {_instance.GetType().Name}.");
+
                 throw new KeyNotFoundException($"Window type {windowType.Name} not registered in {_instance.GetType().Name}.");
+            }
 
             return candidate;
         }
@@ -132,24 +149,30 @@ namespace ENP.UnityExtensions.Runtime
 
         protected static void OpenNext(AnimatedWindow window, AnimatedWindowAnimation close, AnimatedWindowAnimation open, UnityAction onClose = null)
         {
-            var active = CurrentWindow;
-            if (active == null)
-            {
-                onClose?.Invoke();
-                window.Open(open);
-                CurrentWindow = window;
-                return;
-            }
+            _transitionCts?.Cancel();
+            _transitionCts?.Dispose();
+            _transitionCts = new CancellationTokenSource();
 
-            if (active != window)
+            OpenNextAsync(window, close, open, onClose, _transitionCts.Token).Forget();
+        }
+
+        private static async UniTaskVoid OpenNextAsync(AnimatedWindow window, AnimatedWindowAnimation close,
+            AnimatedWindowAnimation open, UnityAction onClose, CancellationToken token)
+        {
+            var active = CurrentWindow;
+
+            if (active != null && active != window)
                 LastWindow = active;
 
-            active.Close(close, () =>
-            {
-                onClose?.Invoke();
-                window.Open(open);
-                CurrentWindow = window;
-            });
+            if (active != null)
+                await active.CloseAsync(close, token);
+
+            if (token.IsCancellationRequested)
+                return;
+
+            onClose?.Invoke();
+            CurrentWindow = window;
+            await window.OpenAsync(open, token);
         }
 
         private static (AnimatedWindowAnimation close, AnimatedWindowAnimation open) ResolveDirection(WindowDirection direction)
