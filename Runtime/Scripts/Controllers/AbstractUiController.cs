@@ -123,6 +123,12 @@ namespace ENP.UnityExtensions.Runtime
                 if (type == windowType)
                     return window;
 
+                // Only assignable subtypes are ambiguity candidates; unrelated
+                // windows are ignored so lookup doesn't fail just because other
+                // window types are registered before the requested one.
+                if (!windowType.IsAssignableFrom(type))
+                    continue;
+
                 if (candidate != null)
                     throw new InvalidOperationException($"Multiple windows match requested type {windowType.Name}. Matches: {candidateType.Name}, {type.Name}");
 
