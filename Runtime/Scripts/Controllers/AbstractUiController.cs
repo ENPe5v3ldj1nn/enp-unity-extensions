@@ -11,6 +11,10 @@ namespace ENP.UnityExtensions.Runtime
     [AddComponentMenu("")]
     public abstract class AbstractUiController : MonoBehaviour
     {
+        [Tooltip("Root under which [UiWindow] windows are auto-discovered. " +
+                 "Leave empty to scan this controller's own children.")]
+        [SerializeField] private Transform _windowsRoot;
+
         private static AbstractUiController _instance;
         private static CancellationTokenSource _transitionCts;
 
@@ -39,16 +43,44 @@ namespace ENP.UnityExtensions.Runtime
         {
             _instance = this;
             _building = new List<(Type, AnimatedWindow)>();
+            DiscoverWindows();
             SetupMap(_building);
             _windows = _building.ToArray();
             _building = null;
             WindowHistory.Reset();
         }
 
-        protected abstract void SetupMap(List<(Type type, AnimatedWindow window)> windows);
+        // Auto-registers every AnimatedWindow marked with [UiWindow] under the windows root.
+        // Opt-in via attribute so nested sub-views aren't picked up. Inactive windows are
+        // included because screens usually start disabled.
+        private void DiscoverWindows()
+        {
+            var root = _windowsRoot != null ? _windowsRoot : transform;
+            var found = root.GetComponentsInChildren<AnimatedWindow>(includeInactive: true);
+            for (int i = 0; i < found.Length; i++)
+            {
+                var window = found[i];
+                if (Attribute.IsDefined(window.GetType(), typeof(UiWindowAttribute), inherit: false))
+                    RegisterWindow(window);
+            }
+        }
+
+        // Optional manual registration hook. Auto-discovery covers the common case;
+        // override only to add windows that live outside the root or aren't attribute-marked.
+        protected virtual void SetupMap(List<(Type type, AnimatedWindow window)> windows)
+        {
+        }
 
         protected void RegisterWindow(AnimatedWindow window)
         {
+            // Idempotent: discovery and a manual SetupMap override may reference the same
+            // instance, so skip anything already registered.
+            for (int i = 0; i < _building.Count; i++)
+            {
+                if (ReferenceEquals(_building[i].window, window))
+                    return;
+            }
+
             _building.Add((window.GetType(), window));
         }
 

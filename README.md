@@ -182,6 +182,57 @@ LanguageController.SetResourcesPath("MyLoc");
 
 Then place your files under `Resources/MyLoc/english/`, `Resources/MyLoc/ukrainian/`, etc.
 
+## Window / UI System
+The package provides a small window stack built around `AbstractUiController` and
+`AnimatedWindow`. Windows are registered automatically — no manual map to maintain.
+
+### Setup
+1. Create your controller by extending `AbstractUiController`:
+
+```csharp
+public class UiController : AbstractUiController
+{
+    public new void Initialize() => base.Initialize();
+}
+```
+
+2. In the Inspector, assign **Windows Root** (`_windowsRoot`) to the Transform that
+   contains your window objects (usually your main Canvas). Leave it empty to scan the
+   controller's own children.
+
+### Registering windows
+Mark each top-level window type with `[UiWindow]`. On `Initialize()` the controller
+scans **Windows Root** and auto-registers every `AnimatedWindow` that carries the
+attribute:
+
+```csharp
+[UiWindow]
+public class MainMenu : AnimatedWindow { }
+```
+
+- Opt-in: only attribute-marked types are registered, so nested `AnimatedWindow`
+  sub-views stay out of the lookup table.
+- Not inherited — each concrete window declares `[UiWindow]` explicitly.
+- Registration order follows hierarchy order; it does not affect lookups.
+
+For rare cases (windows outside the root, or not attribute-marked) you may still
+override `SetupMap` and call `RegisterWindow(window)` — it is idempotent, so a window
+covered by both discovery and a manual call is registered once.
+
+### Opening and querying windows
+```csharp
+AbstractUiController.ShowExclusive<MainMenu>();          // close others, open this one
+AbstractUiController.ShowExclusive<SettingsWindow>(onClose);
+var window = AbstractUiController.GetWindow<MultiGameWindow>();
+
+// Disambiguate when several instances of the same type exist, by GameObject name:
+var named = AbstractUiController.GetWindow<PopupWindow>("ConfirmPopup");
+```
+
+`GetWindow<T>()` returns the exact-type match; if you request a base type and exactly
+one subtype is registered, that subtype is returned. Passing a `name` matches the
+window's `gameObject.name` directly.
+
 ---
 
-_Last updated: 2026-06-02_
+_Last updated: 2026-07-24_
