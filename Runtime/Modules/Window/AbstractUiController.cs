@@ -54,6 +54,10 @@ namespace ENP.UnityExtensions.Runtime
                 WindowConfig.Default = _windowConfig;
 
             _windows = DiscoverWindows();
+
+            for (int i = 0; i < _windows.Length; i++)
+                _windows[i].window.InitializeWindow();
+
             WindowHistory.Reset();
             CloseAll();
         }
@@ -77,7 +81,7 @@ namespace ENP.UnityExtensions.Runtime
         protected void CloseAll()
         {
             for (int i = 0; i < _windows.Length; i++)
-                _windows[i].window.gameObject.SetActive(false);
+                _windows[i].window.HideImmediate();
         }
 
         protected void Show(AnimatedWindow window, WindowTransition transition, UnityAction onClose = null)

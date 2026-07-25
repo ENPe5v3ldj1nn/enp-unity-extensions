@@ -3,9 +3,19 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using UnityEngine;
+using UnityEngine.UI;
 
 namespace ENP.UnityExtensions.Runtime
 {
+    public enum WindowHideMode
+    {
+        // Toggles the window's own Canvas (+ GraphicRaycaster) instead of the GameObject:
+        // no OnEnable/OnDisable churn and no canvas rebuild on show. GameObject stays alive,
+        // so pause per-frame work in OnHidden. Falls back to GameObject when no Canvas exists.
+        Canvas,
+        GameObject
+    }
+
     [RequireComponent(typeof(CanvasGroup), typeof(RectTransform))]
     public class AnimatedWindow : MonoBehaviour
     {
@@ -14,12 +24,20 @@ namespace ENP.UnityExtensions.Runtime
         [SerializeField] private CanvasGroup _canvasGroup;
         [SerializeField] private RectTransform _rect;
 
+        [Header("Hiding")]
+        [SerializeField] private WindowHideMode _hideMode = WindowHideMode.Canvas;
+        [SerializeField] private Canvas _canvas;
+        [SerializeField] private GraphicRaycaster _raycaster;
+
         private Vector2 _basePosition;
         private Vector3 _baseScale;
         private float _baseRotationZ;
         private bool _baseCaptured;
+        private bool _initialized;
         private Sequence _activeSequence;
         private int _opGeneration;
+
+        private bool UseCanvasHiding => _hideMode == WindowHideMode.Canvas && _canvas != null;
 
         private void OnValidate()
         {
@@ -27,6 +45,10 @@ namespace ENP.UnityExtensions.Runtime
                 _canvasGroup = GetComponent<CanvasGroup>();
             if (_rect == null)
                 _rect = GetComponent<RectTransform>();
+            if (_canvas == null)
+                _canvas = GetComponent<Canvas>();
+            if (_raycaster == null)
+                _raycaster = GetComponent<GraphicRaycaster>();
         }
 
         public UniTask OpenAsync(WindowTransition transition, CancellationToken token = default)
@@ -38,6 +60,26 @@ namespace ENP.UnityExtensions.Runtime
         {
             return PlayAsync(transition, enter: false, token);
         }
+
+        public void HideImmediate()
+        {
+            KillActiveSequence();
+            SetVisible(false);
+        }
+
+        // Called once by the controller after discovery, before the first show.
+        internal void InitializeWindow()
+        {
+            if (_initialized)
+                return;
+
+            _initialized = true;
+            OnInitialize();
+        }
+
+        protected virtual void OnInitialize() { }
+        protected virtual void OnShown() { }
+        protected virtual void OnHidden() { }
 
         private async UniTask PlayAsync(WindowTransition transition, bool enter, CancellationToken token)
         {
@@ -51,8 +93,6 @@ namespace ENP.UnityExtensions.Runtime
 
             var recipe = enter ? config.Get(transition).enter : config.Get(transition).exit;
             var id = ++_opGeneration;
-
-            gameObject.SetActive(true);
 
             var hasScale = recipe.scale != Vector3.zero;
             var hasRotation = Mathf.Abs(recipe.rotation) > 0.01f;
@@ -69,11 +109,16 @@ namespace ENP.UnityExtensions.Runtime
             var fromAlpha = enter ? recipe.alpha : 1f;
             var toAlpha = enter ? 1f : recipe.alpha;
 
+            // Apply the start state while still hidden, then reveal — avoids a one-frame flash.
             _rect.anchoredPosition = fromPos;
             if (hasScale) _rect.localScale = fromScale;
             if (hasRotation) _rect.localEulerAngles = new Vector3(0f, 0f, fromRotZ);
             _canvasGroup.alpha = fromAlpha;
             _canvasGroup.blocksRaycasts = enter;
+
+            SetVisible(true);
+            if (enter)
+                OnShown();
 
             var sequence = DOTween.Sequence();
             if (recipe.delay > 0f)
@@ -101,7 +146,27 @@ namespace ENP.UnityExtensions.Runtime
             _activeSequence = null;
 
             if (!enter)
-                gameObject.SetActive(false);
+            {
+                SetVisible(false);
+                OnHidden();
+            }
+        }
+
+        private void SetVisible(bool visible)
+        {
+            if (UseCanvasHiding)
+            {
+                if (visible && !gameObject.activeSelf)
+                    gameObject.SetActive(true);
+
+                _canvas.enabled = visible;
+                if (_raycaster != null)
+                    _raycaster.enabled = visible;
+            }
+            else
+            {
+                gameObject.SetActive(visible);
+            }
         }
 
         private static Tween WithEase(Tween tween, in WindowConfig.Recipe recipe)
