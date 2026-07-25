@@ -10,7 +10,7 @@ namespace ENP.UnityExtensions.Runtime
     [RequireComponent(typeof(CanvasGroup), typeof(RectTransform))]
     public class AnimatedWindow : MonoBehaviour
     {
-        [SerializeField] private WindowAnimationConfig _config;
+        [SerializeField] private WindowConfig _config;
         [SerializeField] private CanvasGroup _canvasGroup;
         [SerializeField] private RectTransform _rect;
 
@@ -29,24 +29,24 @@ namespace ENP.UnityExtensions.Runtime
 
         // --- Async API (primary) ---
 
-        public UniTask OpenAsync(AnimatedWindowAnimation anim, CancellationToken token = default)
+        public UniTask OpenAsync(WindowAnimation anim, CancellationToken token = default)
         {
             return PlayAsync(anim, deactivateOnEnd: false, token);
         }
 
-        public UniTask CloseAsync(AnimatedWindowAnimation anim, CancellationToken token = default)
+        public UniTask CloseAsync(WindowAnimation anim, CancellationToken token = default)
         {
             return PlayAsync(anim, deactivateOnEnd: true, token);
         }
 
         // --- Backward-compatible fire-and-forget API ---
 
-        public void Open(AnimatedWindowAnimation anim)
+        public void Open(WindowAnimation anim)
         {
             OpenAsync(anim).Forget();
         }
 
-        public void Close(AnimatedWindowAnimation anim, UnityAction onComplete)
+        public void Close(WindowAnimation anim, UnityAction onComplete)
         {
             CloseThenInvoke(anim, onComplete).Forget();
         }
@@ -61,13 +61,13 @@ namespace ENP.UnityExtensions.Runtime
             Close(Parse(animName), onComplete);
         }
 
-        private async UniTaskVoid CloseThenInvoke(AnimatedWindowAnimation anim, UnityAction onComplete)
+        private async UniTaskVoid CloseThenInvoke(WindowAnimation anim, UnityAction onComplete)
         {
             await CloseAsync(anim);
             onComplete?.Invoke();
         }
 
-        private async UniTask PlayAsync(AnimatedWindowAnimation anim, bool deactivateOnEnd, CancellationToken token)
+        private async UniTask PlayAsync(WindowAnimation anim, bool deactivateOnEnd, CancellationToken token)
         {
             CaptureBase();
             KillActiveSequence();
@@ -125,9 +125,9 @@ namespace ENP.UnityExtensions.Runtime
             KillActiveSequence();
         }
 
-        private static AnimatedWindowAnimation Parse(string animName)
+        private static WindowAnimation Parse(string animName)
         {
-            return (AnimatedWindowAnimation)Enum.Parse(typeof(AnimatedWindowAnimation), animName);
+            return (WindowAnimation)Enum.Parse(typeof(WindowAnimation), animName);
         }
     }
 }

@@ -4,19 +4,34 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Events;
-using static ENP.UnityExtensions.Runtime.AnimatedWindowAnimation;
+using static ENP.UnityExtensions.Runtime.WindowAnimation;
 
 namespace ENP.UnityExtensions.Runtime
 {
+    /// <summary>
+    /// Window stack controller. Auto-discovers <c>[UiWindow]</c> windows under a serialized root
+    /// and drives exclusive open/close transitions.
+    ///
+    /// Two ways to consume it:
+    ///  • DI / testable: inject <see cref="IWindowService"/> (this type implements it).
+    ///  • Convenience: the static facade (<see cref="ShowExclusive{T}(UnityAction)"/> etc.) forwards
+    ///    to the most recently initialized controller. Handy for projects without a container.
+    ///
+    /// Use the ready-made <see cref="WindowController"/> for drop-in usage, or subclass this for
+    /// custom behaviour.
+    /// </summary>
     [AddComponentMenu("")]
-    public abstract class AbstractUiController : MonoBehaviour
+    public abstract class AbstractUiController : MonoBehaviour, IWindowService
     {
         [Tooltip("Root under which [UiWindow] windows are auto-discovered. " +
                  "Leave empty to scan this controller's own children.")]
         [SerializeField] private Transform _windowsRoot;
 
+        // Static facade target: the last controller that ran Initialize(). Optional convenience for
+        // non-DI projects; DI consumers inject IWindowService and never touch this.
         private static AbstractUiController _instance;
-        private static CancellationTokenSource _transitionCts;
+
+        private CancellationTokenSource _transitionCts;
 
         // Built once on Initialize (no runtime additions), then queried by a fast linear scan.
         // An array of tuples (not a Dictionary) so several windows of the same type can coexist,
@@ -24,20 +39,49 @@ namespace ENP.UnityExtensions.Runtime
         private (Type type, AnimatedWindow window)[] _windows;
         private List<(Type type, AnimatedWindow window)> _building;
 
-        public static AnimatedWindow CurrentWindow
-        {
-            get => WindowHistory.CurrentWindow;
-            private set => WindowHistory.CurrentWindow = value;
-        }
+        // ---------------------------------------------------------------- IWindowService (instance)
 
-        public static AnimatedWindow LastWindow
-        {
-            get => WindowHistory.LastWindow;
-            private set => WindowHistory.LastWindow = value;
-        }
+        AnimatedWindow IWindowService.CurrentWindow => WindowHistory.CurrentWindow;
+        AnimatedWindow IWindowService.LastWindow => WindowHistory.LastWindow;
+        Type IWindowService.CurrentWindowType => WindowHistory.CurrentWindow != null ? WindowHistory.CurrentWindow.GetType() : null;
+        Type IWindowService.LastWindowType => WindowHistory.LastWindow != null ? WindowHistory.LastWindow.GetType() : null;
 
+        T IWindowService.GetWindow<T>(string name) => GetWindowImpl<T>(name);
+        T IWindowService.ShowExclusive<T>(UnityAction onClose) => ShowExclusiveImpl<T>(WindowDirection.Middle, onClose);
+        T IWindowService.ShowExclusive<T>(WindowDirection direction, UnityAction onClose) => ShowExclusiveImpl<T>(direction, onClose);
+        T IWindowService.ShowExclusive<T>(string name, WindowDirection direction, UnityAction onClose) => ShowExclusiveImpl<T>(name, direction, onClose);
+        void IWindowService.ShowLastWindow(UnityAction onClose) => ShowLastImpl(WindowDirection.Middle, onClose);
+        void IWindowService.ShowLastWindow(WindowDirection direction, UnityAction onClose) => ShowLastImpl(direction, onClose);
+
+        // ---------------------------------------------------------------- Static facade (optional)
+
+        public static AnimatedWindow CurrentWindow => WindowHistory.CurrentWindow;
+        public static AnimatedWindow LastWindow => WindowHistory.LastWindow;
         public static Type CurrentWindowType => CurrentWindow != null ? CurrentWindow.GetType() : null;
         public static Type LastWindowType => LastWindow != null ? LastWindow.GetType() : null;
+
+        public static T GetWindow<T>(string name = null) where T : AnimatedWindow => Active.GetWindowImpl<T>(name);
+
+        public static T ShowExclusive<T>(UnityAction onClose = null) where T : AnimatedWindow =>
+            Active.ShowExclusiveImpl<T>(WindowDirection.Middle, onClose);
+
+        public static T ShowExclusive<T>(WindowDirection direction, UnityAction onClose = null) where T : AnimatedWindow =>
+            Active.ShowExclusiveImpl<T>(direction, onClose);
+
+        public static T ShowExclusive<T>(string name, WindowDirection direction = WindowDirection.Middle, UnityAction onClose = null) where T : AnimatedWindow =>
+            Active.ShowExclusiveImpl<T>(name, direction, onClose);
+
+        public static void ShowLastWindow(UnityAction onClose = null) => Active.ShowLastImpl(WindowDirection.Middle, onClose);
+        public static void ShowLastWindow(WindowDirection direction, UnityAction onClose = null) => Active.ShowLastImpl(direction, onClose);
+
+        private static AbstractUiController Active =>
+            _instance != null
+                ? _instance
+                : throw new InvalidOperationException(
+                    "No AbstractUiController is initialized. Call Initialize() on your controller " +
+                    "(WindowController does this on Awake, or a DI adapter does it) before using the static window API.");
+
+        // ---------------------------------------------------------------- init / discovery
 
         protected virtual void Initialize()
         {
@@ -90,58 +134,45 @@ namespace ENP.UnityExtensions.Runtime
                 _windows[i].window.gameObject.SetActive(false);
         }
 
-        public static T ShowExclusive<T>(UnityAction onClose = null) where T : AnimatedWindow
-        {
-            return ShowExclusive<T>(WindowDirection.Middle, onClose);
-        }
+        // ---------------------------------------------------------------- instance implementations
 
-        public static T ShowExclusive<T>(WindowDirection direction, UnityAction onClose = null) where T : AnimatedWindow
+        private T ShowExclusiveImpl<T>(WindowDirection direction, UnityAction onClose) where T : AnimatedWindow
         {
-            var target = GetWindow<T>();
+            var target = GetWindowImpl<T>(null);
             OpenNext(target, direction, onClose);
             return target;
         }
 
-        public static T ShowExclusive<T>(string name, WindowDirection direction = WindowDirection.Middle, UnityAction onClose = null) where T : AnimatedWindow
+        private T ShowExclusiveImpl<T>(string name, WindowDirection direction, UnityAction onClose) where T : AnimatedWindow
         {
-            var target = GetWindow<T>(name);
+            var target = GetWindowImpl<T>(name);
             OpenNext(target, direction, onClose);
             return target;
         }
 
-        public static void ShowLastWindow(UnityAction onClose = null)
+        private void ShowLastImpl(WindowDirection direction, UnityAction onClose)
         {
-            ShowLastWindow(WindowDirection.Middle, onClose);
-        }
-
-        public static void ShowLastWindow(WindowDirection direction, UnityAction onClose = null)
-        {
-            var target = LastWindow;
+            var target = WindowHistory.LastWindow;
             if (target == null)
                 return;
-            
+
             OpenNext(target, direction, onClose);
         }
 
-        public static T GetWindow<T>(string name = null) where T : AnimatedWindow
-        {
-            return (T)GetWindowInternal(typeof(T), name);
-        }
+        private T GetWindowImpl<T>(string name) where T : AnimatedWindow => (T)GetWindowInternal(typeof(T), name);
 
-        private static AnimatedWindow GetWindowInternal(Type windowType, string name = null)
+        private AnimatedWindow GetWindowInternal(Type windowType, string name)
         {
             if (windowType == null)
                 throw new ArgumentNullException(nameof(windowType));
 
-            var windows = _instance._windows;
-
             AnimatedWindow candidate = null;
             Type candidateType = null;
 
-            for (int i = 0; i < windows.Length; i++)
+            for (int i = 0; i < _windows.Length; i++)
             {
-                var (type, window) = windows[i];
-                
+                var (type, window) = _windows[i];
+
                 // When a name is provided it disambiguates directly — return the first match.
                 if (name != null)
                 {
@@ -155,9 +186,8 @@ namespace ENP.UnityExtensions.Runtime
                 if (type == windowType)
                     return window;
 
-                // Only assignable subtypes are ambiguity candidates; unrelated
-                // windows are ignored so lookup doesn't fail just because other
-                // window types are registered before the requested one.
+                // Only assignable subtypes are ambiguity candidates; unrelated windows are ignored
+                // so lookup doesn't fail just because other window types are registered first.
                 if (!windowType.IsAssignableFrom(type))
                     continue;
 
@@ -171,21 +201,21 @@ namespace ENP.UnityExtensions.Runtime
             if (candidate == null)
             {
                 if (name != null)
-                    throw new KeyNotFoundException($"Window of type {windowType.Name} with name '{name}' not registered in {_instance.GetType().Name}.");
+                    throw new KeyNotFoundException($"Window of type {windowType.Name} with name '{name}' not registered in {GetType().Name}.");
 
-                throw new KeyNotFoundException($"Window type {windowType.Name} not registered in {_instance.GetType().Name}.");
+                throw new KeyNotFoundException($"Window type {windowType.Name} not registered in {GetType().Name}.");
             }
 
             return candidate;
         }
 
-        protected static void OpenNext(AnimatedWindow window, WindowDirection direction, UnityAction onClose = null)
+        protected void OpenNext(AnimatedWindow window, WindowDirection direction, UnityAction onClose = null)
         {
             var (close, open) = ResolveDirection(direction);
             OpenNext(window, close, open, onClose);
         }
 
-        protected static void OpenNext(AnimatedWindow window, AnimatedWindowAnimation close, AnimatedWindowAnimation open, UnityAction onClose = null)
+        protected void OpenNext(AnimatedWindow window, WindowAnimation close, WindowAnimation open, UnityAction onClose = null)
         {
             _transitionCts?.Cancel();
             _transitionCts?.Dispose();
@@ -194,13 +224,13 @@ namespace ENP.UnityExtensions.Runtime
             OpenNextAsync(window, close, open, onClose, _transitionCts.Token).Forget();
         }
 
-        private static async UniTaskVoid OpenNextAsync(AnimatedWindow window, AnimatedWindowAnimation close,
-            AnimatedWindowAnimation open, UnityAction onClose, CancellationToken token)
+        private static async UniTaskVoid OpenNextAsync(AnimatedWindow window, WindowAnimation close,
+            WindowAnimation open, UnityAction onClose, CancellationToken token)
         {
-            var active = CurrentWindow;
+            var active = WindowHistory.CurrentWindow;
 
             if (active != null && active != window)
-                LastWindow = active;
+                WindowHistory.LastWindow = active;
 
             if (active != null)
                 await active.CloseAsync(close, token);
@@ -209,11 +239,11 @@ namespace ENP.UnityExtensions.Runtime
                 return;
 
             onClose?.Invoke();
-            CurrentWindow = window;
+            WindowHistory.CurrentWindow = window;
             await window.OpenAsync(open, token);
         }
 
-        private static (AnimatedWindowAnimation close, AnimatedWindowAnimation open) ResolveDirection(WindowDirection direction)
+        private static (WindowAnimation close, WindowAnimation open) ResolveDirection(WindowDirection direction)
         {
             return direction switch
             {

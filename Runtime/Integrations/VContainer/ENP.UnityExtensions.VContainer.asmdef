@@ -1,0 +1,25 @@
+{
+    "name": "ENP.UnityExtensions.VContainer",
+    "rootNamespace": "ENP.UnityExtensions.Runtime",
+    "references": [
+        "ENP.Extensions.Runtime",
+        "VContainer"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "ENP_VCONTAINER"
+    ],
+    "versionDefines": [
+        {
+            "name": "jp.hadashikick.vcontainer",
+            "expression": "",
+            "define": "ENP_VCONTAINER"
+        }
+    ],
+    "noEngineReferences": false
+}

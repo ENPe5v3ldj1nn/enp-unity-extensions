@@ -3,7 +3,7 @@ using DG.Tweening;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
-using static ENP.UnityExtensions.Runtime.AnimatedWindowAnimation;
+using static ENP.UnityExtensions.Runtime.WindowAnimation;
 
 namespace ENP.UnityExtensions.Runtime
 {
@@ -47,7 +47,7 @@ namespace ENP.UnityExtensions.Runtime
             BackgroundFadeMax = fadeMax;
         }
     
-        public static T Open<T>(AnimatedWindowAnimation openAnim = OpenMiddle, params object[] args) where T : PopupWindow
+        public static T Open<T>(WindowAnimation openAnim = OpenMiddle, params object[] args) where T : PopupWindow
         {
             Instance.gameObject.SetActive(true);
             Instance._canvas.gameObject.SetActive(true);
@@ -61,7 +61,7 @@ namespace ENP.UnityExtensions.Runtime
             return SetPopup<T>(typeof(T).Name, openAnim, args);
         }
 
-        public static void Close(PopupWindow popup, AnimatedWindowAnimation closeAnim = CloseMiddle, UnityAction onClose = null)
+        public static void Close(PopupWindow popup, WindowAnimation closeAnim = CloseMiddle, UnityAction onClose = null)
         {
             if (Instance._windowStack.Count == 0)
             {
@@ -112,7 +112,7 @@ namespace ENP.UnityExtensions.Runtime
             popupToClose.Close(closeAnim.ToString(), OnComplete);
         }
     
-        private static T SetPopup<T>(string name, AnimatedWindowAnimation openAnim, params object[] args) where T : PopupWindow
+        private static T SetPopup<T>(string name, WindowAnimation openAnim, params object[] args) where T : PopupWindow
         {
             var popupFromResource = Resources.Load<T>(PopupPath + name);
             var popup = Instantiate(popupFromResource, Instance._canvas.transform);

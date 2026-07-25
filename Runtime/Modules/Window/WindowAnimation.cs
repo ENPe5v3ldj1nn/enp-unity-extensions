@@ -1,6 +1,6 @@
 namespace ENP.UnityExtensions.Runtime
 {
-    public enum AnimatedWindowAnimation
+    public enum WindowAnimation
     {
         OpenLeft,
         OpenRight,
