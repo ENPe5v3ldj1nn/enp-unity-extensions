@@ -1,9 +1,7 @@
-using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using UnityEngine;
-using UnityEngine.Events;
 
 namespace ENP.UnityExtensions.Runtime
 {
@@ -27,8 +25,6 @@ namespace ENP.UnityExtensions.Runtime
                 _rect = GetComponent<RectTransform>();
         }
 
-        // --- Async API (primary) ---
-
         public UniTask OpenAsync(WindowAnimation anim, CancellationToken token = default)
         {
             return PlayAsync(anim, deactivateOnEnd: false, token);
@@ -37,34 +33,6 @@ namespace ENP.UnityExtensions.Runtime
         public UniTask CloseAsync(WindowAnimation anim, CancellationToken token = default)
         {
             return PlayAsync(anim, deactivateOnEnd: true, token);
-        }
-
-        // --- Backward-compatible fire-and-forget API ---
-
-        public void Open(WindowAnimation anim)
-        {
-            OpenAsync(anim).Forget();
-        }
-
-        public void Close(WindowAnimation anim, UnityAction onComplete)
-        {
-            CloseThenInvoke(anim, onComplete).Forget();
-        }
-
-        public void Open(string animName)
-        {
-            Open(Parse(animName));
-        }
-
-        public void Close(string animName, UnityAction onComplete)
-        {
-            Close(Parse(animName), onComplete);
-        }
-
-        private async UniTaskVoid CloseThenInvoke(WindowAnimation anim, UnityAction onComplete)
-        {
-            await CloseAsync(anim);
-            onComplete?.Invoke();
         }
 
         private async UniTask PlayAsync(WindowAnimation anim, bool deactivateOnEnd, CancellationToken token)
@@ -92,7 +60,6 @@ namespace ENP.UnityExtensions.Runtime
             await using (token.Register(() => sequence.Kill()))
                 await completion.Task;
 
-            // Superseded by a newer op or cancelled — leave state to the winning op.
             if (id != _opGeneration || token.IsCancellationRequested)
                 return;
 
@@ -123,11 +90,6 @@ namespace ENP.UnityExtensions.Runtime
         private void OnDestroy()
         {
             KillActiveSequence();
-        }
-
-        private static WindowAnimation Parse(string animName)
-        {
-            return (WindowAnimation)Enum.Parse(typeof(WindowAnimation), animName);
         }
     }
 }

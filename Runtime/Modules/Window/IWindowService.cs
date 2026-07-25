@@ -1,4 +1,3 @@
-using System;
 using UnityEngine.Events;
 
 namespace ENP.UnityExtensions.Runtime
@@ -12,16 +11,14 @@ namespace ENP.UnityExtensions.Runtime
     {
         AnimatedWindow CurrentWindow { get; }
         AnimatedWindow LastWindow { get; }
-        Type CurrentWindowType { get; }
-        Type LastWindowType { get; }
 
+        /// <summary>Resolves a registered window without opening it. Optionally disambiguate by GameObject name.</summary>
         T GetWindow<T>(string name = null) where T : AnimatedWindow;
 
-        T ShowExclusive<T>(UnityAction onClose = null) where T : AnimatedWindow;
+        /// <summary>Closes the current window and opens <typeparamref name="T"/>. Direction drives the open animation.</summary>
         T ShowExclusive<T>(WindowDirection direction, UnityAction onClose = null) where T : AnimatedWindow;
-        T ShowExclusive<T>(string name, WindowDirection direction = WindowDirection.Middle, UnityAction onClose = null) where T : AnimatedWindow;
 
-        void ShowLastWindow(UnityAction onClose = null);
+        /// <summary>Re-opens the previously shown window, if any.</summary>
         void ShowLastWindow(WindowDirection direction, UnityAction onClose = null);
     }
 }

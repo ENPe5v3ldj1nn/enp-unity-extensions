@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using UnityEngine;
 using UnityEngine.Events;
@@ -109,7 +110,7 @@ namespace ENP.UnityExtensions.Runtime
                 onClose?.Invoke();
             }
     
-            popupToClose.Close(closeAnim.ToString(), OnComplete);
+            popupToClose.CloseAsync(closeAnim).ContinueWith(OnComplete).Forget();
         }
     
         private static T SetPopup<T>(string name, WindowAnimation openAnim, params object[] args) where T : PopupWindow
@@ -118,7 +119,7 @@ namespace ENP.UnityExtensions.Runtime
             var popup = Instantiate(popupFromResource, Instance._canvas.transform);
             Instance._windowStack.Push(popup);
             popup.transform.SetAsLastSibling();
-            popup.Open(openAnim.ToString());
+            popup.OpenAsync(openAnim).Forget();
             popup.OnOpen(args);
             return popup;
         }
