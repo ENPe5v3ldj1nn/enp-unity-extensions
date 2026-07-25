@@ -15,10 +15,14 @@ namespace ENP.UnityExtensions.Runtime
         /// <summary>Resolves a registered window without opening it. Optionally disambiguate by GameObject name.</summary>
         T GetWindow<T>(string name = null) where T : AnimatedWindow;
 
-        /// <summary>Closes the current window and opens <typeparamref name="T"/>. Direction drives the open animation.</summary>
-        T ShowExclusive<T>(WindowDirection direction, UnityAction onClose = null) where T : AnimatedWindow;
+        /// <summary>
+        /// Closes the current window and opens <typeparamref name="T"/> with the given transition.
+        /// Pass <paramref name="name"/> (matched against GameObject name) to pick a specific instance
+        /// when several windows share the type.
+        /// </summary>
+        T ShowExclusive<T>(WindowTransition transition, UnityAction onClose = null, string name = null) where T : AnimatedWindow;
 
         /// <summary>Re-opens the previously shown window, if any.</summary>
-        void ShowLastWindow(WindowDirection direction, UnityAction onClose = null);
+        void ShowLastWindow(WindowTransition transition, UnityAction onClose = null);
     }
 }

@@ -17,6 +17,11 @@ namespace ENP.UnityExtensions.Runtime
         [Tooltip("Boot on Awake. Turn OFF when a DI container boots the controller instead.")]
         [SerializeField] private bool _initializeOnAwake = true;
 
+        [Header("Startup")]
+        [Tooltip("Window opened right after boot. Leave empty to open none (open manually instead).")]
+        [SerializeField] private AnimatedWindow _startupWindow;
+        [SerializeField] private WindowTransition _startupTransition = WindowTransition.Fade;
+
         private bool _booted;
 
         private void Awake()
@@ -33,6 +38,7 @@ namespace ENP.UnityExtensions.Runtime
 
             _booted = true;
             Initialize();
+            Show(_startupWindow, _startupTransition);
         }
     }
 }

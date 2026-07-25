@@ -5,89 +5,105 @@ using UnityEngine;
 
 namespace ENP.UnityExtensions.Runtime
 {
-    /// <summary>
-    /// Data-driven enter/exit recipes for <see cref="AnimatedWindow"/>, keyed by
-    /// <see cref="WindowAnimation"/>. Replaces the Animator/AnimationClip based
-    /// motion. Values are seeded from the legacy .anim clips; tune per project in the inspector.
-    /// </summary>
-    [CreateAssetMenu(fileName = "WindowConfig", menuName = "ENP/UI/Window Animation Config")]
+    [CreateAssetMenu(fileName = "WindowConfig", menuName = "ENP/UI/Window Config")]
     public class WindowConfig : ScriptableObject
     {
+        public static WindowConfig Default { get; set; }
+
+        [Serializable]
+        public struct Recipe
+        {
+            public float duration;
+            public float delay;
+            public Ease ease;
+            [Tooltip("Optional. When it has keys it overrides Ease.")]
+            public AnimationCurve curve;
+
+            [Tooltip("Hidden-state anchored offset from base. Enter: offset->base. Exit: base->offset.")]
+            public Vector2 offset;
+            [Tooltip("Hidden-state local scale. Zero = keep base scale (no scaling).")]
+            public Vector3 scale;
+            [Tooltip("Hidden-state extra Z rotation (degrees). 0 = none.")]
+            public float rotation;
+            [Range(0f, 1f)]
+            [Tooltip("Hidden-state alpha. Shown alpha is always 1.")]
+            public float alpha;
+        }
+
         [Serializable]
         public struct Entry
         {
-            public WindowAnimation anim;
-
-            [Tooltip("Anchored-position offset (relative to base) at the START of the animation.")]
-            public Vector2 startOffset;
-
-            [Tooltip("Anchored-position offset (relative to base) at the END of the animation.")]
-            public Vector2 endOffset;
-
-            [Range(0f, 1f)] public float fromAlpha;
-            [Range(0f, 1f)] public float toAlpha;
-
-            public float duration;
-            public Ease ease;
+            public WindowTransition transition;
+            public Recipe enter;
+            public Recipe exit;
         }
 
         [SerializeField] private Entry[] _entries;
 
-        private Dictionary<WindowAnimation, Entry> _lookup;
+        private Dictionary<WindowTransition, Entry> _lookup;
 
-        public Entry Get(WindowAnimation anim)
+        public Entry Get(WindowTransition transition)
         {
             if (_lookup == null)
             {
-                _lookup = new Dictionary<WindowAnimation, Entry>(_entries.Length);
+                _lookup = new Dictionary<WindowTransition, Entry>(_entries.Length);
                 for (int i = 0; i < _entries.Length; i++)
-                    _lookup[_entries[i].anim] = _entries[i];
+                    _lookup[_entries[i].transition] = _entries[i];
             }
 
-            if (!_lookup.TryGetValue(anim, out var entry))
-                throw new KeyNotFoundException($"{name}: no recipe for '{anim}'. Add it to the config.");
+            if (!_lookup.TryGetValue(transition, out var entry))
+                throw new KeyNotFoundException($"{name}: no recipe for '{transition}'. Add it to the config.");
 
             return entry;
         }
 
-        // Seeds defaults matching the legacy .anim clips when the asset is created.
         private void Reset()
         {
             const float slide = 1472f;
+            var one = Vector3.one;
 
             _entries = new[]
             {
-                // --- Open (offset -> base, fade in) ---
-                Recipe(WindowAnimation.OpenLeft,   new Vector2(slide, 0),  Vector2.zero, 0f, 1f, 0.30f, Ease.OutQuad),
-                Recipe(WindowAnimation.OpenRight,  new Vector2(-slide, 0), Vector2.zero, 0f, 1f, 0.30f, Ease.OutQuad),
-                Recipe(WindowAnimation.OpenMiddle, Vector2.zero,           Vector2.zero, 0f, 1f, 0.28f, Ease.OutQuad),
-                Recipe(WindowAnimation.OpenSmoothLeft,  new Vector2(-slide, 0), Vector2.zero, 0f, 1f, 0.40f, Ease.OutBack),
-                Recipe(WindowAnimation.OpenSmoothRight, new Vector2(slide, 0),  Vector2.zero, 0f, 1f, 0.40f, Ease.OutBack),
-                Recipe(WindowAnimation.OpenPopupCard,   new Vector2(0, -180),   Vector2.zero, 0f, 1f, 0.38f, Ease.OutBack),
+                E(WindowTransition.Fade,
+                    enter: R(0.28f, Ease.OutQuad, Vector2.zero, one, 0f, 0f),
+                    exit:  R(0.22f, Ease.InQuad,  Vector2.zero, one, 0f, 0f)),
 
-                // --- Close (base -> offset, fade out) ---
-                Recipe(WindowAnimation.CloseLeft,   Vector2.zero, new Vector2(-slide, 0), 1f, 0f, 0.25f, Ease.InQuad),
-                Recipe(WindowAnimation.CloseRight,  Vector2.zero, new Vector2(slide, 0),  1f, 0f, 0.25f, Ease.InQuad),
-                Recipe(WindowAnimation.CloseMiddle, Vector2.zero, Vector2.zero,           1f, 0f, 0.25f, Ease.InQuad),
-                Recipe(WindowAnimation.CloseSmoothLeft,  Vector2.zero, new Vector2(slide, 0),  1f, 0f, 0.35f, Ease.InBack),
-                Recipe(WindowAnimation.CloseSmoothRight, Vector2.zero, new Vector2(-slide, 0), 1f, 0f, 0.35f, Ease.InBack),
-                Recipe(WindowAnimation.ClosePopupCard,   Vector2.zero, new Vector2(0, -180),   1f, 0f, 0.30f, Ease.InBack),
+                E(WindowTransition.SlideLeft,
+                    enter: R(0.30f, Ease.OutQuad, new Vector2(slide, 0),  one, 0f, 0f),
+                    exit:  R(0.25f, Ease.InQuad,  new Vector2(-slide, 0), one, 0f, 0f)),
+
+                E(WindowTransition.SlideRight,
+                    enter: R(0.30f, Ease.OutQuad, new Vector2(-slide, 0), one, 0f, 0f),
+                    exit:  R(0.25f, Ease.InQuad,  new Vector2(slide, 0),  one, 0f, 0f)),
+
+                E(WindowTransition.SmoothLeft,
+                    enter: R(0.40f, Ease.OutBack, new Vector2(-slide, 0), new Vector3(0.98f, 0.98f, 1f), 0f, 0f),
+                    exit:  R(0.35f, Ease.InBack,  new Vector2(slide, 0),  new Vector3(0.98f, 0.98f, 1f), 0f, 0f)),
+
+                E(WindowTransition.SmoothRight,
+                    enter: R(0.40f, Ease.OutBack, new Vector2(slide, 0),  new Vector3(0.98f, 0.98f, 1f), 0f, 0f),
+                    exit:  R(0.35f, Ease.InBack,  new Vector2(-slide, 0), new Vector3(0.98f, 0.98f, 1f), 0f, 0f)),
+
+                E(WindowTransition.PopupCard,
+                    enter: R(0.38f, Ease.OutBack, new Vector2(0, -180), new Vector3(0.92f, 0.92f, 1f), 0f, 0f),
+                    exit:  R(0.28f, Ease.InBack,  new Vector2(0, -180), new Vector3(0.92f, 0.92f, 1f), 0f, 0f)),
             };
         }
 
-        private static Entry Recipe(WindowAnimation anim, Vector2 startOffset, Vector2 endOffset,
-            float fromAlpha, float toAlpha, float duration, Ease ease)
-        {
-            return new Entry
+        private static Entry E(WindowTransition transition, Recipe enter, Recipe exit) =>
+            new() { transition = transition, enter = enter, exit = exit };
+
+        private static Recipe R(float duration, Ease ease, Vector2 offset, Vector3 scale, float rotation, float alpha) =>
+            new()
             {
-                anim = anim,
-                startOffset = startOffset,
-                endOffset = endOffset,
-                fromAlpha = fromAlpha,
-                toAlpha = toAlpha,
                 duration = duration,
-                ease = ease
+                delay = 0f,
+                ease = ease,
+                curve = null,
+                offset = offset,
+                scale = scale,
+                rotation = rotation,
+                alpha = alpha
             };
-        }
     }
 }

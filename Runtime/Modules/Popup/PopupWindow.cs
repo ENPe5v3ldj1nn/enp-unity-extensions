@@ -1,6 +1,6 @@
 using System;
 using UnityEngine;
-using static ENP.UnityExtensions.Runtime.WindowAnimation;
+using static ENP.UnityExtensions.Runtime.WindowTransition;
 
 namespace ENP.UnityExtensions.Runtime
 {
@@ -16,7 +16,7 @@ namespace ENP.UnityExtensions.Runtime
             }
         }
 
-        public void Close(WindowAnimation closeAnim = CloseMiddle)
+        public void Close(WindowTransition closeAnim = Fade)
         {
             PopupController.Close(this, closeAnim);
         }

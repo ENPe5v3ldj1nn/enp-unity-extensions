@@ -1,3 +1,4 @@
+using System;
 using System.Threading;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
@@ -8,11 +9,14 @@ namespace ENP.UnityExtensions.Runtime
     [RequireComponent(typeof(CanvasGroup), typeof(RectTransform))]
     public class AnimatedWindow : MonoBehaviour
     {
+        [Tooltip("Optional per-window override. When empty, WindowConfig.Default is used.")]
         [SerializeField] private WindowConfig _config;
         [SerializeField] private CanvasGroup _canvasGroup;
         [SerializeField] private RectTransform _rect;
 
         private Vector2 _basePosition;
+        private Vector3 _baseScale;
+        private float _baseRotationZ;
         private bool _baseCaptured;
         private Sequence _activeSequence;
         private int _opGeneration;
@@ -25,32 +29,63 @@ namespace ENP.UnityExtensions.Runtime
                 _rect = GetComponent<RectTransform>();
         }
 
-        public UniTask OpenAsync(WindowAnimation anim, CancellationToken token = default)
+        public UniTask OpenAsync(WindowTransition transition, CancellationToken token = default)
         {
-            return PlayAsync(anim, deactivateOnEnd: false, token);
+            return PlayAsync(transition, enter: true, token);
         }
 
-        public UniTask CloseAsync(WindowAnimation anim, CancellationToken token = default)
+        public UniTask CloseAsync(WindowTransition transition, CancellationToken token = default)
         {
-            return PlayAsync(anim, deactivateOnEnd: true, token);
+            return PlayAsync(transition, enter: false, token);
         }
 
-        private async UniTask PlayAsync(WindowAnimation anim, bool deactivateOnEnd, CancellationToken token)
+        private async UniTask PlayAsync(WindowTransition transition, bool enter, CancellationToken token)
         {
             CaptureBase();
             KillActiveSequence();
 
-            var recipe = _config.Get(anim);
+            var config = _config != null ? _config : WindowConfig.Default;
+            if (config == null)
+                throw new InvalidOperationException(
+                    $"{name}: no WindowConfig assigned and WindowConfig.Default is not set.");
+
+            var recipe = enter ? config.Get(transition).enter : config.Get(transition).exit;
             var id = ++_opGeneration;
 
             gameObject.SetActive(true);
-            _rect.anchoredPosition = _basePosition + recipe.startOffset;
-            _canvasGroup.alpha = recipe.fromAlpha;
-            _canvasGroup.blocksRaycasts = !deactivateOnEnd;
+
+            var hasScale = recipe.scale != Vector3.zero;
+            var hasRotation = Mathf.Abs(recipe.rotation) > 0.01f;
+
+            var hiddenScale = hasScale ? recipe.scale : _baseScale;
+            var hiddenRotZ = _baseRotationZ + recipe.rotation;
+
+            var fromPos = enter ? _basePosition + recipe.offset : _basePosition;
+            var toPos = enter ? _basePosition : _basePosition + recipe.offset;
+            var fromScale = enter ? hiddenScale : _baseScale;
+            var toScale = enter ? _baseScale : hiddenScale;
+            var fromRotZ = enter ? hiddenRotZ : _baseRotationZ;
+            var toRotZ = enter ? _baseRotationZ : hiddenRotZ;
+            var fromAlpha = enter ? recipe.alpha : 1f;
+            var toAlpha = enter ? 1f : recipe.alpha;
+
+            _rect.anchoredPosition = fromPos;
+            if (hasScale) _rect.localScale = fromScale;
+            if (hasRotation) _rect.localEulerAngles = new Vector3(0f, 0f, fromRotZ);
+            _canvasGroup.alpha = fromAlpha;
+            _canvasGroup.blocksRaycasts = enter;
 
             var sequence = DOTween.Sequence();
-            sequence.Join(_rect.DOAnchorPos(_basePosition + recipe.endOffset, recipe.duration).SetEase(recipe.ease));
-            sequence.Join(_canvasGroup.DOFade(recipe.toAlpha, recipe.duration));
+            if (recipe.delay > 0f)
+                sequence.SetDelay(recipe.delay);
+
+            sequence.Join(WithEase(_rect.DOAnchorPos(toPos, recipe.duration), recipe));
+            sequence.Join(WithEase(_canvasGroup.DOFade(toAlpha, recipe.duration), recipe));
+            if (hasScale)
+                sequence.Join(WithEase(_rect.DOScale(toScale, recipe.duration), recipe));
+            if (hasRotation)
+                sequence.Join(WithEase(_rect.DOLocalRotate(new Vector3(0f, 0f, toRotZ), recipe.duration), recipe));
+
             _activeSequence = sequence;
 
             var completion = new UniTaskCompletionSource();
@@ -65,8 +100,15 @@ namespace ENP.UnityExtensions.Runtime
 
             _activeSequence = null;
 
-            if (deactivateOnEnd)
+            if (!enter)
                 gameObject.SetActive(false);
+        }
+
+        private static Tween WithEase(Tween tween, in WindowConfig.Recipe recipe)
+        {
+            return recipe.curve != null && recipe.curve.length > 0
+                ? tween.SetEase(recipe.curve)
+                : tween.SetEase(recipe.ease);
         }
 
         private void CaptureBase()
@@ -75,6 +117,8 @@ namespace ENP.UnityExtensions.Runtime
                 return;
 
             _basePosition = _rect.anchoredPosition;
+            _baseScale = _rect.localScale;
+            _baseRotationZ = _rect.localEulerAngles.z;
             _baseCaptured = true;
         }
 
