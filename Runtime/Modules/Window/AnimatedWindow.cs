@@ -13,6 +13,8 @@ namespace ENP.UnityExtensions.Runtime
         // no OnEnable/OnDisable churn and no canvas rebuild on show. GameObject stays alive,
         // so pause per-frame work in OnHidden. Falls back to GameObject when no Canvas exists.
         Canvas,
+        // Toggles the CanvasGroup (alpha/raycasts) instead of the GameObject: GameObject also
+        // stays alive here, avoiding a SetActive(true) -> stale-layout race on first open.
         GameObject
     }
 
@@ -177,7 +179,18 @@ namespace ENP.UnityExtensions.Runtime
             }
             else
             {
-                gameObject.SetActive(visible);
+                if (!gameObject.activeSelf)
+                    gameObject.SetActive(true);
+
+                if (!visible)
+                    NotifyVisibilityAware(false);
+
+                _canvasGroup.alpha = visible ? 1f : 0f;
+                _canvasGroup.blocksRaycasts = visible;
+                _canvasGroup.interactable = visible;
+
+                if (visible)
+                    NotifyVisibilityAware(true);
             }
         }
 
