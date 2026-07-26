@@ -125,9 +125,11 @@ namespace ENP.UnityExtensions.Runtime
             _canvasGroup.alpha = fromAlpha;
             _canvasGroup.blocksRaycasts = enter;
 
-            SetVisible(true);
             if (enter)
+            {
+                SetVisible(true);
                 OnShown();
+            }
 
             var sequence = DOTween.Sequence();
             if (recipe.delay > 0f)
