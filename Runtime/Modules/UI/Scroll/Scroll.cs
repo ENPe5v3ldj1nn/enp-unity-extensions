@@ -7,7 +7,8 @@ namespace ENP.UnityExtensions.Runtime
 {
     [DisallowMultipleComponent]
     public sealed class Scroll : MonoBehaviour,
-        IInitializePotentialDragHandler, IBeginDragHandler, IDragHandler, IEndDragHandler, IScrollHandler
+        IInitializePotentialDragHandler, IBeginDragHandler, IDragHandler, IEndDragHandler, IScrollHandler,
+        IWindowVisibilityAware
     {
         public enum Axis { Horizontal, Vertical }
         public enum MovementType { Unrestricted, Elastic, Clamped }
@@ -174,6 +175,18 @@ namespace ENP.UnityExtensions.Runtime
         }
 
         private void OnEnable()
+        {
+            NotifyShown();
+        }
+
+        void IWindowVisibilityAware.OnWindowShown() => NotifyShown();
+        void IWindowVisibilityAware.OnWindowHidden() { }
+
+        // Resets drag/velocity/snap state and re-announces the current position, same as a fresh
+        // OnEnable would. Under a Canvas-hiding AnimatedWindow, OnEnable only ever fires once (the
+        // GameObject stays active across show/hide), so the window calls this explicitly on every
+        // show via IWindowVisibilityAware instead.
+        private void NotifyShown()
         {
             if (!_isInitialized)
                 Initialize();

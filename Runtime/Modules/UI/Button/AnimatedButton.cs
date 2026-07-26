@@ -12,7 +12,7 @@ namespace ENP.UnityExtensions.Runtime
     [RequireComponent(typeof(CanvasGroup))]
     [RequireComponent(typeof(RectTransform))]
     [RequireComponent(typeof(AnimatedButtonAnimation))]
-    public sealed class AnimatedButton : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IPointerClickHandler, IPointerExitHandler
+    public sealed class AnimatedButton : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IPointerClickHandler, IPointerExitHandler, IWindowVisibilityAware
     {
         [Header("Visual")]
         [FormerlySerializedAs("IsUseAnimation")]
@@ -170,8 +170,8 @@ namespace ENP.UnityExtensions.Runtime
 
         // For hosts that hide via Canvas.enabled instead of GameObject.SetActive: that path never
         // fires OnDisable, so a button mid-press when its window closes would stay visually pressed
-        // forever. Callers force a release before hiding to restore the same guarantee SetActive(false)
-        // gives for free.
+        // forever. AnimatedWindow calls this (via IWindowVisibilityAware) to restore the same
+        // guarantee SetActive(false) gives for free.
         public void ForceRelease()
         {
             if (!_isPointerDown)
@@ -180,6 +180,9 @@ namespace ENP.UnityExtensions.Runtime
             _isPointerDown = false;
             Released?.Invoke();
         }
+
+        void IWindowVisibilityAware.OnWindowShown() { }
+        void IWindowVisibilityAware.OnWindowHidden() => ForceRelease();
 
         public void SetInteractable(bool value)
         {

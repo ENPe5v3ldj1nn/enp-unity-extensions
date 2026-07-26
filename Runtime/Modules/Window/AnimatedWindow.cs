@@ -159,15 +159,19 @@ namespace ENP.UnityExtensions.Runtime
                 if (visible && !gameObject.activeSelf)
                     gameObject.SetActive(true);
 
-                // GameObject stays active in this mode, so nothing fires OnDisable to reset a button
-                // that's mid-press when the window closes (finger still down, or navigated away
-                // programmatically). Release explicitly before hiding to avoid a frozen pressed visual.
+                // GameObject stays active in this mode, so nothing ever fires OnEnable/OnDisable
+                // again after the first real activation. Notify IWindowVisibilityAware children
+                // explicitly so they can do what they'd normally do there (e.g. a button mid-press
+                // releasing before the window hides, a scroll view resetting its drag state on show).
                 if (!visible)
-                    ReleasePressedButtons();
+                    NotifyVisibilityAware(false);
 
                 _canvas.enabled = visible;
                 if (_raycaster != null)
                     _raycaster.enabled = visible;
+
+                if (visible)
+                    NotifyVisibilityAware(true);
             }
             else
             {
@@ -175,11 +179,16 @@ namespace ENP.UnityExtensions.Runtime
             }
         }
 
-        private void ReleasePressedButtons()
+        private void NotifyVisibilityAware(bool visible)
         {
-            var buttons = GetComponentsInChildren<AnimatedButton>(includeInactive: false);
-            for (int i = 0; i < buttons.Length; i++)
-                buttons[i].ForceRelease();
+            var aware = GetComponentsInChildren<IWindowVisibilityAware>(includeInactive: false);
+            for (int i = 0; i < aware.Length; i++)
+            {
+                if (visible)
+                    aware[i].OnWindowShown();
+                else
+                    aware[i].OnWindowHidden();
+            }
         }
 
         private static Tween WithEase(Tween tween, in WindowConfig.Recipe recipe)
