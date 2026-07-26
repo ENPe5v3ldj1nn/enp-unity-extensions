@@ -51,14 +51,14 @@ namespace ENP.UnityExtensions.Runtime
                 _raycaster = GetComponent<GraphicRaycaster>();
         }
 
-        public UniTask OpenAsync(WindowTransition transition, CancellationToken token = default)
+        public UniTask OpenAsync(WindowTransition transition, SlideDirection direction = SlideDirection.Right, CancellationToken token = default)
         {
-            return PlayAsync(transition, enter: true, token);
+            return PlayAsync(transition, enter: true, direction, token);
         }
 
-        public UniTask CloseAsync(WindowTransition transition, CancellationToken token = default)
+        public UniTask CloseAsync(WindowTransition transition, SlideDirection direction = SlideDirection.Right, CancellationToken token = default)
         {
-            return PlayAsync(transition, enter: false, token);
+            return PlayAsync(transition, enter: false, direction, token);
         }
 
         public void HideImmediate()
@@ -81,7 +81,7 @@ namespace ENP.UnityExtensions.Runtime
         protected virtual void OnShown() { }
         protected virtual void OnHidden() { }
 
-        private async UniTask PlayAsync(WindowTransition transition, bool enter, CancellationToken token)
+        private async UniTask PlayAsync(WindowTransition transition, bool enter, SlideDirection direction, CancellationToken token)
         {
             CaptureBase();
             KillActiveSequence();
@@ -100,7 +100,8 @@ namespace ENP.UnityExtensions.Runtime
             var hiddenScale = hasScale ? recipe.scale : _baseScale;
             var hiddenRotZ = _baseRotationZ + recipe.rotation;
 
-            var resolvedOffset = new Vector2(recipe.offset.x * _rect.rect.width, recipe.offset.y * _rect.rect.height);
+            var dirSign = direction == SlideDirection.Left ? -1f : 1f;
+            var resolvedOffset = new Vector2(recipe.offset.x * dirSign * _rect.rect.width, recipe.offset.y * _rect.rect.height);
             var fromPos = enter ? _basePosition + resolvedOffset : _basePosition;
             var toPos = enter ? _basePosition : _basePosition + resolvedOffset;
             var fromScale = enter ? hiddenScale : _baseScale;
@@ -194,9 +195,7 @@ namespace ENP.UnityExtensions.Runtime
 
         private static Tween WithEase(Tween tween, in WindowConfig.Recipe recipe)
         {
-            return recipe.curve != null && recipe.curve.length > 0
-                ? tween.SetEase(recipe.curve)
-                : tween.SetEase(recipe.ease);
+            return tween.SetEase(recipe.ease);
         }
 
         private void CaptureBase()

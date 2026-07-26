@@ -16,8 +16,6 @@ namespace ENP.UnityExtensions.Runtime
             public float duration;
             public float delay;
             public Ease ease;
-            [Tooltip("Optional. When it has keys it overrides Ease.")]
-            public AnimationCurve curve;
 
             [Tooltip("Hidden-state offset from base, as a fraction of the window's own rect size (1 = one full width/height). Enter: offset->base. Exit: base->offset.")]
             public Vector2 offset;
@@ -59,6 +57,8 @@ namespace ENP.UnityExtensions.Runtime
 
         // Tuned for high-frequency UI navigation (lots of screen switches): short durations, no
         // heavy overshoot. Slower/bouncier presets read fine once; at high frequency they read as lag.
+        // Slide/Smooth recipes are authored once for SlideDirection.Right; AnimatedWindow flips the
+        // horizontal offset at runtime for SlideDirection.Left.
         private void Reset()
         {
             const float slide = 1f; // one full width of the window's own rect
@@ -71,21 +71,13 @@ namespace ENP.UnityExtensions.Runtime
                     enter: R(0.16f, Ease.OutQuad, Vector2.zero, one, 0f, 0f),
                     exit:  R(0.13f, Ease.InQuad,  Vector2.zero, one, 0f, 0f)),
 
-                E(WindowTransition.SlideLeft,
+                E(WindowTransition.Slide,
                     enter: R(0.18f, Ease.OutQuad, new Vector2(slide, 0),  one, 0f, 0f),
                     exit:  R(0.14f, Ease.InQuad,  new Vector2(-slide, 0), one, 0f, 0f)),
 
-                E(WindowTransition.SlideRight,
-                    enter: R(0.18f, Ease.OutQuad, new Vector2(-slide, 0), one, 0f, 0f),
-                    exit:  R(0.14f, Ease.InQuad,  new Vector2(slide, 0),  one, 0f, 0f)),
-
-                E(WindowTransition.SmoothLeft,
-                    enter: R(0.22f, Ease.OutBack, new Vector2(-slide, 0), new Vector3(0.99f, 0.99f, 1f), 0f, 0f),
-                    exit:  R(0.18f, Ease.InBack,  new Vector2(slide, 0),  new Vector3(0.99f, 0.99f, 1f), 0f, 0f)),
-
-                E(WindowTransition.SmoothRight,
-                    enter: R(0.22f, Ease.OutBack, new Vector2(slide, 0),  new Vector3(0.99f, 0.99f, 1f), 0f, 0f),
-                    exit:  R(0.18f, Ease.InBack,  new Vector2(-slide, 0), new Vector3(0.99f, 0.99f, 1f), 0f, 0f)),
+                E(WindowTransition.Smooth,
+                    enter: R(0.24f, Ease.OutCubic, new Vector2(slide, 0),  new Vector3(0.99f, 0.99f, 1f), 0f, 0f),
+                    exit:  R(0.20f, Ease.InCubic,  new Vector2(-slide, 0), new Vector3(0.99f, 0.99f, 1f), 0f, 0f)),
 
                 E(WindowTransition.PopupCard,
                     enter: R(0.20f, Ease.OutBack, new Vector2(0, -popupRise), new Vector3(0.94f, 0.94f, 1f), 0f, 0f),
@@ -102,7 +94,6 @@ namespace ENP.UnityExtensions.Runtime
                 duration = duration,
                 delay = 0f,
                 ease = ease,
-                curve = null,
                 offset = offset,
                 scale = scale,
                 rotation = rotation,

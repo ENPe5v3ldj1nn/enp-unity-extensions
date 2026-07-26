@@ -20,9 +20,9 @@ namespace ENP.UnityExtensions.Runtime
         /// Pass <paramref name="name"/> (matched against GameObject name) to pick a specific instance
         /// when several windows share the type.
         /// </summary>
-        T ShowExclusive<T>(WindowTransition transition, UnityAction onClose = null, string name = null) where T : AnimatedWindow;
+        T ShowExclusive<T>(WindowTransition transition, SlideDirection direction = SlideDirection.Right, UnityAction onClose = null, string name = null) where T : AnimatedWindow;
 
         /// <summary>Re-opens the previously shown window, if any.</summary>
-        void ShowLastWindow(WindowTransition transition, UnityAction onClose = null);
+        void ShowLastWindow(WindowTransition transition, SlideDirection direction = SlideDirection.Right, UnityAction onClose = null);
     }
 }

@@ -36,18 +36,18 @@ namespace ENP.UnityExtensions.Runtime
         AnimatedWindow IWindowService.LastWindow => WindowHistory.LastWindow;
 
         T IWindowService.GetWindow<T>(string name) => GetWindowImpl<T>(name);
-        T IWindowService.ShowExclusive<T>(WindowTransition transition, UnityAction onClose, string name) => ShowExclusiveImpl<T>(transition, onClose, name);
-        void IWindowService.ShowLastWindow(WindowTransition transition, UnityAction onClose) => ShowLastImpl(transition, onClose);
+        T IWindowService.ShowExclusive<T>(WindowTransition transition, SlideDirection direction, UnityAction onClose, string name) => ShowExclusiveImpl<T>(transition, direction, onClose, name);
+        void IWindowService.ShowLastWindow(WindowTransition transition, SlideDirection direction, UnityAction onClose) => ShowLastImpl(transition, direction, onClose);
 
         public static AnimatedWindow CurrentWindow => WindowHistory.CurrentWindow;
         public static AnimatedWindow LastWindow => WindowHistory.LastWindow;
 
         public static T GetWindow<T>(string name = null) where T : AnimatedWindow => Active.GetWindowImpl<T>(name);
 
-        public static T ShowExclusive<T>(WindowTransition transition, UnityAction onClose = null, string name = null) where T : AnimatedWindow =>
-            Active.ShowExclusiveImpl<T>(transition, onClose, name);
+        public static T ShowExclusive<T>(WindowTransition transition, SlideDirection direction = SlideDirection.Right, UnityAction onClose = null, string name = null) where T : AnimatedWindow =>
+            Active.ShowExclusiveImpl<T>(transition, direction, onClose, name);
 
-        public static void ShowLastWindow(WindowTransition transition, UnityAction onClose = null) => Active.ShowLastImpl(transition, onClose);
+        public static void ShowLastWindow(WindowTransition transition, SlideDirection direction = SlideDirection.Right, UnityAction onClose = null) => Active.ShowLastImpl(transition, direction, onClose);
 
         private static AbstractUiController Active =>
             _instance != null
@@ -96,26 +96,26 @@ namespace ENP.UnityExtensions.Runtime
                 _windows[i].window.HideImmediate();
         }
 
-        protected void Show(AnimatedWindow window, WindowTransition transition, UnityAction onClose = null)
+        protected void Show(AnimatedWindow window, WindowTransition transition, SlideDirection direction = SlideDirection.Right, UnityAction onClose = null)
         {
             if (window != null)
-                OpenNext(window, transition, onClose);
+                OpenNext(window, transition, direction, onClose);
         }
 
-        private T ShowExclusiveImpl<T>(WindowTransition transition, UnityAction onClose, string name) where T : AnimatedWindow
+        private T ShowExclusiveImpl<T>(WindowTransition transition, SlideDirection direction, UnityAction onClose, string name) where T : AnimatedWindow
         {
             var target = GetWindowImpl<T>(name);
-            OpenNext(target, transition, onClose);
+            OpenNext(target, transition, direction, onClose);
             return target;
         }
 
-        private void ShowLastImpl(WindowTransition transition, UnityAction onClose)
+        private void ShowLastImpl(WindowTransition transition, SlideDirection direction, UnityAction onClose)
         {
             var target = WindowHistory.LastWindow;
             if (target == null)
                 return;
 
-            OpenNext(target, transition, onClose);
+            OpenNext(target, transition, direction, onClose);
         }
 
         private T GetWindowImpl<T>(string name) where T : AnimatedWindow => (T)GetWindowInternal(typeof(T), name);
@@ -159,17 +159,17 @@ namespace ENP.UnityExtensions.Runtime
             return candidate;
         }
 
-        private void OpenNext(AnimatedWindow window, WindowTransition transition, UnityAction onClose = null)
+        private void OpenNext(AnimatedWindow window, WindowTransition transition, SlideDirection direction, UnityAction onClose = null)
         {
             _transitionCts?.Cancel();
             _transitionCts?.Dispose();
             _transitionCts = new CancellationTokenSource();
 
-            OpenNextAsync(window, transition, onClose, _transitionCts.Token).Forget();
+            OpenNextAsync(window, transition, direction, onClose, _transitionCts.Token).Forget();
         }
 
         private async UniTaskVoid OpenNextAsync(AnimatedWindow window, WindowTransition transition,
-            UnityAction onClose, CancellationToken token)
+            SlideDirection direction, UnityAction onClose, CancellationToken token)
         {
             SetInputBlocked(true);
             try
@@ -180,14 +180,14 @@ namespace ENP.UnityExtensions.Runtime
                     WindowHistory.LastWindow = active;
 
                 if (active != null)
-                    await active.CloseAsync(transition, token);
+                    await active.CloseAsync(transition, direction, token);
 
                 if (token.IsCancellationRequested)
                     return;
 
                 onClose?.Invoke();
                 WindowHistory.CurrentWindow = window;
-                await window.OpenAsync(transition, token);
+                await window.OpenAsync(transition, direction, token);
             }
             finally
             {
