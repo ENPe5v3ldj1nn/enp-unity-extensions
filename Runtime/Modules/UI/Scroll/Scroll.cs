@@ -188,8 +188,6 @@ namespace ENP.UnityExtensions.Runtime
         // show via IWindowVisibilityAware instead.
         private void NotifyShown()
         {
-            Debug.Log($"[SCROLL {name}] NotifyShown f={Time.frameCount} rectSize={((RectTransform)transform).rect.size} anchoredPos={(_content != null ? _content.anchoredPosition.ToString() : "null")}");
-
             if (!_isInitialized)
                 Initialize();
 
@@ -487,8 +485,6 @@ namespace ENP.UnityExtensions.Runtime
                     _snapDampVel = 0f;
                     _snapping = false;
                     _hasPrev = false;
-
-                    Debug.Log($"[SCROLL {name}] LateUpdate: SNAP COMPLETE finalAxis={_snapTargetAxis:F1} finalAnchoredPos={_content.anchoredPosition}");
                 }
 
                 _wasScrolledThisFrame = false;
@@ -499,9 +495,6 @@ namespace ENP.UnityExtensions.Runtime
 
             if (_movementType == MovementType.Elastic && (offset.x != 0f || offset.y != 0f))
             {
-                if (Time.frameCount % 15 == 0)
-                    Debug.Log($"[SCROLL {name}] LateUpdate: ELASTIC firing offset={offset} anchoredPos={_content.anchoredPosition} viewBounds={_viewBounds} contentBounds={_contentBounds}");
-
                 if (_snapEnabled)
                     _pendingSnap = true;
 
@@ -964,10 +957,7 @@ namespace ENP.UnityExtensions.Runtime
             if (!_snapTargetsDirty &&
                 _snapTargetsChildCount == childCount &&
                 _snapTargetsViewSize == viewSize)
-            {
-                Debug.Log($"[SCROLL {name}] EnsureSnapTargets: SKIP (not dirty) cachedCount={_snapTargetsCount} viewSize={viewSize} childCount={childCount}");
                 return;
-            }
 
             _snapTargetsDirty = false;
             _snapTargetsViewSize = viewSize;
@@ -1018,16 +1008,6 @@ namespace ENP.UnityExtensions.Runtime
             }
 
             _snapTargetsCount = page;
-
-            {
-                var sb = new System.Text.StringBuilder();
-                for (int i = 0; i < _snapTargetsCount; i++)
-                {
-                    if (i > 0) sb.Append(", ");
-                    sb.Append(_snapTargetsAxisByPage[i].ToString("F1"));
-                }
-                Debug.Log($"[SCROLL {name}] EnsureSnapTargets: RECOMPUTED childCount={childCount} pages={_snapTargetsCount} curAxis={curAxis:F1} viewAlign={viewAlign:F1} axisByPage=[{sb}] viewBounds={_viewBounds} contentBounds={_contentBounds}");
-            }
 
             if (_snapTargetsCount <= 0)
                 return;
@@ -1278,14 +1258,11 @@ namespace ENP.UnityExtensions.Runtime
 
         public void SetPage(int pageIndex, bool immediate = true)
         {
-            Debug.Log($"[SCROLL {name}] SetPage(pageIndex={pageIndex}, immediate={immediate}) isInitialized={_isInitialized} snapEnabled={_snapEnabled}");
-
             if (!_isInitialized) return;
             if (!_snapEnabled) return;
 
             EnsureSnapTargets();
             int count = _snapTargetsCount;
-            Debug.Log($"[SCROLL {name}] SetPage: snapTargetsCount={count}");
             if (count <= 0) return;
 
             if (pageIndex < 0) pageIndex = 0;
@@ -1300,8 +1277,6 @@ namespace ENP.UnityExtensions.Runtime
                 pos += off;
                 axis = GetAxisValue(pos);
             }
-
-            Debug.Log($"[SCROLL {name}] SetPage: resolvedPageIndex={pageIndex} targetAxis={axis} currentAxis={GetAxisValue(_content.anchoredPosition)}");
 
             if (!immediate)
             {
