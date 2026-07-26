@@ -154,8 +154,6 @@ namespace ENP.UnityExtensions.Runtime
 
         private void SetVisible(bool visible)
         {
-            Debug.Log($"[WIN {name}] SetVisible({visible}) useCanvasHiding={UseCanvasHiding} f={Time.frameCount}");
-
             if (UseCanvasHiding)
             {
                 if (visible && !gameObject.activeSelf)
@@ -180,7 +178,6 @@ namespace ENP.UnityExtensions.Runtime
         private void ReleasePressedButtons()
         {
             var buttons = GetComponentsInChildren<AnimatedButton>(includeInactive: false);
-            Debug.Log($"[WIN {name}] ReleasePressedButtons found={buttons.Length} f={Time.frameCount}");
             for (int i = 0; i < buttons.Length; i++)
                 buttons[i].ForceRelease();
         }

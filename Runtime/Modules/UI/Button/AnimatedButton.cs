@@ -124,7 +124,6 @@ namespace ENP.UnityExtensions.Runtime
 
         public void OnPointerDown(PointerEventData eventData)
         {
-            Debug.Log($"[BTN {name}] OnPointerDown canInteract={CanInteract(eventData)} f={Time.frameCount}");
             if (!CanInteract(eventData))
             {
                 return;
@@ -136,7 +135,6 @@ namespace ENP.UnityExtensions.Runtime
 
         public void OnPointerUp(PointerEventData eventData)
         {
-            Debug.Log($"[BTN {name}] OnPointerUp isPointerDown={_isPointerDown} f={Time.frameCount}");
             if (eventData.button != PointerEventData.InputButton.Left || !_isPointerDown)
             {
                 return;
@@ -152,7 +150,6 @@ namespace ENP.UnityExtensions.Runtime
         // needs release to land back on this object), so this only affects the pressed *visual*.
         public void OnPointerExit(PointerEventData eventData)
         {
-            Debug.Log($"[BTN {name}] OnPointerExit isPointerDown={_isPointerDown} f={Time.frameCount}");
             if (!_isPointerDown)
                 return;
 
@@ -162,7 +159,6 @@ namespace ENP.UnityExtensions.Runtime
 
         public void OnPointerClick(PointerEventData eventData)
         {
-            Debug.Log($"[BTN {name}] OnPointerClick canClick={CanClick(eventData)} f={Time.frameCount}");
             if (!CanClick(eventData))
             {
                 return;
@@ -178,7 +174,6 @@ namespace ENP.UnityExtensions.Runtime
         // gives for free.
         public void ForceRelease()
         {
-            Debug.Log($"[BTN {name}] ForceRelease isPointerDown={_isPointerDown} f={Time.frameCount}");
             if (!_isPointerDown)
                 return;
 

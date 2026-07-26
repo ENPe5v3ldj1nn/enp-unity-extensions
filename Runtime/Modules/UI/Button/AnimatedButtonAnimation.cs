@@ -12,29 +12,22 @@ namespace ENP.UnityExtensions.Runtime
         private RectTransform _rectTransform;
         private Tween _scaleTween;
         private Vector3 _restScale;
+        private bool _restScaleCaptured;
 
         private void Awake()
         {
             CacheReferences();
-            // Captured once, before any interaction is possible, so it always reflects the
-            // authored rest pose. Re-capturing on every OnEnable is what let the scale compound:
-            // if the component got re-enabled while a press tween hadn't finished, that shrunk
-            // value would get baked in as the new "rest" and each press would shrink it further.
-            _restScale = _rectTransform.localScale;
-            Debug.Log($"[BTNANIM {name}] Awake restScale={_restScale} f={Time.frameCount}");
         }
 
         private void OnEnable()
         {
             CacheReferences();
-            Debug.Log($"[BTNANIM {name}] OnEnable restScale={_restScale} currentScale={_rectTransform.localScale} f={Time.frameCount}");
             _button.Pressed += HandlePressed;
             _button.Released += HandleReleased;
         }
 
         private void OnDisable()
         {
-            Debug.Log($"[BTNANIM {name}] OnDisable currentScale={_rectTransform.localScale} f={Time.frameCount}");
             _button.Pressed -= HandlePressed;
             _button.Released -= HandleReleased;
             ResetScale();
@@ -47,14 +40,27 @@ namespace ENP.UnityExtensions.Runtime
 
         private void HandlePressed()
         {
-            Debug.Log($"[BTNANIM {name}] HandlePressed restScale={_restScale} currentScale={_rectTransform.localScale} target={_restScale * _button.PressedScale} f={Time.frameCount}");
+            EnsureRestScale();
             SetScale(_restScale * _button.PressedScale);
         }
 
         private void HandleReleased()
         {
-            Debug.Log($"[BTNANIM {name}] HandleReleased restScale={_restScale} currentScale={_rectTransform.localScale} f={Time.frameCount}");
+            EnsureRestScale();
             SetScale(_restScale);
+        }
+
+        // Captured lazily on first use rather than in Awake/OnEnable: those can run before layout,
+        // spawn animations or other startup scripts have settled the transform into its true rest
+        // pose, baking in a wrong value forever. By the time a press is physically possible, the UI
+        // has necessarily already settled, so this is the first point we can trust.
+        private void EnsureRestScale()
+        {
+            if (_restScaleCaptured)
+                return;
+
+            _restScaleCaptured = true;
+            _restScale = _rectTransform.localScale;
         }
 
         private void SetScale(Vector3 targetScale)
@@ -64,7 +70,6 @@ namespace ENP.UnityExtensions.Runtime
             if (_button.UseAnimation)
             {
                 _scaleTween = _rectTransform.DOScale(targetScale, _button.AnimationDuration);
-                _scaleTween.OnComplete(() => Debug.Log($"[BTNANIM {name}] tween complete finalScale={_rectTransform.localScale} f={Time.frameCount}"));
                 return;
             }
 
@@ -73,6 +78,9 @@ namespace ENP.UnityExtensions.Runtime
 
         private void ResetScale()
         {
+            if (!_restScaleCaptured)
+                return;
+
             KillTween();
             _rectTransform.localScale = _restScale;
         }
