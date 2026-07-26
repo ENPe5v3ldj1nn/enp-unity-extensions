@@ -4,6 +4,7 @@ using System.Threading;
 using Cysharp.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.UI;
 
 namespace ENP.UnityExtensions.Runtime
 {
@@ -18,10 +19,18 @@ namespace ENP.UnityExtensions.Runtime
                  "Assigned to WindowConfig.Default on Initialize.")]
         [SerializeField] private WindowConfig _windowConfig;
 
+        [Tooltip("Block raycasts on the whole UI while a transition is in flight, so a tap can't " +
+                 "land on the outgoing or incoming window mid-animation, or double-fire a switch.")]
+        [SerializeField] private bool _blockInputDuringTransition = true;
+
         private static AbstractUiController _instance;
 
         private CancellationTokenSource _transitionCts;
         private (Type type, AnimatedWindow window)[] _windows;
+
+        private Canvas _blockerCanvas;
+        private GraphicRaycaster _blockerRaycaster;
+        private int _blockCount;
 
         AnimatedWindow IWindowService.CurrentWindow => WindowHistory.CurrentWindow;
         AnimatedWindow IWindowService.LastWindow => WindowHistory.LastWindow;
@@ -52,6 +61,9 @@ namespace ENP.UnityExtensions.Runtime
 
             if (_windowConfig != null)
                 WindowConfig.Default = _windowConfig;
+
+            if (_blockInputDuringTransition)
+                CreateBlocker();
 
             _windows = DiscoverWindows();
 
@@ -156,23 +168,68 @@ namespace ENP.UnityExtensions.Runtime
             OpenNextAsync(window, transition, onClose, _transitionCts.Token).Forget();
         }
 
-        private static async UniTaskVoid OpenNextAsync(AnimatedWindow window, WindowTransition transition,
+        private async UniTaskVoid OpenNextAsync(AnimatedWindow window, WindowTransition transition,
             UnityAction onClose, CancellationToken token)
         {
-            var active = WindowHistory.CurrentWindow;
+            SetInputBlocked(true);
+            try
+            {
+                var active = WindowHistory.CurrentWindow;
 
-            if (active != null && active != window)
-                WindowHistory.LastWindow = active;
+                if (active != null && active != window)
+                    WindowHistory.LastWindow = active;
 
-            if (active != null)
-                await active.CloseAsync(transition, token);
+                if (active != null)
+                    await active.CloseAsync(transition, token);
 
-            if (token.IsCancellationRequested)
+                if (token.IsCancellationRequested)
+                    return;
+
+                onClose?.Invoke();
+                WindowHistory.CurrentWindow = window;
+                await window.OpenAsync(transition, token);
+            }
+            finally
+            {
+                SetInputBlocked(false);
+            }
+        }
+
+        // Runtime full-screen raycast blocker, kept at the highest sort order so it sits above every
+        // window regardless of their individual canvases. Ref-counted: an in-flight transition being
+        // cancelled by a newer one must not let the old task's cleanup unblock input the new task needs.
+        private void CreateBlocker()
+        {
+            var go = new GameObject("WindowInputBlocker", typeof(RectTransform), typeof(Canvas), typeof(GraphicRaycaster));
+            go.transform.SetParent(transform, false);
+
+            var rect = (RectTransform)go.transform;
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+
+            var image = go.AddComponent<Image>();
+            image.color = new Color(0f, 0f, 0f, 0f);
+            image.raycastTarget = true;
+
+            _blockerCanvas = go.GetComponent<Canvas>();
+            _blockerCanvas.overrideSorting = true;
+            _blockerCanvas.sortingOrder = short.MaxValue;
+            _blockerCanvas.enabled = false;
+
+            _blockerRaycaster = go.GetComponent<GraphicRaycaster>();
+        }
+
+        private void SetInputBlocked(bool blocked)
+        {
+            if (_blockerCanvas == null)
                 return;
 
-            onClose?.Invoke();
-            WindowHistory.CurrentWindow = window;
-            await window.OpenAsync(transition, token);
+            _blockCount += blocked ? 1 : -1;
+            var active = _blockCount > 0;
+            _blockerCanvas.enabled = active;
+            _blockerRaycaster.enabled = active;
         }
     }
 }

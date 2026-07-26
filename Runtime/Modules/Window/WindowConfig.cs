@@ -57,6 +57,8 @@ namespace ENP.UnityExtensions.Runtime
             return entry;
         }
 
+        // Tuned for high-frequency UI navigation (lots of screen switches): short durations, no
+        // heavy overshoot. Slower/bouncier presets read fine once; at high frequency they read as lag.
         private void Reset()
         {
             const float slide = 1472f;
@@ -65,28 +67,28 @@ namespace ENP.UnityExtensions.Runtime
             _entries = new[]
             {
                 E(WindowTransition.Fade,
-                    enter: R(0.28f, Ease.OutQuad, Vector2.zero, one, 0f, 0f),
-                    exit:  R(0.22f, Ease.InQuad,  Vector2.zero, one, 0f, 0f)),
+                    enter: R(0.16f, Ease.OutQuad, Vector2.zero, one, 0f, 0f),
+                    exit:  R(0.13f, Ease.InQuad,  Vector2.zero, one, 0f, 0f)),
 
                 E(WindowTransition.SlideLeft,
-                    enter: R(0.30f, Ease.OutQuad, new Vector2(slide, 0),  one, 0f, 0f),
-                    exit:  R(0.25f, Ease.InQuad,  new Vector2(-slide, 0), one, 0f, 0f)),
+                    enter: R(0.18f, Ease.OutQuad, new Vector2(slide, 0),  one, 0f, 0f),
+                    exit:  R(0.14f, Ease.InQuad,  new Vector2(-slide, 0), one, 0f, 0f)),
 
                 E(WindowTransition.SlideRight,
-                    enter: R(0.30f, Ease.OutQuad, new Vector2(-slide, 0), one, 0f, 0f),
-                    exit:  R(0.25f, Ease.InQuad,  new Vector2(slide, 0),  one, 0f, 0f)),
+                    enter: R(0.18f, Ease.OutQuad, new Vector2(-slide, 0), one, 0f, 0f),
+                    exit:  R(0.14f, Ease.InQuad,  new Vector2(slide, 0),  one, 0f, 0f)),
 
                 E(WindowTransition.SmoothLeft,
-                    enter: R(0.40f, Ease.OutBack, new Vector2(-slide, 0), new Vector3(0.98f, 0.98f, 1f), 0f, 0f),
-                    exit:  R(0.35f, Ease.InBack,  new Vector2(slide, 0),  new Vector3(0.98f, 0.98f, 1f), 0f, 0f)),
+                    enter: R(0.22f, Ease.OutBack, new Vector2(-slide, 0), new Vector3(0.99f, 0.99f, 1f), 0f, 0f),
+                    exit:  R(0.18f, Ease.InBack,  new Vector2(slide, 0),  new Vector3(0.99f, 0.99f, 1f), 0f, 0f)),
 
                 E(WindowTransition.SmoothRight,
-                    enter: R(0.40f, Ease.OutBack, new Vector2(slide, 0),  new Vector3(0.98f, 0.98f, 1f), 0f, 0f),
-                    exit:  R(0.35f, Ease.InBack,  new Vector2(-slide, 0), new Vector3(0.98f, 0.98f, 1f), 0f, 0f)),
+                    enter: R(0.22f, Ease.OutBack, new Vector2(slide, 0),  new Vector3(0.99f, 0.99f, 1f), 0f, 0f),
+                    exit:  R(0.18f, Ease.InBack,  new Vector2(-slide, 0), new Vector3(0.99f, 0.99f, 1f), 0f, 0f)),
 
                 E(WindowTransition.PopupCard,
-                    enter: R(0.38f, Ease.OutBack, new Vector2(0, -180), new Vector3(0.92f, 0.92f, 1f), 0f, 0f),
-                    exit:  R(0.28f, Ease.InBack,  new Vector2(0, -180), new Vector3(0.92f, 0.92f, 1f), 0f, 0f)),
+                    enter: R(0.20f, Ease.OutBack, new Vector2(0, -140), new Vector3(0.94f, 0.94f, 1f), 0f, 0f),
+                    exit:  R(0.16f, Ease.InBack,  new Vector2(0, -140), new Vector3(0.94f, 0.94f, 1f), 0f, 0f)),
             };
         }
 
