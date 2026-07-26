@@ -155,6 +155,19 @@ namespace ENP.UnityExtensions.Runtime
             _blockInputUntilTime = Time.unscaledTime + _clickBlockDuration;
         }
 
+        // For hosts that hide via Canvas.enabled instead of GameObject.SetActive: that path never
+        // fires OnDisable, so a button mid-press when its window closes would stay visually pressed
+        // forever. Callers force a release before hiding to restore the same guarantee SetActive(false)
+        // gives for free.
+        public void ForceRelease()
+        {
+            if (!_isPointerDown)
+                return;
+
+            _isPointerDown = false;
+            Released?.Invoke();
+        }
+
         public void SetInteractable(bool value)
         {
             if (_interactable == value)

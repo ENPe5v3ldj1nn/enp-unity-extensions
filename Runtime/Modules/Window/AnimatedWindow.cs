@@ -159,6 +159,12 @@ namespace ENP.UnityExtensions.Runtime
                 if (visible && !gameObject.activeSelf)
                     gameObject.SetActive(true);
 
+                // GameObject stays active in this mode, so nothing fires OnDisable to reset a button
+                // that's mid-press when the window closes (finger still down, or navigated away
+                // programmatically). Release explicitly before hiding to avoid a frozen pressed visual.
+                if (!visible)
+                    ReleasePressedButtons();
+
                 _canvas.enabled = visible;
                 if (_raycaster != null)
                     _raycaster.enabled = visible;
@@ -167,6 +173,13 @@ namespace ENP.UnityExtensions.Runtime
             {
                 gameObject.SetActive(visible);
             }
+        }
+
+        private void ReleasePressedButtons()
+        {
+            var buttons = GetComponentsInChildren<AnimatedButton>(includeInactive: false);
+            for (int i = 0; i < buttons.Length; i++)
+                buttons[i].ForceRelease();
         }
 
         private static Tween WithEase(Tween tween, in WindowConfig.Recipe recipe)
