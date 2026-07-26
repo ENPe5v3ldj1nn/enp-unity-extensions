@@ -442,54 +442,11 @@ namespace ENP.UnityExtensions.Runtime
 
             UpdateBounds();
 
-            Vector2 offset = CalculateOffset(Vector2.zero);
-
-            if (_movementType == MovementType.Elastic && (offset.x != 0f || offset.y != 0f))
-            {
-                _snapping = false;
-                if (_snapEnabled)
-                    _pendingSnap = true;
-
-                Vector2 target = _content.anchoredPosition + offset;
-
-                if (_axis == Axis.Horizontal)
-                    target.y = _content.anchoredPosition.y;
-                else
-                    target.x = _content.anchoredPosition.x;
-
-                float smoothTime = Mathf.Max(0.001f, _elasticity);
-                if (_wasScrolledThisFrame)
-                    smoothTime *= 3f;
-
-                Vector2 pos = Vector2.SmoothDamp(
-                    _content.anchoredPosition,
-                    target,
-                    ref _velocity,
-                    smoothTime,
-                    Mathf.Infinity,
-                    dt);
-
-                if (_axis == Axis.Horizontal)
-                {
-                    pos.y = _content.anchoredPosition.y;
-                    _velocity.y = 0f;
-                    if (Mathf.Abs(_velocity.x) < 1f)
-                        _velocity.x = 0f;
-                }
-                else
-                {
-                    pos.x = _content.anchoredPosition.x;
-                    _velocity.x = 0f;
-                    if (Mathf.Abs(_velocity.y) < 1f)
-                        _velocity.y = 0f;
-                }
-
-                SetContentAnchoredPosition(pos);
-                _hasPrev = false;
-                _wasScrolledThisFrame = false;
-                return;
-            }
-
+            // An explicit programmatic snap (SetPage/SetNormalizedPosition with immediate:false) is
+            // an intentional "go here" command and must win over automatic elastic bounds-correction.
+            // Checking elastic-out-of-bounds first would otherwise cancel _snapping every frame
+            // whenever CalculateOffset reads nonzero (e.g. nested scroll content inflating the
+            // content bounds), silently discarding the requested page switch forever.
             if (_snapping)
             {
                 float curAxis = GetAxisValue(_content.anchoredPosition);
@@ -530,6 +487,53 @@ namespace ENP.UnityExtensions.Runtime
                     _hasPrev = false;
                 }
 
+                _wasScrolledThisFrame = false;
+                return;
+            }
+
+            Vector2 offset = CalculateOffset(Vector2.zero);
+
+            if (_movementType == MovementType.Elastic && (offset.x != 0f || offset.y != 0f))
+            {
+                if (_snapEnabled)
+                    _pendingSnap = true;
+
+                Vector2 target = _content.anchoredPosition + offset;
+
+                if (_axis == Axis.Horizontal)
+                    target.y = _content.anchoredPosition.y;
+                else
+                    target.x = _content.anchoredPosition.x;
+
+                float smoothTime = Mathf.Max(0.001f, _elasticity);
+                if (_wasScrolledThisFrame)
+                    smoothTime *= 3f;
+
+                Vector2 pos = Vector2.SmoothDamp(
+                    _content.anchoredPosition,
+                    target,
+                    ref _velocity,
+                    smoothTime,
+                    Mathf.Infinity,
+                    dt);
+
+                if (_axis == Axis.Horizontal)
+                {
+                    pos.y = _content.anchoredPosition.y;
+                    _velocity.y = 0f;
+                    if (Mathf.Abs(_velocity.x) < 1f)
+                        _velocity.x = 0f;
+                }
+                else
+                {
+                    pos.x = _content.anchoredPosition.x;
+                    _velocity.x = 0f;
+                    if (Mathf.Abs(_velocity.y) < 1f)
+                        _velocity.y = 0f;
+                }
+
+                SetContentAnchoredPosition(pos);
+                _hasPrev = false;
                 _wasScrolledThisFrame = false;
                 return;
             }
