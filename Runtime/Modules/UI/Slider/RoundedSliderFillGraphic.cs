@@ -85,6 +85,7 @@ namespace ENP.UnityExtensions.Runtime
             }
         }
 
+#if UNITY_EDITOR
         protected override void OnValidate()
         {
             base.OnValidate();
@@ -92,6 +93,7 @@ namespace ENP.UnityExtensions.Runtime
             _roundness = Mathf.Clamp01(_roundness);
             _cornerSegments = Mathf.Max(3, _cornerSegments);
         }
+#endif
 
         public override Texture mainTexture => s_WhiteTexture;
 
