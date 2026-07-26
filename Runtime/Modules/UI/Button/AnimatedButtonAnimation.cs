@@ -16,12 +16,16 @@ namespace ENP.UnityExtensions.Runtime
         private void Awake()
         {
             CacheReferences();
+            // Captured once, before any interaction is possible, so it always reflects the
+            // authored rest pose. Re-capturing on every OnEnable is what let the scale compound:
+            // if the component got re-enabled while a press tween hadn't finished, that shrunk
+            // value would get baked in as the new "rest" and each press would shrink it further.
+            _restScale = _rectTransform.localScale;
         }
 
         private void OnEnable()
         {
             CacheReferences();
-            _restScale = _rectTransform.localScale;
             _button.Pressed += HandlePressed;
             _button.Released += HandleReleased;
         }

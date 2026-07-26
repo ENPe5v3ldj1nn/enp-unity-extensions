@@ -12,7 +12,7 @@ namespace ENP.UnityExtensions.Runtime
     [RequireComponent(typeof(CanvasGroup))]
     [RequireComponent(typeof(RectTransform))]
     [RequireComponent(typeof(AnimatedButtonAnimation))]
-    public sealed class AnimatedButton : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IPointerClickHandler
+    public sealed class AnimatedButton : MonoBehaviour, IPointerDownHandler, IPointerUpHandler, IPointerClickHandler, IPointerExitHandler
     {
         [Header("Visual")]
         [FormerlySerializedAs("IsUseAnimation")]
@@ -139,6 +139,19 @@ namespace ENP.UnityExtensions.Runtime
             {
                 return;
             }
+
+            _isPointerDown = false;
+            Released?.Invoke();
+        }
+
+        // A drag (finger/mouse sliding off the button while still held, e.g. inside a ScrollRect
+        // that steals the gesture) can leave OnPointerUp never reaching this target. Releasing on
+        // exit is the standard safety net: Click detection is independent of this flag (it only
+        // needs release to land back on this object), so this only affects the pressed *visual*.
+        public void OnPointerExit(PointerEventData eventData)
+        {
+            if (!_isPointerDown)
+                return;
 
             _isPointerDown = false;
             Released?.Invoke();
