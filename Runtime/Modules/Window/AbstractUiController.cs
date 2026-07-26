@@ -92,8 +92,14 @@ namespace ENP.UnityExtensions.Runtime
 
         protected void CloseAll()
         {
+            // Windows start disabled in the scene. Activate the GameObject before hiding it so
+            // it goes through at least one enable + layout pass now, instead of on first Show —
+            // avoids CaptureBase/offset math reading a stale RectTransform.rect on first open.
             for (int i = 0; i < _windows.Length; i++)
+            {
+                _windows[i].window.gameObject.SetActive(true);
                 _windows[i].window.HideImmediate();
+            }
         }
 
         protected void Show(AnimatedWindow window, WindowTransition transition, SlideDirection direction = SlideDirection.Right, UnityAction onClose = null)
