@@ -31,6 +31,10 @@ namespace ENP.UnityExtensions.Runtime
         [SerializeField] private Canvas _canvas;
         [SerializeField] private GraphicRaycaster _raycaster;
 
+        [Header("Optimization")]
+        [Tooltip("Enable when the window's IWindowVisibilityAware children never change after the first show (no runtime instantiation/destruction). Caches the GetComponentsInChildren scan instead of repeating it on every show/hide.")]
+        [SerializeField] private bool _staticHierarchy;
+
         private Vector2 _basePosition;
         private Vector3 _baseScale;
         private float _baseRotationZ;
@@ -38,6 +42,7 @@ namespace ENP.UnityExtensions.Runtime
         private bool _initialized;
         private Sequence _activeSequence;
         private int _opGeneration;
+        private IWindowVisibilityAware[] _cachedAware;
 
         private bool UseCanvasHiding => _hideMode == WindowHideMode.Canvas && _canvas != null;
 
@@ -196,7 +201,18 @@ namespace ENP.UnityExtensions.Runtime
 
         private void NotifyVisibilityAware(bool visible)
         {
-            var aware = GetComponentsInChildren<IWindowVisibilityAware>(includeInactive: false);
+            IWindowVisibilityAware[] aware;
+            if (_staticHierarchy)
+            {
+                if (_cachedAware == null)
+                    _cachedAware = GetComponentsInChildren<IWindowVisibilityAware>(includeInactive: false);
+                aware = _cachedAware;
+            }
+            else
+            {
+                aware = GetComponentsInChildren<IWindowVisibilityAware>(includeInactive: false);
+            }
+
             for (int i = 0; i < aware.Length; i++)
             {
                 if (visible)
