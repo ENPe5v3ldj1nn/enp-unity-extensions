@@ -19,7 +19,7 @@ namespace ENP.UnityExtensions.Runtime
             [Tooltip("Optional. When it has keys it overrides Ease.")]
             public AnimationCurve curve;
 
-            [Tooltip("Hidden-state anchored offset from base. Enter: offset->base. Exit: base->offset.")]
+            [Tooltip("Hidden-state offset from base, as a fraction of the window's own rect size (1 = one full width/height). Enter: offset->base. Exit: base->offset.")]
             public Vector2 offset;
             [Tooltip("Hidden-state local scale. Zero = keep base scale (no scaling).")]
             public Vector3 scale;
@@ -61,7 +61,8 @@ namespace ENP.UnityExtensions.Runtime
         // heavy overshoot. Slower/bouncier presets read fine once; at high frequency they read as lag.
         private void Reset()
         {
-            const float slide = 1472f;
+            const float slide = 1f; // one full width of the window's own rect
+            const float popupRise = 0.06f; // small fraction of the window's own rect height
             var one = Vector3.one;
 
             _entries = new[]
@@ -87,8 +88,8 @@ namespace ENP.UnityExtensions.Runtime
                     exit:  R(0.18f, Ease.InBack,  new Vector2(-slide, 0), new Vector3(0.99f, 0.99f, 1f), 0f, 0f)),
 
                 E(WindowTransition.PopupCard,
-                    enter: R(0.20f, Ease.OutBack, new Vector2(0, -140), new Vector3(0.94f, 0.94f, 1f), 0f, 0f),
-                    exit:  R(0.16f, Ease.InBack,  new Vector2(0, -140), new Vector3(0.94f, 0.94f, 1f), 0f, 0f)),
+                    enter: R(0.20f, Ease.OutBack, new Vector2(0, -popupRise), new Vector3(0.94f, 0.94f, 1f), 0f, 0f),
+                    exit:  R(0.16f, Ease.InBack,  new Vector2(0, -popupRise), new Vector3(0.94f, 0.94f, 1f), 0f, 0f)),
             };
         }
 

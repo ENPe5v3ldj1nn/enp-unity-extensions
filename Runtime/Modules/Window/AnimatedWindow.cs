@@ -100,8 +100,9 @@ namespace ENP.UnityExtensions.Runtime
             var hiddenScale = hasScale ? recipe.scale : _baseScale;
             var hiddenRotZ = _baseRotationZ + recipe.rotation;
 
-            var fromPos = enter ? _basePosition + recipe.offset : _basePosition;
-            var toPos = enter ? _basePosition : _basePosition + recipe.offset;
+            var resolvedOffset = new Vector2(recipe.offset.x * _rect.rect.width, recipe.offset.y * _rect.rect.height);
+            var fromPos = enter ? _basePosition + resolvedOffset : _basePosition;
+            var toPos = enter ? _basePosition : _basePosition + resolvedOffset;
             var fromScale = enter ? hiddenScale : _baseScale;
             var toScale = enter ? _baseScale : hiddenScale;
             var fromRotZ = enter ? hiddenRotZ : _baseRotationZ;
