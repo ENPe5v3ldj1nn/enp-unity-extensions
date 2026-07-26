@@ -21,17 +21,20 @@ namespace ENP.UnityExtensions.Runtime
             // if the component got re-enabled while a press tween hadn't finished, that shrunk
             // value would get baked in as the new "rest" and each press would shrink it further.
             _restScale = _rectTransform.localScale;
+            Debug.Log($"[BTNANIM {name}] Awake restScale={_restScale} f={Time.frameCount}");
         }
 
         private void OnEnable()
         {
             CacheReferences();
+            Debug.Log($"[BTNANIM {name}] OnEnable restScale={_restScale} currentScale={_rectTransform.localScale} f={Time.frameCount}");
             _button.Pressed += HandlePressed;
             _button.Released += HandleReleased;
         }
 
         private void OnDisable()
         {
+            Debug.Log($"[BTNANIM {name}] OnDisable currentScale={_rectTransform.localScale} f={Time.frameCount}");
             _button.Pressed -= HandlePressed;
             _button.Released -= HandleReleased;
             ResetScale();
@@ -44,11 +47,13 @@ namespace ENP.UnityExtensions.Runtime
 
         private void HandlePressed()
         {
+            Debug.Log($"[BTNANIM {name}] HandlePressed restScale={_restScale} currentScale={_rectTransform.localScale} target={_restScale * _button.PressedScale} f={Time.frameCount}");
             SetScale(_restScale * _button.PressedScale);
         }
 
         private void HandleReleased()
         {
+            Debug.Log($"[BTNANIM {name}] HandleReleased restScale={_restScale} currentScale={_rectTransform.localScale} f={Time.frameCount}");
             SetScale(_restScale);
         }
 
@@ -59,6 +64,7 @@ namespace ENP.UnityExtensions.Runtime
             if (_button.UseAnimation)
             {
                 _scaleTween = _rectTransform.DOScale(targetScale, _button.AnimationDuration);
+                _scaleTween.OnComplete(() => Debug.Log($"[BTNANIM {name}] tween complete finalScale={_rectTransform.localScale} f={Time.frameCount}"));
                 return;
             }
 
