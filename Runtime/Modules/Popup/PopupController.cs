@@ -48,7 +48,7 @@ namespace ENP.UnityExtensions.Runtime
             BackgroundFadeMax = fadeMax;
         }
     
-        public static T Open<T>(WindowTransition openAnim = Fade, params object[] args) where T : PopupWindow
+        public static T Open<T>(WindowTransition openAnim, params object[] args) where T : PopupWindow
         {
             Instance.gameObject.SetActive(true);
             Instance._canvas.gameObject.SetActive(true);
@@ -62,7 +62,7 @@ namespace ENP.UnityExtensions.Runtime
             return SetPopup<T>(typeof(T).Name, openAnim, args);
         }
 
-        public static void Close(PopupWindow popup, WindowTransition closeAnim = Fade, UnityAction onClose = null)
+        public static void Close(PopupWindow popup, WindowTransition closeAnim, UnityAction onClose = null)
         {
             if (Instance._windowStack.Count == 0)
             {
