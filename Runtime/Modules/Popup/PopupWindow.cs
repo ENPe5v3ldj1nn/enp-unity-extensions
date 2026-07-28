@@ -16,7 +16,7 @@ namespace ENP.UnityExtensions.Runtime
             }
         }
 
-        public void Close(WindowTransition closeAnim = Fade)
+        public void Close(WindowTransition closeAnim)
         {
             PopupController.Close(this, closeAnim);
         }
