@@ -30,7 +30,7 @@ public class TextGradient : MonoBehaviour
 
         if (startCharIndex == -1 || endCharIndex == -1)
         {
-            Debug.LogWarning($"Слово '{_targetWord}' не знайдено в тексті.");
+            UnityEngine.Debug.LogWarning($"Слово '{_targetWord}' не знайдено в тексті.");
             return;
         }
 

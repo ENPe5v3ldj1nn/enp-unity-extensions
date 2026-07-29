@@ -354,7 +354,7 @@ namespace ENP.UnityExtensions.Runtime
                 var shader = Shader.Find("UI/RoundedShapeSDF");
                 if (shader == null)
                 {
-                    Debug.LogError("Shader 'UI/RoundedShapeSDF' not found.");
+                    UnityEngine.Debug.LogError("Shader 'UI/RoundedShapeSDF' not found.");
                     return;
                 }
                 _sharedMaterial = new Material(shader);

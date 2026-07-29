@@ -78,9 +78,9 @@ namespace ENP.UnityExtensions.Runtime
             if (_track == null)
                 _track = transform as RectTransform;
 
-            Debug.Assert(_slider != null, "RoundedSliderView requires a Slider reference.");
-            Debug.Assert(_track != null, "RoundedSliderView requires a RectTransform track.");
-            Debug.Assert(_fill != null, "RoundedSliderView requires a fill RectTransform.");
+            UnityEngine.Debug.Assert(_slider != null, "RoundedSliderView requires a Slider reference.");
+            UnityEngine.Debug.Assert(_track != null, "RoundedSliderView requires a RectTransform track.");
+            UnityEngine.Debug.Assert(_fill != null, "RoundedSliderView requires a fill RectTransform.");
         }
 
         private void ClampPadding()

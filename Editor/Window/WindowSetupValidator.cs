@@ -15,7 +15,7 @@ namespace ENP.UnityExtensions.Editor
             var windows = Object.FindObjectsByType<AnimatedWindow>(FindObjectsInactive.Include, FindObjectsSortMode.None);
             if (windows.Length == 0)
             {
-                Debug.Log("[WindowSetupValidator] No AnimatedWindow found in the open scene(s).");
+                UnityEngine.Debug.Log("[WindowSetupValidator] No AnimatedWindow found in the open scene(s).");
                 return;
             }
 
@@ -29,9 +29,9 @@ namespace ENP.UnityExtensions.Editor
             issues += ValidateDuplicateNames(windows, report);
 
             if (issues == 0)
-                Debug.Log(report.ToString());
+                UnityEngine.Debug.Log(report.ToString());
             else
-                Debug.LogWarning(report.ToString());
+                UnityEngine.Debug.LogWarning(report.ToString());
         }
 
         private static int ValidateWindow(AnimatedWindow window, StringBuilder report)

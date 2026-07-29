@@ -67,7 +67,7 @@ namespace ENP.UnityExtensions.Editor
                     catch (Exception ex)
                     {
                         if (hasPrimaryException)
-                            Debug.LogException(ex);
+                            UnityEngine.Debug.LogException(ex);
                         else
                             restoreException = ex;
                     }

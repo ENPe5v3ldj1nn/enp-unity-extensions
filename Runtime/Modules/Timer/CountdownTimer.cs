@@ -1,5 +1,7 @@
 using System;
 using System.Collections;
+using System.Threading;
+using Cysharp.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 
@@ -7,15 +9,14 @@ namespace ENP.UnityExtensions.Runtime
 {
     public sealed class CountdownTimer
     {
-        private static readonly WaitForSecondsRealtime _tickDelay = new(1f);
         private static readonly Action<TMP_Text, TimeSpan> _defaultTextFormatter = DefaultTextFormatter;
 
         private TMP_Text _text;
-        private Coroutine _coroutine;
         private DateTime _targetUtc;
         private bool _isRunning;
         private Action<TMP_Text, TimeSpan> _textFormatter = _defaultTextFormatter;
         private Action _onCompleted;
+        private CancellationTokenSource _cts;
 
         public void Setup(TMP_Text text, Action onCompleted = null)
         {
@@ -53,7 +54,7 @@ namespace ENP.UnityExtensions.Runtime
             _targetUtc = targetUtc;
             _isRunning = true;
 
-            StopCoroutineInternal();
+            StopTimer();
 
             var remaining = _targetUtc - DateTime.UtcNow;
             if (remaining <= TimeSpan.Zero)
@@ -61,34 +62,36 @@ namespace ENP.UnityExtensions.Runtime
                 Complete();
                 return;
             }
+            
+            _cts = new CancellationTokenSource();
 
             ApplyText(remaining);
-            Run().Start(out _coroutine);
+            Run(_cts.Token).Forget();
         }
 
         public void StopTimer()
         {
             _isRunning = false;
-            StopCoroutineInternal();
+            _cts?.Cancel();
+            _cts?.Dispose();
+            _cts = null;
         }
 
-        private IEnumerator Run()
+        private async UniTask Run(CancellationToken token)
         {
-            while (_isRunning)
+            while (_isRunning && !token.IsCancellationRequested)
             {
                 var remaining = _targetUtc - DateTime.UtcNow;
 
                 if (remaining <= TimeSpan.Zero)
                 {
                     Complete();
-                    yield break;
+                    return;
                 }
 
                 ApplyText(remaining);
-                yield return _tickDelay;
+                await UniTask.Delay(1000,  cancellationToken: token);
             }
-
-            _coroutine = null;
         }
 
         private void ApplyText(TimeSpan remaining)
@@ -104,22 +107,13 @@ namespace ENP.UnityExtensions.Runtime
 
         private void Complete()
         {
-            _isRunning = false;
-            _coroutine = null;
+            StopTimer();
             ApplyText(TimeSpan.Zero);
 
             var onCompleted = _onCompleted;
             onCompleted?.Invoke();
         }
-
-        private void StopCoroutineInternal()
-        {
-            if (_coroutine != null)
-            {
-                _coroutine.Stop();
-                _coroutine = null;
-            }
-        }
+        
 
         private static void DefaultTextFormatter(TMP_Text text, TimeSpan remaining)
         {

@@ -143,7 +143,7 @@ namespace ENP.UnityExtensions.Editor
                 }
                 catch (System.Exception ex)
                 {
-                    Debug.LogWarning($"[Language] Failed to scan {file}: {ex.Message}");
+                    UnityEngine.Debug.LogWarning($"[Language] Failed to scan {file}: {ex.Message}");
                 }
             }
             return result;
@@ -169,7 +169,7 @@ namespace ENP.UnityExtensions.Editor
                 }
                 catch (System.Exception ex)
                 {
-                    Debug.LogWarning($"[Language] Failed to parse {jsonPath}: {ex.Message}");
+                    UnityEngine.Debug.LogWarning($"[Language] Failed to parse {jsonPath}: {ex.Message}");
                 }
             }
 

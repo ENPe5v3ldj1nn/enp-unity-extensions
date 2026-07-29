@@ -260,7 +260,7 @@ namespace ENP.UnityExtensions.Editor
             }
             catch (Exception ex)
             {
-                Debug.LogWarning($"[Language] Failed to read files in {folderAssetPath}: {ex.Message}");
+                UnityEngine.Debug.LogWarning($"[Language] Failed to read files in {folderAssetPath}: {ex.Message}");
             }
             return result;
         }
@@ -326,7 +326,7 @@ namespace ENP.UnityExtensions.Editor
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogError($"[Language] Failed to write '{targetFileName}' for {entry.Language}: {ex.Message}");
+                    UnityEngine.Debug.LogError($"[Language] Failed to write '{targetFileName}' for {entry.Language}: {ex.Message}");
                     SetStatus($"Failed to save for {entry.Language}: {ex.Message}", MessageType.Error);
                     return;
                 }
@@ -408,7 +408,7 @@ namespace ENP.UnityExtensions.Editor
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogWarning($"[Language] Failed to delete '{targetPath}': {ex.Message}");
+                    UnityEngine.Debug.LogWarning($"[Language] Failed to delete '{targetPath}': {ex.Message}");
                 }
             }
 
@@ -467,7 +467,7 @@ namespace ENP.UnityExtensions.Editor
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogWarning($"[Language] Failed to delete key '{targetKey}' in '{targetPath}': {ex.Message}");
+                    UnityEngine.Debug.LogWarning($"[Language] Failed to delete key '{targetKey}' in '{targetPath}': {ex.Message}");
                 }
             }
 
@@ -521,7 +521,7 @@ namespace ENP.UnityExtensions.Editor
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogWarning($"[Language] Failed to create file '{targetPath}': {ex.Message}");
+                    UnityEngine.Debug.LogWarning($"[Language] Failed to create file '{targetPath}': {ex.Message}");
                 }
             }
         }
@@ -604,7 +604,7 @@ namespace ENP.UnityExtensions.Editor
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[Language] Failed to load keys from {targetPath}: {ex.Message}");
+                UnityEngine.Debug.LogError($"[Language] Failed to load keys from {targetPath}: {ex.Message}");
                 SetStatus($"Failed to load keys: {ex.Message}", MessageType.Error);
             }
         }
@@ -641,7 +641,7 @@ namespace ENP.UnityExtensions.Editor
                     }
                     catch (Exception ex)
                     {
-                        Debug.LogWarning($"[Language] Failed to read {targetPath}: {ex.Message}");
+                        UnityEngine.Debug.LogWarning($"[Language] Failed to read {targetPath}: {ex.Message}");
                     }
                 }
 
@@ -682,7 +682,7 @@ namespace ENP.UnityExtensions.Editor
                 }
                 catch (Exception ex)
                 {
-                    Debug.LogWarning($"[Language] Failed to read template file {targetPath}: {ex.Message}");
+                    UnityEngine.Debug.LogWarning($"[Language] Failed to read template file {targetPath}: {ex.Message}");
                 }
             }
         }
@@ -715,7 +715,7 @@ namespace ENP.UnityExtensions.Editor
                     }
                     catch (Exception ex)
                     {
-                        Debug.LogWarning($"[Language] Failed to create template file {targetPath}: {ex.Message}");
+                        UnityEngine.Debug.LogWarning($"[Language] Failed to create template file {targetPath}: {ex.Message}");
                     }
                 }
             }

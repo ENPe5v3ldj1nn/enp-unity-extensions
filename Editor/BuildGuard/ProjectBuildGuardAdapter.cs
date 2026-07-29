@@ -36,7 +36,7 @@ public sealed class ProjectBuildGuardAdapter : IBuildGuardProjectAdapter
         if (context.Mode != BuildMode.Release)
             return;
 
-        DebugLog.IsCanLog = false;
+        Deb.IsCanLog = false;
         LanguageController.IsCanLog = false;
 
         var dotweenSettings = AssetDatabase.LoadMainAssetAtPath(_dotweenSettingsPath);
@@ -50,7 +50,7 @@ public sealed class ProjectBuildGuardAdapter : IBuildGuardProjectAdapter
 
     public void Restore(BuildGuardContext context)
     {
-        DebugLog.IsCanLog = _dIsCanLog;
+        Deb.IsCanLog = _dIsCanLog;
         LanguageController.IsCanLog = _languageIsCanLog;
 
         var dotweenSettings = AssetDatabase.LoadMainAssetAtPath(_dotweenSettingsPath);
@@ -67,7 +67,7 @@ public sealed class ProjectBuildGuardAdapter : IBuildGuardProjectAdapter
         if (_snapshotCaptured)
             return;
 
-        _dIsCanLog = DebugLog.IsCanLog;
+        _dIsCanLog = Deb.IsCanLog;
         _languageIsCanLog = LanguageController.IsCanLog;
 
         var dotweenSettings = AssetDatabase.LoadMainAssetAtPath(_dotweenSettingsPath);

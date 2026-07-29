@@ -206,7 +206,7 @@ namespace ENP.UnityExtensions.Runtime
         public void CacheReferences()
         {
             _canvasGroup = GetComponent<CanvasGroup>();
-            Debug.Assert(_canvasGroup != null, "AnimatedButton requires a CanvasGroup.");
+            UnityEngine.Debug.Assert(_canvasGroup != null, "AnimatedButton requires a CanvasGroup.");
         }
 
         private bool CanInteract(PointerEventData eventData)

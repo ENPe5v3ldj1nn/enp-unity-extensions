@@ -322,7 +322,7 @@ namespace ENP.UnityExtensions.Editor
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[Language] Failed to set language: {ex.Message}");
+                UnityEngine.Debug.LogError($"[Language] Failed to set language: {ex.Message}");
                 _host.SetStatus($"Failed to set language: {ex.Message}", MessageType.Error);
             }
         }

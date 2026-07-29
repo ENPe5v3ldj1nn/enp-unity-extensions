@@ -197,7 +197,7 @@ namespace ENP.UnityExtensions.Runtime
         private static void LogError(string message)
         {
             if (!IsCanLog) return;
-            Debug.LogError(message);
+            UnityEngine.Debug.LogError(message);
         }
     }
 }

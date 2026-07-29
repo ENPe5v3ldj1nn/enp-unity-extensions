@@ -1,6 +1,4 @@
-using UnityEngine;
-
-public static class DebugLog
+public static class Deb
 {
     public static bool IsCanLog = true;
         
@@ -9,6 +7,6 @@ public static class DebugLog
         if (!IsCanLog)
             return;
             
-        Debug.Log(message);
+        UnityEngine.Debug.Log(message);
     }
 }

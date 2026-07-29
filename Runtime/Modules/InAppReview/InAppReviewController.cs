@@ -40,7 +40,7 @@ public static class InAppReviewController
             CoroutineController.Instance.StartCoroutine(InitReviewCoroutine(false));
         }
 #else
-        Debug.LogWarning("[InAppReviewController] Google Play In-App Review plugin (com.google.play.review) not found. Falling back to store URL.");
+        UnityEngine.Debug.LogWarning("[InAppReviewController] Google Play In-App Review plugin (com.google.play.review) not found. Falling back to store URL.");
 #endif
 #endif
 
@@ -69,7 +69,7 @@ public static class InAppReviewController
         // Запуск корутини тільки через CoroutineController
         CoroutineController.Instance.StartCoroutine(LaunchReviewCoroutine());
 #elif UNITY_ANDROID
-        Debug.LogWarning("[InAppReviewController] Google Play In-App Review plugin (com.google.play.review) not found. Opening store page instead.");
+        UnityEngine.Debug.LogWarning("[InAppReviewController] Google Play In-App Review plugin (com.google.play.review) not found. Opening store page instead.");
         DirectlyOpen();
 #else
         Debug.Log("[InAppReviewController] In-app review не підтримується на цій платформі.");

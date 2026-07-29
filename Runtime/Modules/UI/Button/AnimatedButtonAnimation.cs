@@ -100,8 +100,8 @@ namespace ENP.UnityExtensions.Runtime
         {
             _button = GetComponent<AnimatedButton>();
             _rectTransform = GetComponent<RectTransform>();
-            Debug.Assert(_button != null, "AnimatedButtonAnimation requires an AnimatedButton.");
-            Debug.Assert(_rectTransform != null, "AnimatedButtonAnimation requires a RectTransform.");
+            UnityEngine.Debug.Assert(_button != null, "AnimatedButtonAnimation requires an AnimatedButton.");
+            UnityEngine.Debug.Assert(_rectTransform != null, "AnimatedButtonAnimation requires a RectTransform.");
         }
     }
 }

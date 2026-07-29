@@ -33,7 +33,7 @@ namespace ENP.UnityExtensions.Runtime
 
                     if (_instance == null)
                     {
-                        DebugLog.Log("PopupController not found in scene!");
+                        Deb.Log("PopupController not found in scene!");
                     }
                 }
 
@@ -74,14 +74,14 @@ namespace ENP.UnityExtensions.Runtime
 
             if (!Instance._windowStack.Contains(popupToClose))
             {
-                DebugLog.Log("PopupController: popup to close is not registered in the stack.");
+                Deb.Log("PopupController: popup to close is not registered in the stack.");
                 onClose?.Invoke();
                 return;
             }
 
             if (!ReferenceEquals(Instance._windowStack.Peek(), popupToClose))
             {
-                DebugLog.Log("PopupController: only the top-most popup can be closed.");
+                Deb.Log("PopupController: only the top-most popup can be closed.");
                 onClose?.Invoke();
                 return;
             }
