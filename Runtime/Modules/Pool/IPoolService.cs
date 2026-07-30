@@ -1,8 +1,10 @@
+using UnityEngine;
+
 namespace ENP.UnityExtensions.Runtime
 {
     public interface IPoolService
     {
-        AbstractPoolObject Get(AbstractPoolObject prefab);
-        void Release(AbstractPoolObject instance);
+        T Get<T>(T prefab) where T : Component, IPoolable;
+        void Release(Component instance);
     }
 }

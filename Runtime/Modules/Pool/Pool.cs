@@ -6,14 +6,16 @@ namespace ENP.UnityExtensions.Runtime
 {
     internal sealed class Pool
     {
-        private readonly AbstractPoolObject _prefab;
+        private readonly Component _prefab;
         private readonly Transform _container;
-        private readonly Queue<AbstractPoolObject> _available = new();
+        private readonly Dictionary<Component, Pool> _ownerRegistry;
+        private readonly Queue<Component> _available = new();
 
-        public Pool(AbstractPoolObject prefab, Transform container)
+        public Pool(Component prefab, Transform container, Dictionary<Component, Pool> ownerRegistry)
         {
             _prefab = prefab;
             _container = container;
+            _ownerRegistry = ownerRegistry;
         }
 
         public void Prewarm(int capacity)
@@ -22,7 +24,7 @@ namespace ENP.UnityExtensions.Runtime
                 _available.Enqueue(CreateInstance());
         }
 
-        public AbstractPoolObject Get()
+        public Component Get()
         {
             if (_available.Count == 0)
             {
@@ -32,23 +34,23 @@ namespace ENP.UnityExtensions.Runtime
 
             var instance = _available.Dequeue();
             instance.gameObject.SetActive(true);
-            instance.OnSpawn();
+            ((IPoolable)instance).OnSpawn();
             return instance;
         }
 
-        public void Release(AbstractPoolObject instance)
+        public void Release(Component instance)
         {
-            instance.OnDespawn();
+            ((IPoolable)instance).OnDespawn();
             instance.gameObject.SetActive(false);
             instance.transform.SetParent(_container, false);
             _available.Enqueue(instance);
         }
 
-        private AbstractPoolObject CreateInstance()
+        private Component CreateInstance()
         {
             var instance = UnityEngine.Object.Instantiate(_prefab, _container);
             instance.gameObject.SetActive(false);
-            instance.OwnerPool = this;
+            _ownerRegistry[instance] = this;
             return instance;
         }
     }
