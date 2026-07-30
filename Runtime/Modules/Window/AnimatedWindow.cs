@@ -18,7 +18,8 @@ namespace ENP.UnityExtensions.Runtime
         GameObject
     }
 
-    [RequireComponent(typeof(CanvasGroup), typeof(RectTransform), typeof(Canvas), typeof(GraphicRaycaster))]
+    [RequireComponent(typeof(CanvasGroup), typeof(RectTransform), typeof(Canvas))]
+    [RequireComponent(typeof(GraphicRaycaster))]
     public class AnimatedWindow : MonoBehaviour
     {
         [Tooltip("Optional per-window override. When empty, WindowConfig.Default is used.")]
