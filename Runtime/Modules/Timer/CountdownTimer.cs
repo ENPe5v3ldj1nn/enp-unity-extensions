@@ -7,12 +7,20 @@ using UnityEngine;
 
 namespace ENP.UnityExtensions.Runtime
 {
+    public enum TimerDirection
+    {
+        CountDown,
+        CountUp
+    }
+
     public sealed class CountdownTimer
     {
         private static readonly Action<TMP_Text, TimeSpan> _defaultTextFormatter = DefaultTextFormatter;
 
         private TMP_Text _text;
-        private DateTime _targetUtc;
+        private DateTime _referenceUtc;
+        private TimerDirection _direction;
+        private TimeSpan? _limit;
         private bool _isRunning;
         private Action<TMP_Text, TimeSpan> _textFormatter = _defaultTextFormatter;
         private Action _onCompleted;
@@ -39,11 +47,15 @@ namespace ENP.UnityExtensions.Runtime
             _onCompleted = null;
         }
 
-        public void StartTimer(DateTime targetUtc)
+        // For CountDown, referenceUtc is the target time to count down to.
+        // For CountUp, referenceUtc is the start time to count up from; limit is optional —
+        // when set, the timer auto-completes once elapsed time reaches it, otherwise it runs
+        // indefinitely until StopTimer() is called.
+        public void StartTimer(DateTime referenceUtc, TimerDirection direction = TimerDirection.CountDown, TimeSpan? limit = null)
         {
-            if (targetUtc.Kind != DateTimeKind.Utc)
+            if (referenceUtc.Kind != DateTimeKind.Utc)
             {
-                throw new ArgumentException("Target time must be UTC.", nameof(targetUtc));
+                throw new ArgumentException("Reference time must be UTC.", nameof(referenceUtc));
             }
 
             if (_text == null)
@@ -51,21 +63,23 @@ namespace ENP.UnityExtensions.Runtime
                 throw new InvalidOperationException("Timer text is not set. Call Setup first.");
             }
 
-            _targetUtc = targetUtc;
+            _referenceUtc = referenceUtc;
+            _direction = direction;
+            _limit = limit;
             _isRunning = true;
 
             StopTimer();
 
-            var remaining = _targetUtc - DateTime.UtcNow;
-            if (remaining <= TimeSpan.Zero)
+            var elapsedOrRemaining = GetElapsedOrRemaining();
+            if (_direction == TimerDirection.CountDown && elapsedOrRemaining <= TimeSpan.Zero)
             {
                 Complete();
                 return;
             }
-            
+
             _cts = new CancellationTokenSource();
 
-            ApplyText(remaining);
+            ApplyText(elapsedOrRemaining);
             Run(_cts.Token).Forget();
         }
 
@@ -81,44 +95,62 @@ namespace ENP.UnityExtensions.Runtime
         {
             while (_isRunning && !token.IsCancellationRequested)
             {
-                var remaining = _targetUtc - DateTime.UtcNow;
+                var elapsedOrRemaining = GetElapsedOrRemaining();
 
-                if (remaining <= TimeSpan.Zero)
+                if (_direction == TimerDirection.CountDown && elapsedOrRemaining <= TimeSpan.Zero)
                 {
                     Complete();
                     return;
                 }
 
-                ApplyText(remaining);
+                if (_direction == TimerDirection.CountUp && _limit.HasValue && elapsedOrRemaining >= _limit.Value)
+                {
+                    ApplyText(_limit.Value);
+                    Complete();
+                    return;
+                }
+
+                ApplyText(elapsedOrRemaining);
                 await UniTask.Delay(1000,  cancellationToken: token);
             }
         }
 
-        private void ApplyText(TimeSpan remaining)
+        private TimeSpan GetElapsedOrRemaining()
         {
-            if (remaining <= TimeSpan.Zero)
+            return _direction == TimerDirection.CountUp
+                ? DateTime.UtcNow - _referenceUtc
+                : _referenceUtc - DateTime.UtcNow;
+        }
+
+        private void ApplyText(TimeSpan value)
+        {
+            if (_direction == TimerDirection.CountDown && value <= TimeSpan.Zero)
             {
                 _textFormatter(_text, TimeSpan.Zero);
                 return;
             }
 
-            _textFormatter(_text, remaining);
+            _textFormatter(_text, value);
         }
 
         private void Complete()
         {
             StopTimer();
-            ApplyText(TimeSpan.Zero);
+
+            if (_direction == TimerDirection.CountDown)
+            {
+                ApplyText(TimeSpan.Zero);
+            }
 
             var onCompleted = _onCompleted;
             onCompleted?.Invoke();
         }
-        
 
-        private static void DefaultTextFormatter(TMP_Text text, TimeSpan remaining)
+
+        private static void DefaultTextFormatter(TMP_Text text, TimeSpan value)
         {
-            var totalHours = remaining.Days * 24 + remaining.Hours;
-            text.SetText("{0:00}:{1:00}:{2:00}", totalHours, remaining.Minutes, remaining.Seconds);
+            var totalHours = value.Days * 24 + value.Hours;
+            text.SetText("{0:00}:{1:00}:{2:00}", totalHours, value.Minutes, value.Seconds);
         }
     }
 }
