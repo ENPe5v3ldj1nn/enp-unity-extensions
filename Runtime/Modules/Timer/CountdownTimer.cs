@@ -63,12 +63,12 @@ namespace ENP.UnityExtensions.Runtime
                 throw new InvalidOperationException("Timer text is not set. Call Setup first.");
             }
 
+            StopTimer();
+
             _referenceUtc = referenceUtc;
             _direction = direction;
             _limit = limit;
             _isRunning = true;
-
-            StopTimer();
 
             var elapsedOrRemaining = GetElapsedOrRemaining();
             if (_direction == TimerDirection.CountDown && elapsedOrRemaining <= TimeSpan.Zero)
