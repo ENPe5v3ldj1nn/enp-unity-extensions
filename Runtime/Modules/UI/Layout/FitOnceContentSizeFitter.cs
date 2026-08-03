@@ -10,9 +10,10 @@ namespace ENP.UnityExtensions.Runtime
     /// <see cref="IWindowVisibilityAware.OnWindowShown"/> if hosted under an AnimatedWindow with
     /// Canvas hide mode (where OnEnable won't refire). Call <see cref="ForceRecalculate"/> when the
     /// content genuinely changes after the initial fit.
-    /// In the Unity Editor (UNITY_EDITOR) this instead behaves exactly like the stock
+    /// In the Unity Editor's Edit Mode this instead behaves exactly like the stock
     /// <see cref="ContentSizeFitter"/> — recalculating continuously via the layout rebuild system —
-    /// so authoring/tweaking content feels normal. Builds always use the fit-once behavior above.
+    /// so authoring/tweaking content feels normal. Play Mode in the Editor and actual builds both
+    /// use the fit-once behavior above, so testing in the Editor matches what ships.
     /// </summary>
     [AddComponentMenu("Layout/Fit Once Content Size Fitter")]
     [RequireComponent(typeof(RectTransform))]
@@ -45,7 +46,16 @@ namespace ENP.UnityExtensions.Runtime
         {
             base.OnEnable();
 #if UNITY_EDITOR
-            SetDirty();
+            // Edit Mode keeps the continuous authoring behavior; Play Mode in the Editor should
+            // behave exactly like a build (fit-once) so testing in the Editor matches what ships.
+            if (Application.isPlaying)
+            {
+                TryFit();
+            }
+            else
+            {
+                SetDirty();
+            }
 #else
             TryFit();
 #endif
@@ -85,12 +95,16 @@ namespace ENP.UnityExtensions.Runtime
         // so the component recalculates continuously while authoring, instead of only once.
         public void SetLayoutHorizontal()
         {
+            // Play Mode in the Editor should stay fit-once, not participate in continuous layout
+            // rebuilds — Unity's layout system still calls this via ILayoutSelfController otherwise.
+            if (Application.isPlaying) return;
             if (_rectTransform == null) _rectTransform = (RectTransform)transform;
             SetSize(RectTransform.Axis.Horizontal, _horizontalFit);
         }
 
         public void SetLayoutVertical()
         {
+            if (Application.isPlaying) return;
             if (_rectTransform == null) _rectTransform = (RectTransform)transform;
             SetSize(RectTransform.Axis.Vertical, _verticalFit);
         }
@@ -113,6 +127,9 @@ namespace ENP.UnityExtensions.Runtime
 
         private void SetDirty()
         {
+            // Guards OnDisable/OnRectTransformDimensionsChange/OnBeforeTransformParentChanged/
+            // OnValidate all at once — none of them should trigger continuous rebuilds in Play Mode.
+            if (Application.isPlaying) return;
             if (!IsActive()) return;
             if (_rectTransform == null) _rectTransform = (RectTransform)transform;
             LayoutRebuilder.MarkLayoutForRebuild(_rectTransform);
