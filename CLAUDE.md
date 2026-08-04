@@ -11,10 +11,13 @@ Respond in Ukrainian. Keep code, identifiers, APIs, filenames and library names 
 Do this automatically, without being asked, in every session that touches this repository:
 
 1. Before writing, editing, or reviewing any C# / Unity code, invoke the Skill tool with `unity-csharp-standards` and follow it.
-2. Before exploring this repository for the first time in a session, or when asked to understand/navigate the codebase, invoke the Skill tool with `repository-orientation` and follow it.
+2. Invoke the Skill tool with `repository-orientation` and follow it in these cases:
+   - before exploring this repository for the first time in a session;
+   - when asked to understand/navigate the codebase;
+   - before any non-trivial repository change — new files, new systems/modules, architecture-level edits, or refactors (not required for trivial one-line/typo fixes).
 3. If either Skill tool call fails or the skill is not found (e.g. running outside this machine/session), fall back to the embedded baseline rules below — do not silently skip them.
 
-Never wait for me to say "use the skill" — treat any `.cs` file edit or Unity task as an implicit trigger for step 1.
+Never wait for me to say "use the skill" — treat any `.cs` file edit or Unity task as an implicit trigger for step 1, and any non-trivial repository change (new file, new system, refactor) as an implicit trigger for step 2.
 
 ---
 

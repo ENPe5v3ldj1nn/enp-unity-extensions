@@ -1,4 +1,4 @@
-using System.Collections;
+using Cysharp.Threading.Tasks;
 using UnityEngine;
 
 #if UNITY_IOS
@@ -36,8 +36,8 @@ public static class InAppReviewController
         if (s_reviewManager == null)
         {
             s_reviewManager = new ReviewManager();
-            // Підготовка PlayReviewInfo у фоні через CoroutineController
-            CoroutineController.Instance.StartCoroutine(InitReviewCoroutine(false));
+            // Підготовка PlayReviewInfo у фоні через UniTask
+            InitReviewAsync(false).Forget();
         }
 #else
         UnityEngine.Debug.LogWarning("[InAppReviewController] Google Play In-App Review plugin (com.google.play.review) not found. Falling back to store URL.");
@@ -66,8 +66,8 @@ public static class InAppReviewController
             s_reviewManager = new ReviewManager();
         }
 
-        // Запуск корутини тільки через CoroutineController
-        CoroutineController.Instance.StartCoroutine(LaunchReviewCoroutine());
+        // Запуск через UniTask
+        LaunchReviewAsync().Forget();
 #elif UNITY_ANDROID
         UnityEngine.Debug.LogWarning("[InAppReviewController] Google Play In-App Review plugin (com.google.play.review) not found. Opening store page instead.");
         DirectlyOpen();
@@ -81,10 +81,10 @@ public static class InAppReviewController
     /// Запитує PlayReviewInfo один раз і кешує його.
     /// Якщо forceDirectOpenOnError = true і сталася помилка – відкриває сторінку стору.
     /// </summary>
-    private static IEnumerator InitReviewCoroutine(bool forceDirectOpenOnError)
+    private static async UniTask InitReviewAsync(bool forceDirectOpenOnError)
     {
         var requestFlowOperation = s_reviewManager.RequestReviewFlow();
-        yield return requestFlowOperation;
+        await UniTask.WaitUntil(() => requestFlowOperation.IsDone);
 
         if (requestFlowOperation.Error != ReviewErrorCode.NoError)
         {
@@ -95,7 +95,7 @@ public static class InAppReviewController
                 DirectlyOpen();
             }
 
-            yield break;
+            return;
         }
 
         s_playReviewInfo = requestFlowOperation.GetResult();
@@ -104,23 +104,23 @@ public static class InAppReviewController
     /// <summary>
     /// Показує in-app review, за потреби сам ініціалізує PlayReviewInfo.
     /// </summary>
-    private static IEnumerator LaunchReviewCoroutine()
+    private static async UniTaskVoid LaunchReviewAsync()
     {
         // Якщо ще не маємо PlayReviewInfo – догружаємо його тут
         if (s_playReviewInfo == null)
         {
             // Тут ми ініціалізуємо з прапорцем:
             // якщо щось піде не так – просто відкриємо сторінку стору
-            yield return InitReviewCoroutine(true);
+            await InitReviewAsync(true);
 
             if (s_playReviewInfo == null)
             {
-                yield break; // InitReviewCoroutine уже зробив DirectlyOpen() у разі помилки
+                return; // InitReviewAsync уже зробив DirectlyOpen() у разі помилки
             }
         }
 
         var launchFlowOperation = s_reviewManager.LaunchReviewFlow(s_playReviewInfo);
-        yield return launchFlowOperation;
+        await UniTask.WaitUntil(() => launchFlowOperation.IsDone);
 
         // Після показу діалогу PlayReviewInfo більше не валідне
         s_playReviewInfo = null;
