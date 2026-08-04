@@ -14,11 +14,20 @@ namespace ENP.UnityExtensions.Runtime
 #if UNITY_EDITOR
         private void OnValidate()
         {
-            if (_object != null && _object is not IPoolable)
+            if (_object == null || _object is IPoolable)
             {
-                Debug.LogError($"{_object.name} must implement {nameof(IPoolable)}.", this);
-                _object = null;
+                return;
             }
+
+            var poolable = _object.GetComponent(typeof(IPoolable)) as Component;
+            if (poolable != null)
+            {
+                _object = poolable;
+                return;
+            }
+
+            Debug.LogError($"{_object.name} must implement {nameof(IPoolable)}.", this);
+            _object = null;
         }
 #endif
     }
