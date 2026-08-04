@@ -2,43 +2,48 @@ using System.Collections.Generic;
 using Cysharp.Threading.Tasks;
 using DG.Tweening;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
 using UnityEngine.Events;
 using UnityEngine.UI;
-using static ENP.UnityExtensions.Runtime.WindowTransition;
 
 namespace ENP.UnityExtensions.Runtime
 {
     public class PopupController : MonoBehaviour
     {
+        [Tooltip("Boot on Awake. Turn OFF when a DI container calls Initialize() instead.")]
+        [SerializeField] private bool _initializeOnAwake = true;
         [SerializeField] private Canvas _canvas;
         [SerializeField] private Image _background;
-    
+
         public static bool PopupIsActive => Instance._windowStack.Count > 0;
         public static float CanvasScale => Instance._canvas.scaleFactor;
-    
+
         private readonly Stack<PopupWindow> _windowStack = new Stack<PopupWindow>();
         private static float AnimSpeed = 0.45f;
         private static float BackgroundFadeMin = 1;
         private static float BackgroundFadeMax = 0;
         private static readonly string PopupPath = "Popups/";
-    
+
         private static PopupController _instance;
         private static PopupController Instance
         {
             get
             {
-                if (_instance == null)
-                {
-                    _instance = FindFirstObjectByType<PopupController>();
-
-                    if (_instance == null)
-                    {
-                        Deb.Log("PopupController not found in scene!");
-                    }
-                }
-
+                Debug.Assert(_instance != null, "PopupController.Initialize() must be called before use.");
                 return _instance;
             }
+        }
+
+        private void Awake()
+        {
+            if (_initializeOnAwake)
+                Initialize();
+        }
+
+        /// <summary>Registers this controller as the active singleton. Call once, before first use.</summary>
+        public void Initialize()
+        {
+            _instance = this;
         }
 
         public static void Setup(float animSpeed, float fadeMin, float fadeMax)
@@ -47,8 +52,8 @@ namespace ENP.UnityExtensions.Runtime
             BackgroundFadeMin = fadeMin;
             BackgroundFadeMax = fadeMax;
         }
-    
-        public static T Open<T>(WindowTransition openAnim, params object[] args) where T : PopupWindow
+
+        public static async UniTask<T> Open<T>(WindowTransition openAnim, params object[] args) where T : PopupWindow
         {
             Instance.gameObject.SetActive(true);
             Instance._canvas.gameObject.SetActive(true);
@@ -59,7 +64,7 @@ namespace ENP.UnityExtensions.Runtime
                 Instance._background.DOFade(BackgroundFadeMax, AnimSpeed);
             }
 
-            return SetPopup<T>(typeof(T).Name, openAnim, args);
+            return await SetPopup<T>(typeof(T).Name, openAnim, args);
         }
 
         public static void Close(PopupWindow popup, WindowTransition closeAnim, UnityAction onClose = null)
@@ -96,7 +101,7 @@ namespace ENP.UnityExtensions.Runtime
             void OnComplete()
             {
                 Instance._windowStack.Pop();
-                Destroy(popupToClose.gameObject);
+                Addressables.ReleaseInstance(popupToClose.gameObject);
 
                 if (Instance._windowStack.Count == 0)
                 {
@@ -113,10 +118,10 @@ namespace ENP.UnityExtensions.Runtime
             popupToClose.CloseAsync(closeAnim).ContinueWith(OnComplete).Forget();
         }
     
-        private static T SetPopup<T>(string name, WindowTransition openAnim, params object[] args) where T : PopupWindow
+        private static async UniTask<T> SetPopup<T>(string name, WindowTransition openAnim, params object[] args) where T : PopupWindow
         {
-            var popupFromResource = Resources.Load<T>(PopupPath + name);
-            var popup = Instantiate(popupFromResource, Instance._canvas.transform);
+            var instance = await Addressables.InstantiateAsync(PopupPath + name, Instance._canvas.transform).ToUniTask();
+            var popup = instance.GetComponent<T>();
             Instance._windowStack.Push(popup);
             popup.transform.SetAsLastSibling();
             popup.OpenAsync(openAnim).Forget();
