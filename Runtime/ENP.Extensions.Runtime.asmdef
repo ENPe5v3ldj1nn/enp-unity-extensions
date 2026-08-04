@@ -11,7 +11,8 @@
         "Google.Play.Common",
         "Google.Play.Core",
         "Unity.Addressables",
-        "Unity.ResourceManager"
+        "Unity.ResourceManager",
+        "UniTask.Addressables"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
