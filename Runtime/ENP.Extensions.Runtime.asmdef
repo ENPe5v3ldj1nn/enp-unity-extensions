@@ -9,7 +9,9 @@
         "Unity.InputSystem",
         "Google.Play.Review",
         "Google.Play.Common",
-        "Google.Play.Core"
+        "Google.Play.Core",
+        "Unity.Addressables",
+        "Unity.ResourceManager"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
