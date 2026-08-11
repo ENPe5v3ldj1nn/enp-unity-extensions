@@ -163,7 +163,13 @@ Shader "Sprite2D/RoundedShapeSDF"
                     float ds = sdShape(p - shOffset, halfSize, radius, shapeType) - shSpread;
                     float aaS = max(fwidth(ds) * _EdgeSoftness, 1e-4);
                     aaS = max(aaS, shBlur);
-                    float sInside = smoothstep(0.0, 1.0, saturate(0.5 - ds / aaS));
+                    // Inside/at the shape boundary (ds <= 0) the shadow is fully opaque — this band
+                    // is normally hidden under the caster's own fill anyway. Outside, instead of a
+                    // hard cutoff at ds == aaS, fade with a Gaussian tail so the halo softens
+                    // gradually the further it gets from the shape, rather than reading as a
+                    // uniform, sharp-edged ring.
+                    float t = max(ds, 0.0) / aaS;
+                    float sInside = exp(-t * t * 2.0);
                     Ashadow = sInside * Sa * i.color.a;
                 }
 

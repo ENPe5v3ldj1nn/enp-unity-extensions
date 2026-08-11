@@ -8,6 +8,8 @@ namespace ENP.UnityExtensions.Runtime
     [RequireComponent(typeof(CanvasRenderer))]
     public sealed class RoundedShapeGraphic : MaskableGraphic, ICanvasRaycastFilter
     {
+        private const float SHADOW_BLUR_PADDING_MULTIPLIER = 2.5f;
+
         [SerializeField] private RoundedShapeStyle _style;
         [SerializeField] private bool _preciseRaycast = false;
         [SerializeField] private float _fillGradientAngleSpeed;
@@ -464,8 +466,11 @@ namespace ENP.UnityExtensions.Runtime
             var padY = 0f;
             if (shadowEnabled && shCol.a > 0.0001f)
             {
-                padX = Mathf.Abs(shadowOffset.x) + shadowBlur + shadowSpread;
-                padY = Mathf.Abs(shadowOffset.y) + shadowBlur + shadowSpread;
+                // Padded wider than shadowBlur itself so the shader's soft exponential falloff
+                // (which tapers gradually past the blur distance) has room to fade to ~0 before
+                // hitting the mesh edge, instead of being hard-clipped there.
+                padX = Mathf.Abs(shadowOffset.x) + shadowBlur * SHADOW_BLUR_PADDING_MULTIPLIER + shadowSpread;
+                padY = Mathf.Abs(shadowOffset.y) + shadowBlur * SHADOW_BLUR_PADDING_MULTIPLIER + shadowSpread;
             }
 
             var p0 = new Vector3(r.xMin - padX, r.yMin - padY, 0f);
