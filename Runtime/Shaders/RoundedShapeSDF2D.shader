@@ -76,6 +76,11 @@ Shader "Sprite2D/RoundedShapeSDF"
                 return sdEllipseApprox(p, halfSize);
             }
 
+            float InterleavedGradientNoise(float2 screenPos)
+            {
+                return frac(52.9829189 * frac(dot(screenPos, float2(0.06711056, 0.00583715))));
+            }
+
             fixed4 SampleRamp(float t, float rowV)
             {
                 return tex2D(_MainTex, float2(t, rowV));
@@ -179,6 +184,14 @@ Shader "Sprite2D/RoundedShapeSDF"
                 fixed3 outPM = PMshape + PMshadow * (1.0 - Ashape);
 
                 fixed3 outRGB = (outA > 1e-5) ? (outPM / outA) : 0;
+
+                // Smooth gradients (large-radius shadow glow, wide fill/border ramps) band visibly
+                // at 8-bit output precision. A tiny per-pixel noise offset before the final write
+                // breaks the bands up into imperceptible grain without altering the gradient itself.
+                float dither = (InterleavedGradientNoise(i.vertex.xy) - 0.5) / 255.0;
+                outRGB = saturate(outRGB + dither);
+                outA = saturate(outA + dither);
+
                 fixed4 res = fixed4(outRGB, outA);
 
                 return res;
