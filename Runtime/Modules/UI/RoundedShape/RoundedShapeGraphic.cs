@@ -47,6 +47,63 @@ namespace ENP.UnityExtensions.Runtime
             }
         }
 
+        public bool ShadowEnabled
+        {
+            get => _customShadowEnabled;
+            set
+            {
+                if (_customShadowEnabled == value) return;
+                _customShadowEnabled = value;
+                SetVerticesDirty();
+            }
+        }
+
+        public Color ShadowColor
+        {
+            get => _customShadowColor;
+            set
+            {
+                if (_customShadowColor == value) return;
+                _customShadowColor = value;
+                SetVerticesDirty();
+            }
+        }
+
+        public Vector2 ShadowOffset
+        {
+            get => _customShadowOffset;
+            set
+            {
+                if (_customShadowOffset == value) return;
+                _customShadowOffset = value;
+                SetVerticesDirty();
+            }
+        }
+
+        public float ShadowBlur
+        {
+            get => _customShadowBlur;
+            set
+            {
+                value = Mathf.Max(0f, value);
+                if (Mathf.Approximately(_customShadowBlur, value)) return;
+                _customShadowBlur = value;
+                SetVerticesDirty();
+            }
+        }
+
+        public float ShadowSpread
+        {
+            get => _customShadowSpread;
+            set
+            {
+                value = Mathf.Max(0f, value);
+                if (Mathf.Approximately(_customShadowSpread, value)) return;
+                _customShadowSpread = value;
+                SetVerticesDirty();
+            }
+        }
+
         public UnityEngine.Gradient FillGradient => ResolveFillGradient();
         public UnityEngine.Gradient BorderGradient => ResolveBorderGradient();
 
