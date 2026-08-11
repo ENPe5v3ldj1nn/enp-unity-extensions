@@ -163,7 +163,7 @@ Shader "Sprite2D/RoundedShapeSDF"
                     float ds = sdShape(p - shOffset, halfSize, radius, shapeType) - shSpread;
                     float aaS = max(fwidth(ds) * _EdgeSoftness, 1e-4);
                     aaS = max(aaS, shBlur);
-                    float sInside = saturate(0.5 - ds / aaS);
+                    float sInside = smoothstep(0.0, 1.0, saturate(0.5 - ds / aaS));
                     Ashadow = sInside * Sa * i.color.a;
                 }
 
