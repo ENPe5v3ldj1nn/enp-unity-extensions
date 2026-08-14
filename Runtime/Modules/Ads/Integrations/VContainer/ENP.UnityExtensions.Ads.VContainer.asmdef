@@ -1,0 +1,27 @@
+{
+    "name": "ENP.UnityExtensions.Ads.VContainer",
+    "rootNamespace": "ENP.UnityExtensions.Ads",
+    "references": [
+        "ENP.Extensions.Runtime",
+        "ENP.UnityExtensions.Ads",
+        "VContainer"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "ENP_ADMOB",
+        "ENP_VCONTAINER"
+    ],
+    "versionDefines": [
+        {
+            "name": "jp.hadashikick.vcontainer",
+            "expression": "",
+            "define": "ENP_VCONTAINER"
+        }
+    ],
+    "noEngineReferences": false
+}

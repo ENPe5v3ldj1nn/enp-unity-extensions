@@ -1,0 +1,19 @@
+{
+    "name": "ENP.UnityExtensions.Ads",
+    "rootNamespace": "ENP.UnityExtensions.Ads",
+    "references": [
+        "ENP.Extensions.Runtime",
+        "UniTask"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "ENP_ADMOB"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
