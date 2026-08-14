@@ -25,7 +25,7 @@ namespace ENP.UnityExtensions.Ads
         {
             _config = config;
             _consentService = consentService;
-            _shouldUseProductionAdUnits = config.ShouldUseProductionAdUnitsByDefault;
+            _shouldUseProductionAdUnits = IsProductionBuild();
 
             _interstitial = new AdMobInterstitial(analytics, throttler, this);
             _rewarded = new AdMobRewarded(analytics, throttler, this);
@@ -135,7 +135,20 @@ namespace ENP.UnityExtensions.Ads
 
         public void SetUseProductionAdUnits(bool enabled)
         {
+#if ENP_ADS_RELEASE
             _shouldUseProductionAdUnits = enabled;
+#else
+            _shouldUseProductionAdUnits = false;
+#endif
+        }
+
+        private static bool IsProductionBuild()
+        {
+#if ENP_ADS_RELEASE
+            return true;
+#else
+            return false;
+#endif
         }
 
         public void SetAppOpenForceShowAlwaysDebug(bool enabled)

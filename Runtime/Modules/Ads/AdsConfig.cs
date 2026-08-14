@@ -5,27 +5,27 @@ namespace ENP.UnityExtensions.Ads
     [CreateAssetMenu(fileName = "AdsConfig", menuName = "ENP/Ads/Ads Config")]
     public sealed class AdsConfig : ScriptableObject
     {
+        // Стандартні публічні test ad unit id від Google (однакові для всіх застосунків):
+        // https://developers.google.com/admob/unity/test-ads
+        private const string TestInterstitialAndroid = "ca-app-pub-3940256099942544/1033173712";
+        private const string TestInterstitialIos = "ca-app-pub-3940256099942544/4411468910";
+        private const string TestRewardedAndroid = "ca-app-pub-3940256099942544/5224354917";
+        private const string TestRewardedIos = "ca-app-pub-3940256099942544/1712485313";
+        private const string TestAppOpenAndroid = "ca-app-pub-3940256099942544/9257395921";
+        private const string TestAppOpenIos = "ca-app-pub-3940256099942544/5575463023";
+
         [Header("AdMob — Interstitial")]
-        [SerializeField] private string _testInterstitialAndroid;
-        [SerializeField] private string _testInterstitialIos;
         [SerializeField] private string _prodInterstitialAndroid;
         [SerializeField] private string _prodInterstitialIos;
 
         [Header("AdMob — Rewarded")]
-        [SerializeField] private string _testRewardedAndroid;
-        [SerializeField] private string _testRewardedIos;
         [SerializeField] private string _prodRewardedAndroid;
         [SerializeField] private string _prodRewardedIos;
 
         [Header("AdMob — App Open")]
-        [SerializeField] private string _testAppOpenAndroid;
-        [SerializeField] private string _testAppOpenIos;
         [SerializeField] private string _prodAppOpenAndroid;
         [SerializeField] private string _prodAppOpenIos;
         [SerializeField] private bool _shouldAutoInitializeAppOpen;
-
-        [Header("AdMob — Build")]
-        [SerializeField] private bool _shouldUseProductionAdUnitsByDefault;
 
         [Header("Consent (UMP)")]
         [SerializeField] private bool _tagForUnderAgeOfConsent;
@@ -48,25 +48,24 @@ namespace ENP.UnityExtensions.Ads
         // AdMob
 
         public bool ShouldAutoInitializeAppOpen => _shouldAutoInitializeAppOpen;
-        public bool ShouldUseProductionAdUnitsByDefault => _shouldUseProductionAdUnitsByDefault;
 
         public string ResolveInterstitialAndroid(bool useProduction) =>
-            useProduction ? _prodInterstitialAndroid : _testInterstitialAndroid;
+            useProduction ? _prodInterstitialAndroid : TestInterstitialAndroid;
 
         public string ResolveInterstitialIos(bool useProduction) =>
-            useProduction ? _prodInterstitialIos : _testInterstitialIos;
+            useProduction ? _prodInterstitialIos : TestInterstitialIos;
 
         public string ResolveRewardedAndroid(bool useProduction) =>
-            useProduction ? _prodRewardedAndroid : _testRewardedAndroid;
+            useProduction ? _prodRewardedAndroid : TestRewardedAndroid;
 
         public string ResolveRewardedIos(bool useProduction) =>
-            useProduction ? _prodRewardedIos : _testRewardedIos;
+            useProduction ? _prodRewardedIos : TestRewardedIos;
 
         public string ResolveAppOpenAndroid(bool useProduction) =>
-            useProduction ? _prodAppOpenAndroid : _testAppOpenAndroid;
+            useProduction ? _prodAppOpenAndroid : TestAppOpenAndroid;
 
         public string ResolveAppOpenIos(bool useProduction) =>
-            useProduction ? _prodAppOpenIos : _testAppOpenIos;
+            useProduction ? _prodAppOpenIos : TestAppOpenIos;
 
         // Consent
 
