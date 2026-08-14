@@ -8,14 +8,14 @@ namespace ENP.UnityExtensions.Ads
 {
     public sealed class ConsentService
     {
-        private readonly ConsentConfig _config;
+        private readonly AdsConfig _config;
 
         private UniTaskCompletionSource<bool> _updateTcs;
         private UniTaskCompletionSource<bool> _formTcs;
         private bool _hasAttemptedConsentUpdate;
         private bool _shouldForceAdsInEditor;
 
-        public ConsentService(ConsentConfig config)
+        public ConsentService(AdsConfig config)
         {
             _config = config;
         }

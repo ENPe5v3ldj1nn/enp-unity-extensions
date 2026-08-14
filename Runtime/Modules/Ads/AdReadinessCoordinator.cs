@@ -9,14 +9,14 @@ namespace ENP.UnityExtensions.Ads
         private readonly ConsentService _consentService;
         private readonly AdMobService _adMobService;
         private readonly IosAttAuthorizationRequester _attRequester;
-        private readonly AdMobConfig _config;
+        private readonly AdsConfig _config;
 
         private bool _isAdsReady;
         private bool _hasCheckedMainMenuThisSession;
         private UniTaskCompletionSource<bool> _adsReadyTcs;
 
         public AdReadinessCoordinator(ConsentService consentService, AdMobService adMobService,
-            IosAttAuthorizationRequester attRequester, AdMobConfig config)
+            IosAttAuthorizationRequester attRequester, AdsConfig config)
         {
             _consentService = consentService;
             _adMobService = adMobService;

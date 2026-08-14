@@ -4,12 +4,9 @@ namespace ENP.UnityExtensions.Ads
 {
     public static class AdsVContainerExtensions
     {
-        public static void RegisterAdsModule(this IContainerBuilder builder, AdMobConfig adMobConfig,
-            ConsentConfig consentConfig, AdThrottleConfig throttleConfig)
+        public static void RegisterAdsModule(this IContainerBuilder builder, AdsConfig config)
         {
-            builder.RegisterInstance(adMobConfig);
-            builder.RegisterInstance(consentConfig);
-            builder.RegisterInstance(throttleConfig);
+            builder.RegisterInstance(config);
 
             builder.Register<AdAnalyticsService>(Lifetime.Singleton);
             builder.Register<AdThrottleService>(Lifetime.Singleton);

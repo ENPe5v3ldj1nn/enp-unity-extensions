@@ -13,7 +13,7 @@ namespace ENP.UnityExtensions.Ads
         private const string AppOpenHistoryKey = "ENP.AdThrottle.AppOpenHistoryUtcTicks";
         private const char HistorySeparator = ';';
 
-        private readonly AdThrottleConfig _config;
+        private readonly AdsConfig _config;
         private readonly TimeSpan _cooldown;
         private readonly TimeSpan _antiChainCooldown;
         private readonly TimeSpan _hourWindow;
@@ -28,7 +28,7 @@ namespace ENP.UnityExtensions.Ads
         private int _completedGamesThisSession;
         private int _interstitialsShownThisSession;
 
-        public AdThrottleService(AdThrottleConfig config)
+        public AdThrottleService(AdsConfig config)
         {
             _config = config;
             _cooldown = TimeSpan.FromSeconds(config.InterstitialCooldownSeconds);

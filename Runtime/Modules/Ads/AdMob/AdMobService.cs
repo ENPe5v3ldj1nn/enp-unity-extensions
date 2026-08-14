@@ -7,7 +7,7 @@ namespace ENP.UnityExtensions.Ads
 {
     public sealed class AdMobService : IFullscreenAdGate
     {
-        private readonly AdMobConfig _config;
+        private readonly AdsConfig _config;
         private readonly ConsentService _consentService;
         private readonly AdMobInterstitial _interstitial;
         private readonly AdMobRewarded _rewarded;
@@ -20,7 +20,7 @@ namespace ENP.UnityExtensions.Ads
         private bool _shouldUseProductionAdUnits;
         private UniTaskCompletionSource<bool> _initializeTcs;
 
-        public AdMobService(AdMobConfig config, ConsentService consentService, AdAnalyticsService analytics,
+        public AdMobService(AdsConfig config, ConsentService consentService, AdAnalyticsService analytics,
             AdThrottleService throttler, IAdSessionState sessionState)
         {
             _config = config;
