@@ -33,7 +33,7 @@ namespace ENP.UnityExtensions.Runtime
         [SerializeField] private GraphicRaycaster _raycaster;
 
         [Header("Optimization")]
-        [Tooltip("Enable when the window's IWindowVisibilityAware children never change after the first show (no runtime instantiation/destruction). Caches the GetComponentsInChildren scan instead of repeating it on every show/hide.")]
+        [Tooltip("Enable when the window's IWindowVisibilityAware children and nested Canvas components never change after the first show (no runtime instantiation/destruction). Caches the GetComponentsInChildren scans instead of repeating them on every show/hide.")]
         [SerializeField] private bool _staticHierarchy;
 
         private Vector2 _basePosition;
@@ -44,6 +44,7 @@ namespace ENP.UnityExtensions.Runtime
         private Sequence _activeSequence;
         private int _opGeneration;
         private IWindowVisibilityAware[] _cachedAware;
+        private Canvas[] _cachedNestedCanvases;
 
         private bool UseCanvasHiding => _hideMode == WindowHideMode.Canvas && _canvas != null;
 
@@ -182,6 +183,12 @@ namespace ENP.UnityExtensions.Runtime
                 if (_raycaster != null)
                     _raycaster.enabled = visible;
 
+                // A nested Canvas (e.g. one added to isolate a frequently-updating element from
+                // this window's own rebuild/draw calls) is its own independent render root —
+                // disabling only this window's Canvas above doesn't stop it from rendering, since
+                // the GameObject stays active in this hide mode. Keep them in lockstep.
+                SetNestedCanvasesEnabled(visible);
+
                 if (visible)
                     NotifyVisibilityAware(true);
             }
@@ -200,6 +207,43 @@ namespace ENP.UnityExtensions.Runtime
                 if (visible)
                     NotifyVisibilityAware(true);
             }
+        }
+
+        private void SetNestedCanvasesEnabled(bool visible)
+        {
+            Canvas[] nested;
+            if (_staticHierarchy)
+            {
+                if (_cachedNestedCanvases == null)
+                    _cachedNestedCanvases = FindNestedCanvases();
+                nested = _cachedNestedCanvases;
+            }
+            else
+            {
+                nested = FindNestedCanvases();
+            }
+
+            for (int i = 0; i < nested.Length; i++)
+                nested[i].enabled = visible;
+        }
+
+        private Canvas[] FindNestedCanvases()
+        {
+            var all = GetComponentsInChildren<Canvas>(includeInactive: true);
+            if (all.Length <= 1)
+                return Array.Empty<Canvas>();
+
+            var nested = new Canvas[all.Length - 1];
+            var index = 0;
+            for (int i = 0; i < all.Length; i++)
+            {
+                if (all[i] == _canvas)
+                    continue;
+
+                nested[index++] = all[i];
+            }
+
+            return nested;
         }
 
         private void NotifyVisibilityAware(bool visible)
