@@ -1,0 +1,16 @@
+{
+    "name": "ENP.UnityExtensions.Analytics",
+    "rootNamespace": "ENP.UnityExtensions.Analytics",
+    "references": [
+        "ENP.Extensions.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

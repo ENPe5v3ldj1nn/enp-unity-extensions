@@ -1,0 +1,19 @@
+{
+    "name": "ENP.UnityExtensions.Firebase",
+    "rootNamespace": "ENP.UnityExtensions.Firebase",
+    "references": [
+        "ENP.Extensions.Runtime",
+        "ENP.UnityExtensions.Analytics"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "ENP_FIREBASE"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

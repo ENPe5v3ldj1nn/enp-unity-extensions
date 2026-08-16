@@ -1,0 +1,20 @@
+{
+    "name": "ENP.UnityExtensions.Analytics.Ads",
+    "rootNamespace": "ENP.UnityExtensions.Analytics",
+    "references": [
+        "ENP.Extensions.Runtime",
+        "ENP.UnityExtensions.Analytics",
+        "ENP.UnityExtensions.Ads"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "ENP_ADMOB"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

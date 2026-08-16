@@ -233,6 +233,149 @@ var named = AbstractUiController.GetWindow<PopupWindow>("ConfirmPopup");
 one subtype is registered, that subtype is returned. Passing a `name` matches the
 window's `gameObject.name` directly.
 
+## Ads
+AdMob wrapper (`ENP.UnityExtensions.Ads`) with interstitial / rewarded / app open, UMP
+consent, ATT and per-session throttling built in. The assembly only compiles when the
+project defines **`ENP_ADMOB`** — without it, none of the Ads code (or the GoogleMobileAds
+dependency) is part of the build.
+
+### Setup
+1. Import the **Google Mobile Ads Unity plugin** ([GitHub releases](https://github.com/googleads/googleads-mobile-unity/releases)).
+   It brings EDM4U and resolves the native Android/iOS AdMob SDKs.
+2. Add the scripting define symbol **`ENP_ADMOB`** (Project Settings → Player → Scripting
+   Define Symbols). Add **`ENP_ADS_RELEASE`** as well in your release/production builds —
+   it switches ad units from Google's public test ids to your production ids and silences
+   verbose debug logging (`ConsentService`, `AdAnalyticsService`).
+3. Create an `AdsConfig` asset: **Create → ENP → Ads → Ads Config**. Fill in production ad
+   unit ids per platform (interstitial / rewarded / app open) and the UMP/throttling fields;
+   test ids are hardcoded and used automatically while `ENP_ADS_RELEASE` is not defined.
+4. Set up AdMob's `AndroidManifest.xml` App ID meta-data and the iOS `SKAdNetworkItems` /
+   `NSUserTrackingUsageDescription` entries as required by the plugin — this package does not
+   generate them.
+
+### Registration (VContainer)
+Requires `ENP_VCONTAINER` as well (separate `ENP.UnityExtensions.Ads.VContainer` assembly).
+
+```csharp
+builder.RegisterAdsModule(adsConfig);
+```
+
+This registers `AdAnalyticsService`, `AdThrottleService`, `ConsentService`, `AdMobService`,
+`IosAttAuthorizationRequester` and `AdReadinessCoordinator` as singletons. It does **not**
+register an `IAdAnalyticsSink` — `AdAnalyticsService` requires one, so supply it yourself
+(see [Ads integration](#ads-integration) below for the built-in Firebase-backed option, or
+implement `IAdAnalyticsSink` directly).
+
+You must also register an `IAdSessionState` implementation (app-open ad needs it to know
+whether the app is in the foreground) — the package has no default for it.
+
+### Startup flow
+```csharp
+await _adReadinessCoordinator.WarmupAtStartupAsync();      // UMP consent info, no UI
+var isReady = await _adReadinessCoordinator.EnsureAdsReadyAsync(allowUi: true);
+// consent flow (shows UI if required) -> ATT prompt -> MobileAds.Initialize -> optional app open init
+```
+
+`AdReadinessCoordinator` is the intended single entry point — it sequences consent, ATT and
+AdMob initialization so individual ad types don't need to know about that order.
+
+```csharp
+_adMobService.ShowInterstitialAd(onShow, placement: "level_complete");
+_adMobService.ShowRewardedAd(onShowed, onReward, placement: "extra_life");
+_adMobService.PreloadInterstitial();
+_adMobService.PreloadRewarded();
+```
+
+`ConsentService.SetEditorAdsEnabled(true)` bypasses consent/ATT/init entirely in the Editor
+(mock interstitial, `IsAdsReady` reports `true`) so you can iterate without waiting on the
+UMP/AdMob SDK.
+
+## Analytics
+The analytics core (`ENP.UnityExtensions.Analytics`) is vendor-agnostic: it knows nothing
+about Firebase. A backend is plugged in separately.
+
+### What the core does
+- Queues events logged before the backend is ready and **persists** that queue, so events
+  from the very first session survive an app restart (capped at 200 events).
+- Appends common parameters to every event via `IAnalyticsCommonParamsProvider`
+  (`app_version` and `session_number` ship built in; add your own for A/B group and similar).
+- Owns the per-install session counter (`AnalyticsSessionCounter`, stored via `Storage`).
+
+```csharp
+_analyticsService.BeginSession();
+
+_analyticsService.LogEvent("level_completed",
+    new AnalyticsParam("level", 12),
+    new AnalyticsParam("duration_seconds", 41.5f));
+
+_analyticsService.LogScreenView("MainMenu");
+```
+
+Project-specific common parameters:
+
+```csharp
+public sealed class AbGroupCommonParamsProvider : IAnalyticsCommonParamsProvider
+{
+    public void AppendParams(IList<AnalyticsParam> destination)
+    {
+        destination.Add(new AnalyticsParam("ab_group", ABController.AnalyticsGroup));
+    }
+}
+```
+
+Register it as `IAnalyticsCommonParamsProvider` and it is applied to every event. An event
+parameter with the same key always wins over a common one.
+
+### Backends
+| Backend | Assembly | Requires |
+| --- | --- | --- |
+| `NullAnalyticsBackend` / `NullCrashReporter` | core | nothing (logs to console in the Editor) |
+| `FirebaseAnalyticsBackend` / `FirebaseCrashReporter` | `ENP.UnityExtensions.Firebase` | `ENP_FIREBASE` |
+
+### Firebase setup
+1. Import the Firebase Unity SDK (`FirebaseAnalytics.unitypackage`, `FirebaseCrashlytics.unitypackage`)
+   and add `google-services.json` / `GoogleService-Info.plist` to the project.
+2. Add the scripting define symbol **`ENP_FIREBASE`** (Project Settings → Player → Scripting Define Symbols).
+   Without it the Firebase assemblies are excluded from compilation entirely.
+3. Register the module and call `BeginSession()` once at startup.
+
+`FirebaseBootstrap` runs `CheckAndFixDependenciesAsync` once for both analytics and Crashlytics,
+and resumes on the main thread. User ids, user properties and Crashlytics custom keys set before
+initialization completes are cached and applied as soon as it does. String parameter values are
+truncated to Firebase's 100-character limit; events are capped at 25 parameters.
+
+### Registration (VContainer)
+```csharp
+builder.RegisterAnalyticsModule();
+
+#if ENP_FIREBASE
+builder.RegisterFirebaseAnalyticsBackend();
+#else
+builder.RegisterNullAnalyticsBackend();
+#endif
+
+builder.Register<IAnalyticsCommonParamsProvider, AbGroupCommonParamsProvider>(Lifetime.Singleton);
+```
+
+Then, at startup:
+
+```csharp
+_analyticsService.BeginSession();
+_crashReporter.Initialize();
+```
+
+### Ads integration
+With the Ads module present (`ENP_ADMOB`), `AnalyticsAdSink` forwards `IAdAnalyticsSink`
+callbacks into `AnalyticsService`:
+
+```csharp
+builder.RegisterAdsModule(adsConfig);
+builder.Register<IAdAnalyticsSink, AnalyticsAdSink>(Lifetime.Singleton);
+```
+
+It emits `ad_offer_shown`, `ad_load_failed`, `ad_clicked`, `ad_show_failed`,
+`ad_reward_granted`, `ad_retry_stopped`, `ad_load_skipped_throttled` and `ad_load_expired`.
+
 ---
 
-_Last updated: 2026-07-24_
+_Last updated: 2026-08-16_

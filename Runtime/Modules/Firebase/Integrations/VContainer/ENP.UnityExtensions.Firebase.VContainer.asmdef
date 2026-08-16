@@ -1,0 +1,28 @@
+{
+    "name": "ENP.UnityExtensions.Firebase.VContainer",
+    "rootNamespace": "ENP.UnityExtensions.Firebase",
+    "references": [
+        "ENP.Extensions.Runtime",
+        "ENP.UnityExtensions.Analytics",
+        "ENP.UnityExtensions.Firebase",
+        "VContainer"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "ENP_FIREBASE",
+        "ENP_VCONTAINER"
+    ],
+    "versionDefines": [
+        {
+            "name": "jp.hadashikick.vcontainer",
+            "expression": "",
+            "define": "ENP_VCONTAINER"
+        }
+    ],
+    "noEngineReferences": false
+}

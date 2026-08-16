@@ -1,5 +1,21 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+- **Analytics module** (`ENP.UnityExtensions.Analytics`, always compiled) — vendor-agnostic
+  analytics core: `AnalyticsService`, `AnalyticsParam`, persisted `PendingAnalyticsQueue`
+  (events logged before the backend is ready survive an app restart), `AnalyticsSessionCounter`
+  and `IAnalyticsCommonParamsProvider` for per-project common parameters.
+  `NullAnalyticsBackend` / `NullCrashReporter` keep the module usable without any SDK.
+- **Firebase module** (`ENP.UnityExtensions.Firebase`, define constraint `ENP_FIREBASE`) —
+  `FirebaseBootstrap` (single dependency check, main-thread continuation),
+  `FirebaseAnalyticsBackend` and `FirebaseCrashReporter`.
+- `AnalyticsAdSink` (define constraint `ENP_ADMOB`) — bridges the Ads module's
+  `IAdAnalyticsSink` into `AnalyticsService`, so ad events reach whichever backend is wired.
+- VContainer registration helpers: `RegisterAnalyticsModule`, `RegisterNullAnalyticsBackend`,
+  `RegisterFirebaseAnalyticsBackend`.
+
 ## [1.1.0]
 
 ### Changed (BREAKING)
