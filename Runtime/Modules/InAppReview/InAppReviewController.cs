@@ -49,6 +49,16 @@ public static class InAppReviewController
 #endif
     }
     
+    /// <summary>
+    /// Пряме відкриття сторінки застосунку в сторі, без review API.
+    /// Використовувати для кнопок, на які тисне сам користувач (наприклад Settings) —
+    /// review API призначений лише для природних, не user-initiated моментів.
+    /// </summary>
+    public static void OpenStorePage()
+    {
+        DirectlyOpen();
+    }
+
     public static void RateAndReview()
     {
         s_rateAndReviewAttempts++;
