@@ -1,7 +1,6 @@
 using System;
 using TMPro;
 using UnityEngine;
-using UnityEngine.Events;
 using UnityEngine.EventSystems;
 using UnityEngine.Serialization;
 
@@ -32,7 +31,7 @@ namespace ENP.UnityExtensions.Runtime
         [SerializeField] private TMP_Text _text;
 
         [Header("Events")]
-        [SerializeField] private UnityEvent _onClick = new();
+        private event Action OnClick;
 
         private CanvasGroup _canvasGroup;
         private bool _isPointerDown;
@@ -104,22 +103,22 @@ namespace ENP.UnityExtensions.Runtime
 
         public void AddListener(Action onClick)
         {
-            _onClick.AddListener(onClick);
+            OnClick += onClick;
         }
 
         public void RemoveListener()
         {
-            _onClick.RemoveAllListeners();
+            OnClick = null;
         }
 
         public void RemoveListener(Action onClick)
         {
-            _onClick.RemoveListener(onClick);
+            OnClick -= onClick;
         }
 
         public void ForceInvoke()
         {
-            _onClick.Invoke();
+            OnClick?.Invoke();
         }
 
         public void OnPointerDown(PointerEventData eventData)
@@ -164,7 +163,7 @@ namespace ENP.UnityExtensions.Runtime
                 return;
             }
 
-            _onClick.Invoke();
+            OnClick?.Invoke();
             _blockInputUntilTime = Time.unscaledTime + _clickBlockDuration;
         }
 
