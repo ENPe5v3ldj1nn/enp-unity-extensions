@@ -30,7 +30,6 @@ namespace ENP.UnityExtensions.Runtime
         [FormerlySerializedAs("text")]
         [SerializeField] private TMP_Text _text;
 
-        [Header("Events")]
         private event Action OnClick;
 
         private CanvasGroup _canvasGroup;
