@@ -102,7 +102,7 @@ namespace ENP.UnityExtensions.Runtime
             ApplyInteractableVisual();
         }
 
-        public void AddListener(UnityAction onClick)
+        public void AddListener(Action onClick)
         {
             _onClick.AddListener(onClick);
         }
@@ -112,7 +112,7 @@ namespace ENP.UnityExtensions.Runtime
             _onClick.RemoveAllListeners();
         }
 
-        public void RemoveListener(UnityAction onClick)
+        public void RemoveListener(Action onClick)
         {
             _onClick.RemoveListener(onClick);
         }
