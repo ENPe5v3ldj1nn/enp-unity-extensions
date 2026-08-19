@@ -24,7 +24,27 @@ public static class InAppReviewController
 #if UNITY_IOS
     private static string s_iosStoreUrl;
 #endif
-    
+
+    /// <summary>
+    /// Чи готовий нативний review flow до показу прямо зараз.
+    /// Android (PLAY_REVIEW): true лише коли PlayReviewInfo вже завантажено.
+    /// iOS: завжди true — StoreKit не дає дізнатись стан заздалегідь.
+    /// Інші платформи / Android без плагіна PLAY_REVIEW: завжди false.
+    /// </summary>
+    public static bool IsReviewFlowReady
+    {
+        get
+        {
+#if UNITY_IOS
+            return true;
+#elif UNITY_ANDROID && PLAY_REVIEW
+            return s_playReviewInfo != null;
+#else
+            return false;
+#endif
+        }
+    }
+
     public static void Initialize(string androidStoreUrl, string iosStoreUrl)
     {
         s_rateAndReviewAttempts = 0;
