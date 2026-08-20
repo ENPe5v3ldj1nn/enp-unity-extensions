@@ -24,6 +24,10 @@ public class WrapLayoutGroup : LayoutGroup
     private bool _useFixedColumnCount = false;
     [SerializeField]
     private int _columnCount = 1;
+    [SerializeField]
+    private bool _stretchWidth = false;
+    [SerializeField]
+    private bool _stretchHeight = false;
 
     private float AvailableWidth => rectTransform.rect.width - padding.horizontal;
     private float AvailableHeight => rectTransform.rect.height - padding.vertical;
@@ -37,6 +41,8 @@ public class WrapLayoutGroup : LayoutGroup
 
     private float _totalContentWidth;
     private float _totalContentHeight;
+    private float _stretchedItemWidth;
+    private float _stretchedItemHeight;
 
     private bool _pendingRebuild;
     private bool _rebuildInProgress;
@@ -122,11 +128,17 @@ public class WrapLayoutGroup : LayoutGroup
 
     private float GetChildWidth(RectTransform child)
     {
+        if (_useFixedColumnCount && _stretchWidth)
+            return _stretchedItemWidth;
+
         return _controlChildWidth ? LayoutUtility.GetPreferredWidth(child) : child.rect.width;
     }
 
     private float GetChildHeight(RectTransform child)
     {
+        if (_useFixedColumnCount && _stretchHeight)
+            return _stretchedItemHeight;
+
         return _controlChildHeight ? LayoutUtility.GetPreferredHeight(child) : child.rect.height;
     }
 
@@ -151,6 +163,19 @@ public class WrapLayoutGroup : LayoutGroup
 
     private void CalculateHorizontalPositionsAndSize()
     {
+        int columnsPerRow = Mathf.Max(1, _columnCount);
+        int rowCount = _useFixedColumnCount && rectChildren.Count > 0
+            ? Mathf.CeilToInt((float)rectChildren.Count / columnsPerRow)
+            : 0;
+
+        _stretchedItemWidth = _useFixedColumnCount && _stretchWidth
+            ? Mathf.Max(0f, (AvailableWidth - _spacing.x * (columnsPerRow - 1)) / columnsPerRow)
+            : 0f;
+
+        _stretchedItemHeight = _useFixedColumnCount && _stretchHeight && rowCount > 0
+            ? Mathf.Max(0f, (AvailableHeight - _spacing.y * (rowCount - 1)) / rowCount)
+            : 0f;
+
         float x = padding.left;
         float y = 0f;
         float maxHeight = 0f;
@@ -165,7 +190,7 @@ public class WrapLayoutGroup : LayoutGroup
             float height = GetChildHeight(child);
 
             bool shouldWrap = _useFixedColumnCount
-                ? i - startIndex >= _columnCount
+                ? i - startIndex >= columnsPerRow
                 : x + width > AvailableWidth + padding.left && x > padding.left;
 
             if (shouldWrap)
@@ -196,6 +221,19 @@ public class WrapLayoutGroup : LayoutGroup
 
     private void CalculateVerticalPositionsAndSize()
     {
+        int rowsPerColumn = Mathf.Max(1, _columnCount);
+        int columnCount = _useFixedColumnCount && rectChildren.Count > 0
+            ? Mathf.CeilToInt((float)rectChildren.Count / rowsPerColumn)
+            : 0;
+
+        _stretchedItemHeight = _useFixedColumnCount && _stretchHeight
+            ? Mathf.Max(0f, (AvailableHeight - _spacing.y * (rowsPerColumn - 1)) / rowsPerColumn)
+            : 0f;
+
+        _stretchedItemWidth = _useFixedColumnCount && _stretchWidth && columnCount > 0
+            ? Mathf.Max(0f, (AvailableWidth - _spacing.x * (columnCount - 1)) / columnCount)
+            : 0f;
+
         float x = 0f;
         float y = 0f;
         float maxWidth = 0f;
@@ -209,7 +247,11 @@ public class WrapLayoutGroup : LayoutGroup
             float width = GetChildWidth(child);
             float height = GetChildHeight(child);
 
-            if (y + height > AvailableHeight && y > 0f)
+            bool shouldWrap = _useFixedColumnCount
+                ? i - startIndex >= rowsPerColumn
+                : y + height > AvailableHeight && y > 0f;
+
+            if (shouldWrap)
             {
                 float columnHeight = currentColumnHeight - _spacing.y;
                 _columnWidths.Add(maxWidth);
@@ -254,6 +296,8 @@ public class WrapLayoutGroup : LayoutGroup
 
     private void SetChildrenPositionsHorizontal()
     {
+        bool controlWidth = _controlChildWidth || (_useFixedColumnCount && _stretchWidth);
+        bool controlHeight = _controlChildHeight || (_useFixedColumnCount && _stretchHeight);
         float containerHeight = rectTransform.rect.height;
         float verticalOffset = 0f;
 
@@ -327,7 +371,7 @@ public class WrapLayoutGroup : LayoutGroup
 
                 finalY += verticalOffset + padding.top;
 
-                if (_controlChildWidth)
+                if (controlWidth)
                 {
                     SetChildAlongAxis(child, 0, offsetX, width);
                 }
@@ -336,7 +380,7 @@ public class WrapLayoutGroup : LayoutGroup
                     SetChildAlongAxis(child, 0, offsetX);
                 }
 
-                if (_controlChildHeight)
+                if (controlHeight)
                 {
                     SetChildAlongAxis(child, 1, finalY, height);
                 }
@@ -351,6 +395,8 @@ public class WrapLayoutGroup : LayoutGroup
 
     private void SetChildrenPositionsVertical()
     {
+        bool controlWidth = _controlChildWidth || (_useFixedColumnCount && _stretchWidth);
+        bool controlHeight = _controlChildHeight || (_useFixedColumnCount && _stretchHeight);
         float horizontalOffset = 0f;
         float innerContentWidth = Mathf.Max(0f, _totalContentWidth - padding.horizontal);
 
@@ -431,7 +477,7 @@ public class WrapLayoutGroup : LayoutGroup
                         break;
                 }
 
-                if (_controlChildWidth)
+                if (controlWidth)
                 {
                     SetChildAlongAxis(child, 0, finalX, width);
                 }
@@ -440,7 +486,7 @@ public class WrapLayoutGroup : LayoutGroup
                     SetChildAlongAxis(child, 0, finalX);
                 }
 
-                if (_controlChildHeight)
+                if (controlHeight)
                 {
                     SetChildAlongAxis(child, 1, finalY, height);
                 }
