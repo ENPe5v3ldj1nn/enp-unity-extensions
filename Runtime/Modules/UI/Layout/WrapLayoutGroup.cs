@@ -20,6 +20,10 @@ public class WrapLayoutGroup : LayoutGroup
     private bool _controlChildHeight = true;
     [SerializeField]
     private WrapDirection _sortDirection = WrapDirection.Horizontal;
+    [SerializeField]
+    private bool _useFixedColumnCount = false;
+    [SerializeField]
+    private int _columnCount = 1;
 
     private float AvailableWidth => rectTransform.rect.width - padding.horizontal;
     private float AvailableHeight => rectTransform.rect.height - padding.vertical;
@@ -36,6 +40,12 @@ public class WrapLayoutGroup : LayoutGroup
 
     private bool _pendingRebuild;
     private bool _rebuildInProgress;
+
+    protected override void OnValidate()
+    {
+        base.OnValidate();
+        _columnCount = Mathf.Max(1, _columnCount);
+    }
 
     protected override void OnEnable()
     {
@@ -154,7 +164,11 @@ public class WrapLayoutGroup : LayoutGroup
             float width = GetChildWidth(child);
             float height = GetChildHeight(child);
 
-            if (x + width > AvailableWidth + padding.left && x > padding.left)
+            bool shouldWrap = _useFixedColumnCount
+                ? i - startIndex >= _columnCount
+                : x + width > AvailableWidth + padding.left && x > padding.left;
+
+            if (shouldWrap)
             {
                 _rowHeights.Add(maxHeight);
                 _rowStartIndexes.Add(startIndex);
