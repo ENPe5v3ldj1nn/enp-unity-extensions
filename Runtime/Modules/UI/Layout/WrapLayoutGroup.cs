@@ -47,11 +47,12 @@ public class WrapLayoutGroup : LayoutGroup
     private bool _pendingRebuild;
     private bool _rebuildInProgress;
 
-    protected override void OnValidate()
+#if UNITY_EDITOR
+    private void OnValidate()
     {
-        base.OnValidate();
         _columnCount = Mathf.Max(1, _columnCount);
     }
+#endif
 
     protected override void OnEnable()
     {
