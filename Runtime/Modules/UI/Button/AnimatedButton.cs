@@ -39,6 +39,11 @@ namespace ENP.UnityExtensions.Runtime
         public event Action Pressed;
         public event Action Released;
 
+        // Static, project-wide hook fired on every successful click of every AnimatedButton —
+        // opt-in (nothing subscribes by default), so existing per-project click handling (sound,
+        // haptics, etc.) is unaffected unless a project explicitly listens.
+        public static event Action AnyButtonClicked;
+
         public bool Interactable
         {
             get => _interactable;
@@ -163,6 +168,7 @@ namespace ENP.UnityExtensions.Runtime
             }
 
             OnClick?.Invoke();
+            AnyButtonClicked?.Invoke();
             _blockInputUntilTime = Time.unscaledTime + _clickBlockDuration;
         }
 
