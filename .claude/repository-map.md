@@ -76,11 +76,16 @@ frameworks the plugin's own always-compiled native iOS code needs — `AppTracki
 (for `VibrationController.TriggerIOS`). Lives in the plugin, not per-project, because both
 symbols compile into any iOS build that consumes this package, define-constraint-free. Add
 future framework needs to its `RequiredFrameworks` array rather than a project-local copy.
-Linking the framework is necessary but not sufficient for a P/Invoke onto it: `TriggerIOS`'s
-`AudioServicesPlaySystemSound` `[DllImport]` must target `"__Internal"`, not `"AudioToolbox"`
-(fixed 26.08.2026) — IL2CPP treats a named-framework `DllImport` as a runtime `dlopen`, which
-iOS system frameworks (statically linked at build time) don't support; `__Internal` resolves
-the symbol from the already-loaded process image instead.
+Linking the framework is necessary but not sufficient for a P/Invoke onto it: any iOS
+`[DllImport]` in this plugin must target `"__Internal"`, never a framework name — IL2CPP
+treats a named-framework `DllImport` as a runtime `dlopen`, which iOS system frameworks
+(statically linked at build time) don't support; `__Internal` resolves the symbol from the
+already-loaded process image instead. `VibrationController.TriggerIOS` hit this exact bug
+26.08.2026 with `AudioServicesPlaySystemSound` under `"AudioToolbox"`; fixed by switching to
+`__Internal` and, same day, replaced with `Runtime/Plugins/iOS/NeuroDashHapticBridge.mm`
+(`UIImpactFeedbackGenerator.impactOccurredWithIntensity`) so `intensity01` is actually honored
+instead of `AudioServicesPlaySystemSound`'s fixed-strength system buzz (no longer needs
+`AudioToolbox.framework` — `UIKit` is linked by default).
 
 ## Conventions
 

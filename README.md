@@ -443,15 +443,25 @@ already links `UnityFramework`):
 
 - `AppTrackingTransparency.framework` (weak) — used by
   `Runtime/Plugins/iOS/NeuroDashTrackingAuthorizationBridge.mm`.
-- `AudioToolbox.framework` (not weak, always present on iOS) — used by
-  `VibrationController.TriggerIOS`'s `AudioServicesPlaySystemSound` P/Invoke.
 
-Both symbols come from `Runtime/` code with no define constraint, so they compile into any iOS
+(`Runtime/Plugins/iOS/NeuroDashHapticBridge.mm`, used by `VibrationController.TriggerIOS`,
+only needs `UIKit`, which Unity's iOS template links by default — no entry required here.)
+
+This symbol comes from `Runtime/` code with no define constraint, so it compiles into any iOS
 build that consumes this plugin regardless of which optional modules (Ads, VContainer, ...) are
-actually used — every consuming project needs both frameworks, so this lives in the plugin
-rather than being duplicated per-project. If the plugin's native iOS code grows another
+actually used — every consuming project needs it, so this lives in the plugin rather than being
+duplicated per-project. If the plugin's native iOS code grows another
 `DllImport`/`.mm` needing a new system framework, add it to `RequiredFrameworks` here instead of
 writing a project-local linker.
+
+**`[DllImport]` target must be `"__Internal"`, never a framework name.** Linking the framework
+makes the symbol available in the binary, but IL2CPP resolves a named-framework `DllImport`
+(e.g. `[DllImport("AudioToolbox")]`) by trying to `dlopen` it at runtime — which iOS does not
+support for system frameworks (they're statically linked at build time, not loaded by name).
+`VibrationController.TriggerIOS` hit exactly this (26.08.2026): switching to `__Internal` fixed
+the `DllNotFoundException`, and the underlying `AudioServicesPlaySystemSound` call was then
+replaced with `NeuroDashHapticBridge.mm`'s `UIImpactFeedbackGenerator.impactOccurredWithIntensity`
+so `intensity01` is actually honored instead of triggering a fixed-strength system buzz.
 
 ---
 

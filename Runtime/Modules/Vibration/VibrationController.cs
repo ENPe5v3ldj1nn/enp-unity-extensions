@@ -88,7 +88,7 @@ namespace ENP.UnityExtensions.Runtime
 #if UNITY_ANDROID && !UNITY_EDITOR
             TriggerAndroid(durationMs, clampedIntensity);
 #elif UNITY_IOS && !UNITY_EDITOR
-            TriggerIOS();
+            TriggerIOS(clampedIntensity);
 #else
             TriggerFallback();
 #endif
@@ -167,20 +167,12 @@ namespace ENP.UnityExtensions.Runtime
 #endif
 
 #if UNITY_IOS && !UNITY_EDITOR
-        // Точка розширення: за потреби замінити на нативний .mm Taptic Engine плагін
-        // без зміни публічного API (Trigger(durationMs, intensity01)).
-        private const int SystemSoundIdVibrate = 4095;
-
-        // __Internal, not "AudioToolbox": on iOS/IL2CPP system frameworks are statically linked
-        // into the binary at build time, not dlopen'd by name at runtime - "AudioToolbox" here
-        // would make IL2CPP try (and fail) to dlopen a dynamic library with that literal name.
         [DllImport("__Internal")]
-        private static extern void AudioServicesPlaySystemSound(int soundId);
+        private static extern void NeuroDashHapticImpactOccurred(float intensity01);
 
-        private static void TriggerIOS()
+        private static void TriggerIOS(float intensity01)
         {
-            // Грубий фолбек: тривалість та інтенсивність ігноруються стандартним API.
-            AudioServicesPlaySystemSound(SystemSoundIdVibrate);
+            NeuroDashHapticImpactOccurred(intensity01);
         }
 #endif
 
