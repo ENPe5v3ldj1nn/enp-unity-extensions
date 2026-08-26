@@ -9,8 +9,8 @@ namespace ENP.UnityExtensions.Editor
     // Links the system frameworks the plugin's own native iOS code needs, since Unity does not
     // auto-link a framework for a plain .mm file or a DllImport. The required symbol comes from
     // Runtime code that always compiles into an iOS build regardless of which optional modules a
-    // consuming project uses (NeuroDashTrackingAuthorizationBridge.mm). UIKit (used by
-    // NeuroDashHapticBridge.mm) is linked by Unity's iOS template by default and needs no entry here.
+    // consuming project uses (EnpTrackingAuthorizationBridge.mm). UIKit (used by
+    // EnpHapticBridge.mm) is linked by Unity's iOS template by default and needs no entry here.
     internal static class EnpNativeFrameworkLinker
     {
         private const string APP_TRACKING_TRANSPARENCY_FRAMEWORK = "AppTrackingTransparency.framework";

@@ -5,19 +5,19 @@
 // fixed-strength system vibration, impactOccurredWithIntensity actually honors intensity01.
 extern "C"
 {
-    void NeuroDashHapticImpactOccurred(float intensity01)
+    void EnpHapticImpactOccurred(float intensity01)
     {
         if (@available(iOS 13.0, *))
         {
             UIImpactFeedbackGenerator *generator =
-                [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleMedium];
+                [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleHeavy];
             [generator prepare];
             [generator impactOccurredWithIntensity:(CGFloat)intensity01];
         }
         else
         {
             UIImpactFeedbackGenerator *generator =
-                [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleMedium];
+                [[UIImpactFeedbackGenerator alloc] initWithStyle:UIImpactFeedbackStyleHeavy];
             [generator prepare];
             [generator impactOccurred];
         }

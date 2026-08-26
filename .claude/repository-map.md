@@ -72,7 +72,7 @@ warning per platform it had to fix.
 folder): `EnpNativeFrameworkLinker` is a `[PostProcessBuild]` step (idempotent via
 `ContainsFramework`) that links, into the `UnityFramework` Xcode target only, the system
 frameworks the plugin's own always-compiled native iOS code needs — `AppTrackingTransparency`
-(weak, for `Runtime/Plugins/iOS/NeuroDashTrackingAuthorizationBridge.mm`) and `AudioToolbox`
+(weak, for `Runtime/Plugins/iOS/EnpTrackingAuthorizationBridge.mm`) and `AudioToolbox`
 (for `VibrationController.TriggerIOS`). Lives in the plugin, not per-project, because both
 symbols compile into any iOS build that consumes this package, define-constraint-free. Add
 future framework needs to its `RequiredFrameworks` array rather than a project-local copy.
@@ -82,10 +82,12 @@ treats a named-framework `DllImport` as a runtime `dlopen`, which iOS system fra
 (statically linked at build time) don't support; `__Internal` resolves the symbol from the
 already-loaded process image instead. `VibrationController.TriggerIOS` hit this exact bug
 26.08.2026 with `AudioServicesPlaySystemSound` under `"AudioToolbox"`; fixed by switching to
-`__Internal` and, same day, replaced with `Runtime/Plugins/iOS/NeuroDashHapticBridge.mm`
+`__Internal` and, same day, replaced with `Runtime/Plugins/iOS/EnpHapticBridge.mm`
 (`UIImpactFeedbackGenerator.impactOccurredWithIntensity`) so `intensity01` is actually honored
 instead of `AudioServicesPlaySystemSound`'s fixed-strength system buzz (no longer needs
-`AudioToolbox.framework` — `UIKit` is linked by default).
+`AudioToolbox.framework` — `UIKit` is linked by default). Base style is `.Heavy` (not `.Medium`)
+— `.Medium` felt too weak across the whole `intensity01` range even at 1.0; `.Heavy` gives a
+stronger baseline punch that `intensity01` then scales down from.
 
 ## Conventions
 

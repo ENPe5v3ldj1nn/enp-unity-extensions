@@ -168,11 +168,11 @@ namespace ENP.UnityExtensions.Runtime
 
 #if UNITY_IOS && !UNITY_EDITOR
         [DllImport("__Internal")]
-        private static extern void NeuroDashHapticImpactOccurred(float intensity01);
+        private static extern void EnpHapticImpactOccurred(float intensity01);
 
         private static void TriggerIOS(float intensity01)
         {
-            NeuroDashHapticImpactOccurred(intensity01);
+            EnpHapticImpactOccurred(intensity01);
         }
 #endif
 

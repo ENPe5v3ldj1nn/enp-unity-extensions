@@ -2,16 +2,16 @@
 
 #if __has_include(<AppTrackingTransparency/ATTrackingManager.h>)
 #import <AppTrackingTransparency/ATTrackingManager.h>
-#define NEURODASH_ATT_AVAILABLE 1
+#define ENP_ATT_AVAILABLE 1
 #else
-#define NEURODASH_ATT_AVAILABLE 0
+#define ENP_ATT_AVAILABLE 0
 #endif
 
 extern "C"
 {
-    int NeuroDashTrackingAuthorizationGetStatus()
+    int EnpTrackingAuthorizationGetStatus()
     {
-#if NEURODASH_ATT_AVAILABLE
+#if ENP_ATT_AVAILABLE
         if (@available(iOS 14.0, *))
         {
             return (int)[ATTrackingManager trackingAuthorizationStatus];
@@ -20,9 +20,9 @@ extern "C"
         return 3;
     }
 
-    void NeuroDashTrackingAuthorizationRequest()
+    void EnpTrackingAuthorizationRequest()
     {
-#if NEURODASH_ATT_AVAILABLE
+#if ENP_ATT_AVAILABLE
         if (@available(iOS 14.0, *))
         {
             if ([ATTrackingManager trackingAuthorizationStatus] != ATTrackingManagerAuthorizationStatusNotDetermined)

@@ -75,7 +75,7 @@ namespace ENP.UnityExtensions.Ads
         private static int GetAuthorizationStatus()
         {
 #if UNITY_IOS && !UNITY_EDITOR
-            return NeuroDashTrackingAuthorizationGetStatus();
+            return EnpTrackingAuthorizationGetStatus();
 #else
             return AuthorizedStatus;
 #endif
@@ -84,16 +84,16 @@ namespace ENP.UnityExtensions.Ads
         private static void RequestAuthorization()
         {
 #if UNITY_IOS && !UNITY_EDITOR
-            NeuroDashTrackingAuthorizationRequest();
+            EnpTrackingAuthorizationRequest();
 #endif
         }
 
 #if UNITY_IOS && !UNITY_EDITOR
         [DllImport("__Internal")]
-        private static extern int NeuroDashTrackingAuthorizationGetStatus();
+        private static extern int EnpTrackingAuthorizationGetStatus();
 
         [DllImport("__Internal")]
-        private static extern void NeuroDashTrackingAuthorizationRequest();
+        private static extern void EnpTrackingAuthorizationRequest();
 #endif
     }
 }

@@ -442,9 +442,9 @@ the same framework into both caused duplicate-symbol linker errors, since the ma
 already links `UnityFramework`):
 
 - `AppTrackingTransparency.framework` (weak) — used by
-  `Runtime/Plugins/iOS/NeuroDashTrackingAuthorizationBridge.mm`.
+  `Runtime/Plugins/iOS/EnpTrackingAuthorizationBridge.mm`.
 
-(`Runtime/Plugins/iOS/NeuroDashHapticBridge.mm`, used by `VibrationController.TriggerIOS`,
+(`Runtime/Plugins/iOS/EnpHapticBridge.mm`, used by `VibrationController.TriggerIOS`,
 only needs `UIKit`, which Unity's iOS template links by default — no entry required here.)
 
 This symbol comes from `Runtime/` code with no define constraint, so it compiles into any iOS
@@ -460,7 +460,7 @@ makes the symbol available in the binary, but IL2CPP resolves a named-framework 
 support for system frameworks (they're statically linked at build time, not loaded by name).
 `VibrationController.TriggerIOS` hit exactly this (26.08.2026): switching to `__Internal` fixed
 the `DllNotFoundException`, and the underlying `AudioServicesPlaySystemSound` call was then
-replaced with `NeuroDashHapticBridge.mm`'s `UIImpactFeedbackGenerator.impactOccurredWithIntensity`
+replaced with `EnpHapticBridge.mm`'s `UIImpactFeedbackGenerator.impactOccurredWithIntensity`
 so `intensity01` is actually honored instead of triggering a fixed-strength system buzz.
 
 ---
