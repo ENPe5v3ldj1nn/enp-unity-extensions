@@ -150,7 +150,7 @@ namespace ENP.UnityExtensions.Ads
 
         private static void LogDebug(string message)
         {
-#if !ENP_ADS_RELEASE
+#if !APP_BUILD_RELEASE
             Debug.Log(message);
 #endif
         }

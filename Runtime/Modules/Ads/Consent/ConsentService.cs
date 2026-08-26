@@ -113,7 +113,7 @@ namespace ENP.UnityExtensions.Ads
                 TagForUnderAgeOfConsent = _config.TagForUnderAgeOfConsent
             };
 
-#if !ENP_ADS_RELEASE
+#if !APP_BUILD_RELEASE
             parameters.ConsentDebugSettings = BuildDebugSettings();
 #endif
 
@@ -167,7 +167,7 @@ namespace ENP.UnityExtensions.Ads
 
         private static void LogConsentDebug(string message)
         {
-#if !ENP_ADS_RELEASE
+#if !APP_BUILD_RELEASE
             Debug.Log(message);
 #endif
         }
@@ -183,7 +183,7 @@ namespace ENP.UnityExtensions.Ads
                    || Application.platform == RuntimePlatform.IPhonePlayer;
         }
 
-#if !ENP_ADS_RELEASE
+#if !APP_BUILD_RELEASE
         private ConsentDebugSettings BuildDebugSettings()
         {
             var debugSettings = new ConsentDebugSettings();

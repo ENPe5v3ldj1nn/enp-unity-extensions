@@ -135,7 +135,7 @@ namespace ENP.UnityExtensions.Ads
 
         public void SetUseProductionAdUnits(bool enabled)
         {
-#if ENP_ADS_RELEASE
+#if APP_BUILD_RELEASE
             _shouldUseProductionAdUnits = enabled;
 #else
             _shouldUseProductionAdUnits = false;
@@ -144,7 +144,7 @@ namespace ENP.UnityExtensions.Ads
 
         private static bool IsProductionBuild()
         {
-#if ENP_ADS_RELEASE
+#if APP_BUILD_RELEASE
             return true;
 #else
             return false;

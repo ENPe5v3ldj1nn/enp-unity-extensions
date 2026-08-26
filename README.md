@@ -243,12 +243,12 @@ dependency) is part of the build.
 1. Import the **Google Mobile Ads Unity plugin** ([GitHub releases](https://github.com/googleads/googleads-mobile-unity/releases)).
    It brings EDM4U and resolves the native Android/iOS AdMob SDKs.
 2. Add the scripting define symbol **`ENP_ADMOB`** (Project Settings → Player → Scripting
-   Define Symbols). Add **`ENP_ADS_RELEASE`** as well in your release/production builds —
+   Define Symbols). Add **`APP_BUILD_RELEASE`** as well in your release/production builds —
    it switches ad units from Google's public test ids to your production ids and silences
    verbose debug logging (`ConsentService`, `AdAnalyticsService`).
 3. Create an `AdsConfig` asset: **Create → ENP → Ads → Ads Config**. Fill in production ad
    unit ids per platform (interstitial / rewarded / app open) and the UMP/throttling fields;
-   test ids are hardcoded and used automatically while `ENP_ADS_RELEASE` is not defined.
+   test ids are hardcoded and used automatically while `APP_BUILD_RELEASE` is not defined.
 4. Set up AdMob's `AndroidManifest.xml` App ID meta-data and the iOS `SKAdNetworkItems` /
    `NSUserTrackingUsageDescription` entries as required by the plugin — this package does not
    generate them.

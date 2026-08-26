@@ -59,6 +59,6 @@ for rounded shapes / sliders / images, `WindowSetupValidator`.
 - Namespaces: `ENP.UnityExtensions.*` (root runtime namespace is `ENP.UnityExtensions.Runtime`).
 - Optional deps must never break compilation — gate with a define constraint on a
   dedicated assembly, never with `#if` inside the main runtime assembly.
-- Verbose debug logging is compiled out with `ENP_ADS_RELEASE` in the Ads module.
+- Verbose debug logging is compiled out with `APP_BUILD_RELEASE` in the Ads module.
 - VContainer wiring is exposed as `IContainerBuilder` extension methods per module
   (`RegisterAdsModule`, `RegisterAnalyticsModule`, `RegisterFirebaseAnalyticsBackend`, ...).
