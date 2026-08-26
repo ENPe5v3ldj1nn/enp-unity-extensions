@@ -429,4 +429,30 @@ Release build made through this dialog, never as ambient project state.
 
 ---
 
+## iOS native framework linking
+
+`Editor/iOS/EnpNativeFrameworkLinker.cs` links the system frameworks the plugin's own native
+iOS code needs, since Unity does not auto-link a framework for a plain `.mm` file or a
+`DllImport`. Runs as a `[PostProcessBuild]` step after every iOS build, idempotently
+(`ContainsFramework` guard — safe across repeated builds that append to an existing Xcode
+project instead of regenerating it).
+
+Currently links, into the `UnityFramework` Xcode target only (not the main app target — linking
+the same framework into both caused duplicate-symbol linker errors, since the main target
+already links `UnityFramework`):
+
+- `AppTrackingTransparency.framework` (weak) — used by
+  `Runtime/Plugins/iOS/NeuroDashTrackingAuthorizationBridge.mm`.
+- `AudioToolbox.framework` (not weak, always present on iOS) — used by
+  `VibrationController.TriggerIOS`'s `AudioServicesPlaySystemSound` P/Invoke.
+
+Both symbols come from `Runtime/` code with no define constraint, so they compile into any iOS
+build that consumes this plugin regardless of which optional modules (Ads, VContainer, ...) are
+actually used — every consuming project needs both frameworks, so this lives in the plugin
+rather than being duplicated per-project. If the plugin's native iOS code grows another
+`DllImport`/`.mm` needing a new system framework, add it to `RequiredFrameworks` here instead of
+writing a project-local linker.
+
+---
+
 _Last updated: 2026-08-26_

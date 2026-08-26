@@ -68,6 +68,15 @@ warning per platform it had to fix.
 `LanguageSettings` (localization window with keys audit and translation tabs),
 `TimeScaleToolbar`, custom editors for rounded shapes / sliders / images, `WindowSetupValidator`.
 
+`iOS` (`Editor/iOS/`, added 26.08.2026 — moved here from a consuming project's own Editor
+folder): `EnpNativeFrameworkLinker` is a `[PostProcessBuild]` step (idempotent via
+`ContainsFramework`) that links, into the `UnityFramework` Xcode target only, the system
+frameworks the plugin's own always-compiled native iOS code needs — `AppTrackingTransparency`
+(weak, for `Runtime/Plugins/iOS/NeuroDashTrackingAuthorizationBridge.mm`) and `AudioToolbox`
+(for `VibrationController.TriggerIOS`). Lives in the plugin, not per-project, because both
+symbols compile into any iOS build that consumes this package, define-constraint-free. Add
+future framework needs to its `RequiredFrameworks` array rather than a project-local copy.
+
 ## Conventions
 
 - Namespaces: `ENP.UnityExtensions.*` (root runtime namespace is `ENP.UnityExtensions.Runtime`).
