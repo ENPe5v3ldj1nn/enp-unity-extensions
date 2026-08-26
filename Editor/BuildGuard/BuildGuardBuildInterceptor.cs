@@ -20,6 +20,10 @@ namespace ENP.UnityExtensions.Editor
 
         private static void OnBuildPlayer(BuildPlayerOptions options)
         {
+            // Safety net: strips the release define back out if it ended up in Player Settings by
+            // hand (e.g. a direct ProjectSettings.asset edit) since the last domain reload.
+            BuildGuardScriptingDefineGuard.RemoveReleaseDefineFromPlayerSettings();
+
             var settings = BuildGuardSettings.instance;
             var mode = ResolveBuildMode(settings);
             if (!mode.HasValue)
@@ -27,6 +31,8 @@ namespace ENP.UnityExtensions.Editor
 
             settings.LastSelectedMode = mode.Value;
 
+            // Intentionally per-build only, never persisted to Player Settings' scriptingDefineSymbols -
+            // that would defeat the Release/Development choice above by keeping the symbol always defined.
             var buildOptions = options;
             if (mode.Value == BuildMode.Release)
                 buildOptions.extraScriptingDefines = AppendDefine(buildOptions.extraScriptingDefines, settings.ReleaseDefineSymbol);

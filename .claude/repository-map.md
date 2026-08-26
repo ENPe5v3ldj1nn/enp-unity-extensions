@@ -50,9 +50,23 @@ constraint, so the package compiles when the SDK is absent. `ENP_VCONTAINER` is 
 
 ## Editor (`Editor/`)
 
-`BuildGuard` (build-mode validation via `IBuildGuardProjectAdapter`), `LanguageSettings`
-(localization window with keys audit and translation tabs), `TimeScaleToolbar`, custom editors
-for rounded shapes / sliders / images, `WindowSetupValidator`.
+`BuildGuard` (`Editor/BuildGuard/`) — `BuildGuardBuildInterceptor` hooks
+`BuildPlayerWindow.RegisterBuildPlayerHandler`, shows a Release/Development/Cancel dialog on
+every build (settings in the consuming project's `ProjectSettings/BuildGuardSettings.asset`),
+and on Release appends `BuildGuardSettings.ReleaseDefineSymbol` (default `APP_BUILD_RELEASE`)
+to `BuildPlayerOptions.extraScriptingDefines` — **per build only, never written into Player
+Settings' persistent `scriptingDefineSymbols`.** `IBuildGuardProjectAdapter` implementations
+(discovered via `TypeCache`, e.g. the consuming project's `ProjectBuildGuardAdapter`) get
+`Validate`/`Apply`/`Restore` hooks to flip other release-only state (debug logging, DOTween
+debug mode) and undo it after the build if `_restoreStateAfterBuild` is set. See README.md
+"Build Guard" section for the exact failure mode if this symbol is ever added to Player
+Settings by hand (happened once, 26.08.2026, in CardGame — silently defeats the dialog).
+`BuildGuardScriptingDefineGuard` (added 26.08.2026, same file group) is the automated guard
+against a repeat: strips `ReleaseDefineSymbol` back out of every platform's Player Settings
+scripting define symbols on editor load and again at the top of `OnBuildPlayer`, logging a
+warning per platform it had to fix.
+`LanguageSettings` (localization window with keys audit and translation tabs),
+`TimeScaleToolbar`, custom editors for rounded shapes / sliders / images, `WindowSetupValidator`.
 
 ## Conventions
 
@@ -60,5 +74,9 @@ for rounded shapes / sliders / images, `WindowSetupValidator`.
 - Optional deps must never break compilation — gate with a define constraint on a
   dedicated assembly, never with `#if` inside the main runtime assembly.
 - Verbose debug logging is compiled out with `APP_BUILD_RELEASE` in the Ads module.
+- `APP_BUILD_RELEASE` (or whatever `BuildGuardSettings.ReleaseDefineSymbol` is set to) must
+  never be added to a consuming project's Player Settings scripting define symbols directly —
+  it belongs solely to Build Guard's per-build `extraScriptingDefines` injection. See
+  `Editor/BuildGuard` above.
 - VContainer wiring is exposed as `IContainerBuilder` extension methods per module
   (`RegisterAdsModule`, `RegisterAnalyticsModule`, `RegisterFirebaseAnalyticsBackend`, ...).

@@ -378,4 +378,55 @@ It emits `ad_offer_shown`, `ad_load_failed`, `ad_clicked`, `ad_show_failed`,
 
 ---
 
-_Last updated: 2026-08-16_
+## Build Guard
+
+`Editor/BuildGuard/` intercepts every build (`BuildPlayerWindow.RegisterBuildPlayerHandler`)
+and asks **Release / Development / Cancel** before it runs. It decides two things per build:
+whether the release scripting define symbol (default `APP_BUILD_RELEASE`, configurable via
+`BuildGuardSettings.ReleaseDefineSymbol`) is present, and — through any `IBuildGuardProjectAdapter`
+found in the project (e.g. `ProjectBuildGuardAdapter`) — whether debug logging / DOTween debug
+mode is turned off for that build.
+
+Settings live in the per-project `ProjectSettings/BuildGuardSettings.asset`
+(`_askEveryBuild`, `_restoreStateAfterBuild`, `_defaultInteractiveMode`, `_batchModeBuildMode`,
+`_releaseDefineSymbol`, `_lastSelectedMode`).
+
+### ⚠️ The one rule that matters
+
+**The release define symbol (`APP_BUILD_RELEASE`) must never be added to
+`ProjectSettings.asset`'s persistent `scriptingDefineSymbols` (Player Settings → Scripting
+Define Symbols), for any platform.**
+
+Build Guard adds it itself, dynamically, only for the current build, via
+`BuildPlayerOptions.extraScriptingDefines` — and only when you pick **Release** in the dialog.
+It never touches `PlayerSettings.SetScriptingDefineSymbolsForGroup`, so nothing gets written
+back to disk.
+
+If the symbol is ever added by hand to Player Settings (e.g. "just to test something" or by
+copying another platform's define list), it becomes permanently defined regardless of what you
+pick in the dialog — **Development builds silently start shipping production AdMob keys and
+Release-only code paths**, with no error, no warning, and no visible difference in the dialog
+itself. This exact mistake happened on 26.08.2026 in a consuming project (CardGame): the
+symbol was hand-added to both the Android and iPhone define lists to "match" what Build Guard
+was expected to do, which defeated Build Guard for both platforms until it was found and
+reverted.
+
+`BuildGuardScriptingDefineGuard` now guards against this automatically: on every editor load
+(`[InitializeOnLoadMethod]`) and again right before every build (inside
+`BuildGuardBuildInterceptor.OnBuildPlayer`, before the dialog result matters), it scans Player
+Settings' scripting define symbols for every platform and strips `ReleaseDefineSymbol` out if
+found, logging a warning naming the platform it was removed from. This is a safety net, not a
+substitute for not doing it in the first place — don't rely on it to "make it fine" to edit the
+symbol in by hand; it just prevents the mistake from silently shipping.
+
+If you need to check what mode was actually used for a given editor session, read
+`BuildGuardSettings.instance.LastSelectedMode` — don't infer it from Player Settings, since a
+correctly working setup never puts the symbol there.
+
+Anything gated by this symbol (`#if APP_BUILD_RELEASE`) — ad unit id selection, verbose
+debug logs, QA-only tooling — should assume the symbol is **only** present during an actual
+Release build made through this dialog, never as ambient project state.
+
+---
+
+_Last updated: 2026-08-26_

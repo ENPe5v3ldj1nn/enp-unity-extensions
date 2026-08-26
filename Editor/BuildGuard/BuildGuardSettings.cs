@@ -3,6 +3,10 @@ using UnityEngine;
 
 namespace ENP.UnityExtensions.Editor
 {
+    // ReleaseDefineSymbol is added by BuildGuardBuildInterceptor via BuildPlayerOptions.extraScriptingDefines
+    // for the current build only. Never add it to Player Settings -> Scripting Define Symbols directly -
+    // that makes it permanently defined regardless of the Release/Development choice, silently defeating
+    // this whole system (see README.md "Build Guard" section).
     [FilePath("ProjectSettings/BuildGuardSettings.asset", FilePathAttribute.Location.ProjectFolder)]
     public sealed class BuildGuardSettings : ScriptableSingleton<BuildGuardSettings>
     {
