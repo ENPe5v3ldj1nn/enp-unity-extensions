@@ -171,7 +171,10 @@ namespace ENP.UnityExtensions.Runtime
         // без зміни публічного API (Trigger(durationMs, intensity01)).
         private const int SystemSoundIdVibrate = 4095;
 
-        [DllImport("AudioToolbox")]
+        // __Internal, not "AudioToolbox": on iOS/IL2CPP system frameworks are statically linked
+        // into the binary at build time, not dlopen'd by name at runtime - "AudioToolbox" here
+        // would make IL2CPP try (and fail) to dlopen a dynamic library with that literal name.
+        [DllImport("__Internal")]
         private static extern void AudioServicesPlaySystemSound(int soundId);
 
         private static void TriggerIOS()

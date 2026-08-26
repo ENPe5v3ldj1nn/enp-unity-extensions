@@ -76,6 +76,11 @@ frameworks the plugin's own always-compiled native iOS code needs — `AppTracki
 (for `VibrationController.TriggerIOS`). Lives in the plugin, not per-project, because both
 symbols compile into any iOS build that consumes this package, define-constraint-free. Add
 future framework needs to its `RequiredFrameworks` array rather than a project-local copy.
+Linking the framework is necessary but not sufficient for a P/Invoke onto it: `TriggerIOS`'s
+`AudioServicesPlaySystemSound` `[DllImport]` must target `"__Internal"`, not `"AudioToolbox"`
+(fixed 26.08.2026) — IL2CPP treats a named-framework `DllImport` as a runtime `dlopen`, which
+iOS system frameworks (statically linked at build time) don't support; `__Internal` resolves
+the symbol from the already-loaded process image instead.
 
 ## Conventions
 
