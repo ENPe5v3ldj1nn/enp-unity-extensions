@@ -229,6 +229,9 @@ namespace ENP.UnityExtensions.Runtime
 
         private void ApplyInteractableVisual()
         {
+            if (_canvasGroup == null)
+                CacheReferences();
+
             _canvasGroup.interactable = _interactable;
             _canvasGroup.blocksRaycasts = _interactable;
             _canvasGroup.alpha = _interactable ? 1f : Mathf.Clamp01(_disabledAlpha);
