@@ -7,6 +7,24 @@ Install and forget helpers for Unity maintained by **ENPe5v3ldj1nn**.
 - Optional integrations with **DOTween** and **UniRx**.
 - An auto-detector on import that checks whether DOTween/UniRx are present and can offer quick install links.
 
+## Dependencies at a glance
+
+Quick links to grab everything this package can integrate with, so you don't have to hunt each one down separately.
+
+| Dependency | Required? | Info | Install via Package Manager |
+| --- | --- | --- | --- |
+| TextMeshPro | Required (declared in `package.json`) | — | Installed automatically via UPM |
+| Newtonsoft Json (`com.unity.nuget.newtonsoft-json`) | Required (declared in `package.json`) | — | Installed automatically via UPM |
+| DOTween | Optional | [Asset Store](https://assetstore.unity.com/packages/tools/animation/dotween-hotween-v2-27676) | Not distributed via UPM — import from the Asset Store link |
+| UniRx | Optional | [OpenUPM](https://openupm.com/packages/com.neuecc.unirx/) | Package Manager -> `+` -> **Add package by name...** -> `com.neuecc.unirx` (requires the OpenUPM scoped registry — see the link) |
+| VContainer | Optional (`ENP_VCONTAINER` integrations) | [GitHub](https://github.com/hadashiA/VContainer) · [OpenUPM](https://openupm.com/packages/jp.hadashikick.vcontainer/) | Package Manager -> `+` -> **Add package from git URL...** -> `https://github.com/hadashiA/VContainer.git?path=VContainer/Assets/VContainer` |
+| Google Play In-App Review | Optional (Android, `InAppReviewController`) | [GitHub Releases](https://github.com/google/play-in-app-reviews-unity/releases) | Package Manager -> `+` -> **Add package by name...** -> `com.google.play.review` (via OpenUPM scoped registry) or import the `.unitypackage` from the releases link |
+| Google Mobile Ads Unity plugin | Optional (`ENP_ADMOB`, Ads module) | [GitHub Releases](https://github.com/googleads/googleads-mobile-unity/releases) | Not distributed via UPM — import the `.unitypackage` from the releases link |
+| Firebase Unity SDK (Analytics + Crashlytics) | Optional (`ENP_FIREBASE`, Analytics module) | [Firebase Unity SDK](https://firebase.google.com/download/unity) | Not distributed via UPM — import the `.unitypackage` files from the SDK download |
+| Unity MCP | Not a dependency of this package — useful alongside it for AI-assisted Unity workflows | [CoplayDev/unity-mcp](https://github.com/CoplayDev/unity-mcp) | See the repo's README for the exact Package Manager git-URL/path — it changes between releases |
+
+The package compiles without any optional entry above — related modules stay inactive until you install what you need. See the sections below for step-by-step setup per dependency.
+
 ## Install
 
 ### Via Git URL
@@ -110,13 +128,6 @@ If you do not want to set up OpenUPM:
 - On import, you will get a dialog if something is missing.
 - You can run it manually anytime from **ENP/Check Dependencies**.
 - An option to disable future prompts is available.
-
-## Versioning
-This package follows Semantic Versioning: **MAJOR.MINOR.PATCH**.
-
-## Troubleshooting
-- **Missing DOTween types** - install DOTween.
-- **UniRx not found** - install via OpenUPM and make sure the scoped registry is configured.
 
 ## Language System
 This package includes a lightweight localization system built around `LanguageController`, `LanguageText` and `LanguageExtension`.
@@ -326,12 +337,6 @@ public sealed class AbGroupCommonParamsProvider : IAnalyticsCommonParamsProvider
 Register it as `IAnalyticsCommonParamsProvider` and it is applied to every event. An event
 parameter with the same key always wins over a common one.
 
-### Backends
-| Backend | Assembly | Requires |
-| --- | --- | --- |
-| `NullAnalyticsBackend` / `NullCrashReporter` | core | nothing (logs to console in the Editor) |
-| `FirebaseAnalyticsBackend` / `FirebaseCrashReporter` | `ENP.UnityExtensions.Firebase` | `ENP_FIREBASE` |
-
 ### Firebase setup
 1. Import the Firebase Unity SDK (`FirebaseAnalytics.unitypackage`, `FirebaseCrashlytics.unitypackage`)
    and add `google-services.json` / `GoogleService-Info.plist` to the project.
@@ -390,42 +395,6 @@ mode is turned off for that build.
 Settings live in the per-project `ProjectSettings/BuildGuardSettings.asset`
 (`_askEveryBuild`, `_restoreStateAfterBuild`, `_defaultInteractiveMode`, `_batchModeBuildMode`,
 `_releaseDefineSymbol`, `_lastSelectedMode`).
-
-### ⚠️ The one rule that matters
-
-**The release define symbol (`APP_BUILD_RELEASE`) must never be added to
-`ProjectSettings.asset`'s persistent `scriptingDefineSymbols` (Player Settings → Scripting
-Define Symbols), for any platform.**
-
-Build Guard adds it itself, dynamically, only for the current build, via
-`BuildPlayerOptions.extraScriptingDefines` — and only when you pick **Release** in the dialog.
-It never touches `PlayerSettings.SetScriptingDefineSymbolsForGroup`, so nothing gets written
-back to disk.
-
-If the symbol is ever added by hand to Player Settings (e.g. "just to test something" or by
-copying another platform's define list), it becomes permanently defined regardless of what you
-pick in the dialog — **Development builds silently start shipping production AdMob keys and
-Release-only code paths**, with no error, no warning, and no visible difference in the dialog
-itself. This exact mistake happened on 26.08.2026 in a consuming project (CardGame): the
-symbol was hand-added to both the Android and iPhone define lists to "match" what Build Guard
-was expected to do, which defeated Build Guard for both platforms until it was found and
-reverted.
-
-`BuildGuardScriptingDefineGuard` now guards against this automatically: on every editor load
-(`[InitializeOnLoadMethod]`) and again right before every build (inside
-`BuildGuardBuildInterceptor.OnBuildPlayer`, before the dialog result matters), it scans Player
-Settings' scripting define symbols for every platform and strips `ReleaseDefineSymbol` out if
-found, logging a warning naming the platform it was removed from. This is a safety net, not a
-substitute for not doing it in the first place — don't rely on it to "make it fine" to edit the
-symbol in by hand; it just prevents the mistake from silently shipping.
-
-If you need to check what mode was actually used for a given editor session, read
-`BuildGuardSettings.instance.LastSelectedMode` — don't infer it from Player Settings, since a
-correctly working setup never puts the symbol there.
-
-Anything gated by this symbol (`#if APP_BUILD_RELEASE`) — ad unit id selection, verbose
-debug logs, QA-only tooling — should assume the symbol is **only** present during an actual
-Release build made through this dialog, never as ambient project state.
 
 ---
 
