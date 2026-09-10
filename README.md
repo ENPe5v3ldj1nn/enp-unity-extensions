@@ -11,17 +11,48 @@ Install and forget helpers for Unity maintained by **ENPe5v3ldj1nn**.
 
 Quick links to grab everything this package can integrate with, so you don't have to hunt each one down separately.
 
-| Dependency | Required? | Info | Install via Package Manager |
-| --- | --- | --- | --- |
-| TextMeshPro | Required (declared in `package.json`) | — | Installed automatically via UPM |
-| Newtonsoft Json (`com.unity.nuget.newtonsoft-json`) | Required (declared in `package.json`) | — | Installed automatically via UPM |
-| DOTween | Optional | [Asset Store](https://assetstore.unity.com/packages/tools/animation/dotween-hotween-v2-27676) | Not distributed via UPM — import from the Asset Store link |
-| UniRx | Optional | [OpenUPM](https://openupm.com/packages/com.neuecc.unirx/) | Package Manager -> `+` -> **Add package by name...** -> `com.neuecc.unirx` (requires the OpenUPM scoped registry — see the link) |
-| VContainer | Optional (`ENP_VCONTAINER` integrations) | [GitHub](https://github.com/hadashiA/VContainer) · [OpenUPM](https://openupm.com/packages/jp.hadashikick.vcontainer/) | Package Manager -> `+` -> **Add package from git URL...** -> `https://github.com/hadashiA/VContainer.git?path=VContainer/Assets/VContainer` |
-| Google Play In-App Review | Optional (Android, `InAppReviewController`) | [GitHub Releases](https://github.com/google/play-in-app-reviews-unity/releases) | Package Manager -> `+` -> **Add package by name...** -> `com.google.play.review` (via OpenUPM scoped registry) or import the `.unitypackage` from the releases link |
-| Google Mobile Ads Unity plugin | Optional (`ENP_ADMOB`, Ads module) | [GitHub Releases](https://github.com/googleads/googleads-mobile-unity/releases) | Not distributed via UPM — import the `.unitypackage` from the releases link |
-| Firebase Unity SDK (Analytics + Crashlytics) | Optional (`ENP_FIREBASE`, Analytics module) | [Firebase Unity SDK](https://firebase.google.com/download/unity) | Not distributed via UPM — import the `.unitypackage` files from the SDK download |
-| Unity MCP | Not a dependency of this package — useful alongside it for AI-assisted Unity workflows | [CoplayDev/unity-mcp](https://github.com/CoplayDev/unity-mcp) | See the repo's README for the exact Package Manager git-URL/path — it changes between releases |
+
+**Newtonsoft Json**
+[Unity](https://docs.unity3d.com/Packages/com.unity.nuget.newtonsoft-json@latest)
+
+```
+com.unity.nuget.newtonsoft-json
+```
+**DOTween**
+[Asset Store](https://assetstore.unity.com/packages/tools/animation/dotween-hotween-v2-27676)
+
+
+**UniRx**
+[OpenUPM](https://openupm.com/packages/com.neuecc.unirx/)
+```
+com.neuecc.unirx
+```
+
+**VContainer**
+[GitHub](https://github.com/hadashiA/VContainer)
+```
+https://github.com/hadashiA/VContainer.git?path=VContainer/Assets/VContainer
+```
+
+**Google Play In-App Review**
+[GitHub Releases](https://github.com/google/play-in-app-reviews-unity/releases)
+```
+com.google.play.review
+```
+
+**Google Mobile Ads Unity plugin**
+[GitHub Releases](https://github.com/googleads/googleads-mobile-unity/releases)
+
+
+**Firebase Unity SDK**
+[Firebase Unity SDK](https://firebase.google.com/download/unity)
+
+
+**Unity MCP**
+[CoplayDev/unity-mcp](https://github.com/CoplayDev/unity-mcp)
+```
+https://github.com/CoplayDev/unity-mcp.git?path=/MCPForUnity#main
+```
 
 The package compiles without any optional entry above — related modules stay inactive until you install what you need. See the sections below for step-by-step setup per dependency.
 
@@ -46,52 +77,8 @@ This package uses the UPM id:
 "name": "com.enope.unity.extensions"
 ```
 
-## Dependencies
-- **TextMeshPro** - declared in `package.json`
-- **DOTween** *(optional)* - [Asset Store](https://assetstore.unity.com/packages/tools/animation/dotween-hotween-v2-27676)
-- **UniRx** *(optional)* - [OpenUPM](https://openupm.com/packages/com.neuecc.unirx/)
-- **Google Play In-App Review** *(Android, required for `InAppReviewController`)* - install the UPM package `com.google.play.review` or import the latest `com.google.play.review-*.unitypackage` from [GitHub Releases](https://github.com/google/play-in-app-reviews-unity/releases)
-
-> The package compiles even if DOTween/UniRx are missing. Related modules stay inactive until installed.
-
-### Newtonsoft Json
-Some features in this project use **Newtonsoft Json**. Unity ships an official package for it called `com.unity.nuget.newtonsoft-json`.
-
-You can install it in two ways:
-
-#### 1. Install via Package Manager
-1. In Unity, open **Window -> Package Manager**.
-2. Click the **+** button in the top-left corner.
-3. Choose **Add package by name...**.
-4. In the **Name** field enter:
-
-```text
-com.unity.nuget.newtonsoft-json
-```
-
-5. Optionally set a version, for example:
-
-```text
-3.0.1
-```
-
-6. Click **Add**.
-
-#### 2. Install via `manifest.json`
-If your Unity version does not have **Add package by name...**, you can add the package manually:
-
-1. Close Unity.
-2. Open `Packages/manifest.json`.
-3. Inside the `"dependencies"` section add:
-
-```json
-"com.unity.nuget.newtonsoft-json": "3.0.1"
-```
-
 ## Google Play In-App Reviews
-For Android in-app review this package uses the official **Google Play In-App Reviews plugin for Unity**:
-
-https://github.com/google/play-in-app-reviews-unity
+For Android in-app review this package uses the official **Google Play In-App Reviews plugin for Unity** (see [Dependencies at a glance](#dependencies-at-a-glance) for the install link).
 
 You must install this plugin before calling `InAppReviewController` on Android.
 
@@ -105,24 +92,6 @@ When you install the plugin, it will automatically bring in:
 - **Play Common plugin for Unity**
 
 You do not need to install these manually.
-
-#### Option 1 - Install via OpenUPM
-If you already use **OpenUPM** in your project:
-
-1. Make sure OpenUPM is configured for your project.
-2. In Unity, open **Window -> Package Manager**.
-3. Switch the top-left filter to **My Registries**.
-4. Find package **Google Play In-app Review** with id `com.google.play.review`.
-5. Click **Install**.
-
-#### Option 2 - Install via `.unitypackage`
-If you do not want to set up OpenUPM:
-
-1. Open the GitHub repo releases page.
-2. Download the latest `com.google.play.review-*.unitypackage`.
-3. In Unity, go to **Assets -> Import Package -> Custom Package...**.
-4. Select the downloaded `.unitypackage` and click **Import**.
-5. Keep everything checked.
 
 ## Auto-detector
 - On import, you will get a dialog if something is missing.
@@ -251,7 +220,7 @@ project defines **`ENP_ADMOB`** — without it, none of the Ads code (or the Goo
 dependency) is part of the build.
 
 ### Setup
-1. Import the **Google Mobile Ads Unity plugin** ([GitHub releases](https://github.com/googleads/googleads-mobile-unity/releases)).
+1. Import the **Google Mobile Ads Unity plugin** (see [Dependencies at a glance](#dependencies-at-a-glance)).
    It brings EDM4U and resolves the native Android/iOS AdMob SDKs.
 2. Add the scripting define symbol **`ENP_ADMOB`** (Project Settings → Player → Scripting
    Define Symbols). Add **`APP_BUILD_RELEASE`** as well in your release/production builds —
