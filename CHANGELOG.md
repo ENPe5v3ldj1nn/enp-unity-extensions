@@ -3,6 +3,36 @@
 ## [Unreleased]
 
 ### Added
+- `LanguageId.Belarusian` (`be`, folder `be_belarusian`), detected from `be` device locales.
+  Appended at the end of the enum so persisted integer values of existing languages stay unchanged.
+- **Plurals**: a JSON value can be an object of CLDR forms (`zero`/`one`/`two`/`few`/`many`/`other`).
+  `LanguageController.GetPlural(key, count)` and `tmpText.SetPluralKey(key, count[, arg1])` pick
+  the form via the new `PluralRules` (integer CLDR rules for every `LanguageId`), falling back to
+  `other`.
+- `LanguageController.TryResolveAvailable` — regional fallback: a device or stored language that
+  is not available resolves to another variant of the same language (pt-PT → pt-BR, fr-CA → fr-FR)
+  before English. `ResolveSelectedLanguage` uses it.
+- Device locale aliases: legacy Android `in` (Indonesian), `iw` (Hebrew), `tl` (Filipino), and
+  Norwegian `nb`/`nn`. Previously these devices fell back to English.
+- `LanguageId.ToNativeName()` (for language pickers), `ToPrimaryCode()`, and `TryFromCode()`
+  (exact inverse of `ToCode()`).
+- `LanguageFilesValidator` (Editor): checks every `Resources` language root against English —
+  missing keys, type and `{n}` placeholder mismatches, missing plural forms, invalid JSON, and
+  literal keys used in code but absent from English. Runs on every Build Guard build through the
+  new `LanguageFilesBuildGuardAdapter` (Release fails on errors, Development only logs) and from the
+  Language Settings window's audit tab ("Validate all language files").
+
+### Changed
+- `LanguageId` is now serialized by Newtonsoft as its code (`"uk"`, `"pt-BR"`) through
+  `LanguageIdJsonConverter` instead of an integer. Reading still accepts the legacy integer and the
+  enum name, so existing saves migrate on their next write; unknown values read as `EnglishUS`.
+  A save written by this version is not readable by an older build (downgrade only).
+- `SetKey` / `SetArrayKey` with a null or empty key now clear the text instead of showing `<>`.
+- `FitOnceContentSizeFitter` re-fits after `LanguageController.LanguageChanged`, and every fit now
+  rebuilds its own layout first (twice: before width, then before height). Previously it measured
+  the layout group's cached size, so a label changed while the window was alive (e.g. a runtime
+  language switch) kept the old width and wrapped mid-word.
+- Keys audit also recognises `SetPluralKey` / `GetPlural` / `GetArray` call sites.
 - **Analytics module** (`ENP.UnityExtensions.Analytics`, always compiled) — vendor-agnostic
   analytics core: `AnalyticsService`, `AnalyticsParam`, persisted `PendingAnalyticsQueue`
   (events logged before the backend is ready survive an app restart), `AnalyticsSessionCounter`

@@ -99,59 +99,80 @@ You do not need to install these manually.
 - An option to disable future prompts is available.
 
 ## Language System
-This package includes a lightweight localization system built around `LanguageController`, `LanguageText` and `LanguageExtension`.
+A lightweight localization system: `LanguageController` loads JSON dictionaries from `Resources`,
+`LanguageExtension` puts them into `TMP_Text`, and `LanguageId` identifies languages.
 
 ### How it works
-- Each language has its own folder inside `Resources/Languages/`.
-- Inside each folder you can place multiple JSON files.
-
-Example structure:
+- Each language has its own folder inside `Resources/Languages/`, named by `LanguageId.ToFolderName()`.
+- A folder may contain any number of JSON files; all of them are merged.
+- English (`en_us_english_united_states`) is always loaded first and the selected language on top
+  of it, so a key missing from a translation falls back to English.
 
 ```text
 Assets/Resources/Languages/
-  english/
-    MainMenu.json
-    Settings.json
-  ukrainian/
-    MainMenu.json
-    Settings.json
+  en_us_english_united_states/
+    menu.json
+    popups.json
+  uk_ukrainian/
+    menu.json
+    popups.json
 ```
 
-- All JSON files inside the active language folder are loaded and merged into a single dictionary.
-
 ### JSON file format
-Each JSON file is a simple dictionary of keys and strings:
+A value is a string, an array of strings, or a plural object:
 
 ```json
 {
-  "menu.play": "Play",
-  "menu.settings": "Settings"
+  "menu_play": "Play",
+  "score_label": "Score: {0}",
+  "tips": ["Tip one", "Tip two"],
+  "hints_left": { "one": "{0} hint left", "other": "{0} hints left" }
 }
 ```
 
-### Duplicate keys
-- If the same key appears in multiple JSON files for the same language, the last loaded file overwrites the value.
-- This allows you to override specific keys by adding small JSON patches without touching the main files.
+- `{0}`…`{3}` are placeholders; `{{` and `}}` are literal braces.
+- Plural forms are the CLDR categories `zero`, `one`, `two`, `few`, `many`, `other`. Each language
+  only needs the forms its rules use (e.g. Ukrainian `one`/`few`/`many`, English `one`/`other`);
+  `other` is the fallback and should always be present.
+- If the same key appears in several files of one language, the last loaded file wins.
 
 ### Using localized text in UI
 ```csharp
-tmpText.SetKey("menu.play");
-tmpText.SetKey("score", points);
+title.SetKey("menu_play");
+score.SetKey("score_label", points.ToString());
+hints.SetPluralKey("hints_left", count);        // {0} = count
+tip.SetArrayKey("tips");                         // random item; SetArrayKey(key, index) for a fixed one
+string raw = LanguageController.Get("menu_play");
 ```
 
-If you frequently update only the formatting parameters, you can bind the key once and then update only values without re-fetching the localized string:
+A missing key renders as `<key>` so it is visible in testing. A null or empty key clears the text.
 
+### Selecting the language
 ```csharp
-tmpText.SetKey("round.label", currentRound, maxRounds);
-tmpText.UpdateValue(currentRound, maxRounds);
+var language = LanguageController.ResolveSelectedLanguage(storedLanguage, wasLaunchedBefore, availableLanguages);
+LanguageController.SetLanguage(language);
 ```
 
-### Switching language at runtime
-```csharp
-LanguageController.SetLanguage(SystemLanguage.Ukrainian);
-```
+- On first launch the device language is used if available. Otherwise, and on later launches,
+  the stored language is used.
+- If the exact variant is not available, another variant of the same language is used
+  (pt-PT → pt-BR, fr-CA → fr-FR) before falling back to English (`TryResolveAvailable`).
+- `SetLanguage` raises `LanguageController.LanguageChanged`; re-apply texts in its handler.
+  `FitOnceContentSizeFitter` re-fits automatically after a language change.
+- `LanguageId.ToNativeName()` returns the language's own name ("Українська") for pickers.
 
-This reloads all JSON files from `Resources/Languages/ukrainian/` and updates every `LanguageText` in the scene.
+### Persisting LanguageId
+Newtonsoft writes `LanguageId` as its code (`"uk"`, `"pt-BR"`) via `LanguageIdJsonConverter`, and
+reads codes, enum names and legacy integers. Unity serialization still stores the integer, so new
+languages are always appended at the end of the enum.
+
+### Validation
+`LanguageFilesValidator` compares every language folder with English: missing keys, value type and
+placeholder mismatches, missing plural forms, invalid JSON, and literal keys used in code
+(`SetKey("...")`, `SetPluralKey("...")`, `LanguageController.Get("...")`, …) that English lacks.
+
+- Runs automatically on every Build Guard build: errors fail a Release build, Development only logs.
+- Run it manually from the Language Settings window's audit tab ("Validate all language files").
 
 ### Custom resources path
 If you want a different folder than `Languages/`, set it once at startup:
@@ -160,7 +181,7 @@ If you want a different folder than `Languages/`, set it once at startup:
 LanguageController.SetResourcesPath("MyLoc");
 ```
 
-Then place your files under `Resources/MyLoc/english/`, `Resources/MyLoc/ukrainian/`, etc.
+Then place your language folders under `Resources/MyLoc/`.
 
 ## Window / UI System
 The package provides a small window stack built around `AbstractUiController` and

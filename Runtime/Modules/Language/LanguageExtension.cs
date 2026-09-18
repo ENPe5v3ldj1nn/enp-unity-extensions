@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Text;
 using TMPro;
@@ -40,6 +41,18 @@ namespace ENP.UnityExtensions.Runtime
         public static void SetKey(this TMP_Text text, string key, string arg0, string arg1, string arg2, string arg3)
         {
             SetKeyInternal(text, key, 4, arg0, arg1, arg2, arg3);
+        }
+
+        // {0} in the chosen form is the count itself, {1} is arg1 — e.g. "{0} hints left" or
+        // "{1}: {0} moves".
+        public static void SetPluralKey(this TMP_Text text, string key, long count)
+        {
+            SetPluralKeyInternal(text, key, count, 1, null);
+        }
+
+        public static void SetPluralKey(this TMP_Text text, string key, long count, string arg1)
+        {
+            SetPluralKeyInternal(text, key, count, 2, arg1);
         }
 
         public static void SetArrayKey(this TMP_Text text, string key)
@@ -94,6 +107,14 @@ namespace ENP.UnityExtensions.Runtime
 
         private static void SetKeyInternal(TMP_Text text, string key, int argCount, string arg0, string arg1, string arg2, string arg3)
         {
+            // An empty key means "no text here" (e.g. a mode without a subtitle), not a missing
+            // translation — render nothing rather than a "<>" marker.
+            if (string.IsNullOrEmpty(key))
+            {
+                text.SetText(string.Empty);
+                return;
+            }
+
             var cache = KeyCache.GetOrCreateValue(text);
             if (cache.Key != key || cache.Version != LanguageController.Version)
             {
@@ -134,6 +155,12 @@ namespace ENP.UnityExtensions.Runtime
 
         private static void SetArrayKeyInternal(TMP_Text text, string key, int index, int argCount, string arg0, string arg1, string arg2, string arg3)
         {
+            if (string.IsNullOrEmpty(key))
+            {
+                text.SetText(string.Empty);
+                return;
+            }
+
             var arr = LanguageController.GetArray(key);
             if (arr.Length == 0)
             {
@@ -176,6 +203,37 @@ namespace ENP.UnityExtensions.Runtime
             }
 
             AppendFormatted(sb, pick, argCount, arg0, arg1, arg2, arg3);
+            text.SetText(sb);
+        }
+
+        private static void SetPluralKeyInternal(TMP_Text text, string key, long count, int argCount, string arg1)
+        {
+            if (string.IsNullOrEmpty(key))
+            {
+                text.SetText(string.Empty);
+                return;
+            }
+
+            var template = LanguageController.GetPlural(key, count);
+            if (string.IsNullOrEmpty(template))
+            {
+                text.SetText("<" + key + ">");
+                return;
+            }
+
+            var cache = KeyCache.GetOrCreateValue(text);
+            var sb = cache.Sb;
+            if (sb == null)
+            {
+                sb = new StringBuilder(template.Length + 16 * argCount);
+                cache.Sb = sb;
+            }
+            else
+            {
+                sb.Clear();
+            }
+
+            AppendFormatted(sb, template, argCount, count.ToString(CultureInfo.InvariantCulture), arg1, null, null);
             text.SetText(sb);
         }
 

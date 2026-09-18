@@ -6,8 +6,9 @@ namespace ENP.UnityExtensions.Runtime
 {
     /// <summary>
     /// Alternative to <see cref="ContentSizeFitter"/> that fits the RectTransform to its content on
-    /// specific triggers (OnEnable, <see cref="IWindowVisibilityAware.OnWindowShown"/>, or an explicit
-    /// <see cref="ForceRecalculate"/> call) instead of on every layout rebuild. AnimatedWindow's
+    /// specific triggers (OnEnable, <see cref="IWindowVisibilityAware.OnWindowShown"/>,
+    /// <see cref="LanguageController.LanguageChanged"/>, or an explicit <see cref="ForceRecalculate"/>
+    /// call) instead of on every layout rebuild. AnimatedWindow's
     /// Canvas/GameObject hide modes keep the window's GameObject alive after the first activation, so
     /// OnEnable won't refire on later shows — OnWindowShown is what re-fits then, and both paths
     /// always recalculate (no "already sized" guard), so each real show gets a correct fit even if an
@@ -29,6 +30,7 @@ namespace ENP.UnityExtensions.Runtime
         [SerializeField] private ContentSizeFitter.FitMode _verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
         private RectTransform _rectTransform;
+        private bool _isRefitQueued;
         private RectTransform TargetRect => _rectTransform != null ? _rectTransform : _rectTransform = (RectTransform)transform;
 
         public ContentSizeFitter.FitMode HorizontalFit { get => _horizontalFit; set => _horizontalFit = value; }
@@ -46,22 +48,61 @@ namespace ENP.UnityExtensions.Runtime
 #if UNITY_EDITOR
             // Edit Mode keeps the continuous authoring behavior; Play Mode in the Editor should
             // behave exactly like a build (trigger-based fit) so testing in the Editor matches what ships.
-            if (Application.isPlaying)
-            {
-                Recalculate();
-            }
-            else
+            if (!Application.isPlaying)
             {
                 SetDirty();
+                return;
             }
-#else
-            Recalculate();
 #endif
+            LanguageController.LanguageChanged += OnLanguageChanged;
+            Recalculate();
+        }
+
+        protected override void OnDisable()
+        {
+#if UNITY_EDITOR
+            SetDirty();
+#endif
+            LanguageController.LanguageChanged -= OnLanguageChanged;
+            CancelQueuedRefit();
+            base.OnDisable();
+        }
+
+        // Deferred to willRenderCanvases: LanguageChanged listeners run in subscription order, so the
+        // label's own SetKey may not have happened yet when this fitter is notified.
+        private void OnLanguageChanged(LanguageId language)
+        {
+            if (_isRefitQueued) return;
+
+            _isRefitQueued = true;
+            Canvas.willRenderCanvases += OnWillRenderCanvases;
+        }
+
+        private void OnWillRenderCanvases()
+        {
+            CancelQueuedRefit();
+            if (IsActive())
+                Recalculate();
+        }
+
+        private void CancelQueuedRefit()
+        {
+            if (!_isRefitQueued) return;
+
+            _isRefitQueued = false;
+            Canvas.willRenderCanvases -= OnWillRenderCanvases;
         }
 
         private void Recalculate()
         {
+            // The layout group on this rect caches its preferred size from its last rebuild. Without
+            // this, a fit after the content changed (new text, new language) measures the old content.
+            LayoutRebuilder.ForceRebuildLayoutImmediate(TargetRect);
             SetSize(RectTransform.Axis.Horizontal, _horizontalFit);
+
+            // Height depends on width (wrapping text), and the rebuild above laid children out at the
+            // old width — rebuild again at the fitted width before measuring height.
+            LayoutRebuilder.ForceRebuildLayoutImmediate(TargetRect);
             SetSize(RectTransform.Axis.Vertical, _verticalFit);
 
             if (TargetRect.parent is RectTransform parentRect)
@@ -94,12 +135,6 @@ namespace ENP.UnityExtensions.Runtime
         {
             if (Application.isPlaying) return;
             SetSize(RectTransform.Axis.Vertical, _verticalFit);
-        }
-
-        protected override void OnDisable()
-        {
-            SetDirty();
-            base.OnDisable();
         }
 
         protected override void OnRectTransformDimensionsChange()

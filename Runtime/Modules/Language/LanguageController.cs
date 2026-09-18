@@ -16,6 +16,7 @@ namespace ENP.UnityExtensions.Runtime
 
         public static readonly Dictionary<string, string> Data = new Dictionary<string, string>();
         public static readonly Dictionary<string, string[]> Arrays = new Dictionary<string, string[]>();
+        public static readonly Dictionary<string, Dictionary<PluralCategory, string>> Plurals = new Dictionary<string, Dictionary<PluralCategory, string>>();
 
         public static bool IsCanLog { get; set; } = true;
 
@@ -60,17 +61,40 @@ namespace ENP.UnityExtensions.Runtime
 
         public static LanguageId ResolveSelectedLanguage(LanguageId storedLanguage, bool wasLaunchedBefore, IReadOnlyList<LanguageId> availableLanguages)
         {
-            var fallback = Contains(availableLanguages, storedLanguage)
-                ? storedLanguage
-                : GetFallbackLanguage(availableLanguages);
+            if (!wasLaunchedBefore && TryGetDeviceLanguage(out var deviceLanguage) &&
+                TryResolveAvailable(deviceLanguage, availableLanguages, out var resolvedDevice))
+                return resolvedDevice;
 
-            if (!wasLaunchedBefore)
+            return TryResolveAvailable(storedLanguage, availableLanguages, out var resolvedStored)
+                ? resolvedStored
+                : GetFallbackLanguage(availableLanguages);
+        }
+
+        // Exact match first, then another regional variant of the same language (a pt-PT device gets
+        // pt-BR, fr-CA gets fr-FR) — any variant of the player's language beats the English fallback.
+        public static bool TryResolveAvailable(LanguageId requested, IReadOnlyList<LanguageId> availableLanguages, out LanguageId resolved)
+        {
+            if (Contains(availableLanguages, requested))
             {
-                if (TryGetDeviceLanguage(out var deviceLanguage) && Contains(availableLanguages, deviceLanguage))
-                    return deviceLanguage;
+                resolved = requested;
+                return true;
             }
 
-            return fallback;
+            if (availableLanguages != null)
+            {
+                var primary = requested.ToPrimaryCode();
+                for (var i = 0; i < availableLanguages.Count; i++)
+                {
+                    if (!string.Equals(availableLanguages[i].ToPrimaryCode(), primary, StringComparison.Ordinal))
+                        continue;
+
+                    resolved = availableLanguages[i];
+                    return true;
+                }
+            }
+
+            resolved = requested;
+            return false;
         }
 
         public static LanguageId GetFallbackLanguage(IReadOnlyList<LanguageId> availableLanguages)
@@ -96,10 +120,27 @@ namespace ENP.UnityExtensions.Runtime
             return Arrays.TryGetValue(key, out var arr) && arr != null && arr.Length > 0 ? arr : Array.Empty<string>();
         }
 
+        // Picks the plural form for count in the current language; falls back to "other", then to any
+        // form present, so a translation that only defines "other" still renders.
+        public static string GetPlural(string key, long count)
+        {
+            if (string.IsNullOrEmpty(key)) return string.Empty;
+            if (!Plurals.TryGetValue(key, out var forms) || forms.Count == 0) return string.Empty;
+
+            if (forms.TryGetValue(PluralRules.Select(CurrentLanguageId, count), out var form)) return form;
+            if (forms.TryGetValue(PluralCategory.Other, out var other)) return other;
+
+            foreach (var any in forms.Values)
+                return any;
+
+            return string.Empty;
+        }
+
         public static void Reload()
         {
             Data.Clear();
             Arrays.Clear();
+            Plurals.Clear();
             LoadFolder(_fallbackLangFolder);
 
             if (!string.Equals(CurrentLanguageFolder, _fallbackLangFolder, StringComparison.OrdinalIgnoreCase))
@@ -185,6 +226,17 @@ namespace ENP.UnityExtensions.Runtime
 
                             continue;
                         }
+
+                        if (token.Type == JTokenType.Object && token is JObject pluralToken)
+                        {
+                            var forms = ParsePluralForms(pluralToken);
+                            if (forms.Count > 0)
+                                Plurals[key] = forms;
+                            else
+                                LogError($"[Language] Plural key '{key}' in '{ta.name}' has no recognised forms (zero/one/two/few/many/other).");
+
+                            continue;
+                        }
                     }
                 }
                 catch (Exception ex)
@@ -192,6 +244,34 @@ namespace ENP.UnityExtensions.Runtime
                     LogError($"[Language] Failed to parse '{ta.name}' in '{path}': {ex.Message}");
                 }
             }
+        }
+
+        private static Dictionary<PluralCategory, string> ParsePluralForms(JObject pluralToken)
+        {
+            var forms = new Dictionary<PluralCategory, string>();
+            foreach (var form in pluralToken.Properties())
+            {
+                if (form.Value.Type != JTokenType.String) continue;
+                if (!TryParsePluralCategory(form.Name, out var category)) continue;
+
+                forms[category] = form.Value.Value<string>() ?? string.Empty;
+            }
+
+            return forms;
+        }
+
+        private static bool TryParsePluralCategory(string name, out PluralCategory category)
+        {
+            foreach (PluralCategory candidate in Enum.GetValues(typeof(PluralCategory)))
+            {
+                if (!string.Equals(candidate.ToKey(), name, StringComparison.OrdinalIgnoreCase)) continue;
+
+                category = candidate;
+                return true;
+            }
+
+            category = PluralCategory.Other;
+            return false;
         }
 
         private static void LogError(string message)

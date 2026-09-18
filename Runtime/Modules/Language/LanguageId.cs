@@ -1,7 +1,12 @@
 using System;
+using Newtonsoft.Json;
 
 namespace ENP.UnityExtensions.Runtime
 {
+    // Newtonsoft persists this as its ToCode() string (see LanguageIdJsonConverter), but Unity
+    // serialization and saves written before the converter still store the integer value —
+    // append new languages at the end only.
+    [JsonConverter(typeof(LanguageIdJsonConverter))]
     public enum LanguageId
     {
         Afrikaans,
@@ -52,7 +57,8 @@ namespace ENP.UnityExtensions.Runtime
         ChineseTaiwan,
         ChineseHongKong,
         Zulu,
-        Vietnamese
+        Vietnamese,
+        Belarusian
     }
 
     public static class LanguageIdExtensions
@@ -64,6 +70,7 @@ namespace ENP.UnityExtensions.Runtime
                 case LanguageId.Afrikaans: return "af";
                 case LanguageId.Amharic: return "am";
                 case LanguageId.Bulgarian: return "bg";
+                case LanguageId.Belarusian: return "be";
                 case LanguageId.Catalan: return "ca";
                 case LanguageId.Croatian: return "hr";
                 case LanguageId.Czech: return "cs";
@@ -121,6 +128,7 @@ namespace ENP.UnityExtensions.Runtime
                 case LanguageId.Afrikaans: return "af_afrikaans";
                 case LanguageId.Amharic: return "am_amharic";
                 case LanguageId.Bulgarian: return "bg_bulgarian";
+                case LanguageId.Belarusian: return "be_belarusian";
                 case LanguageId.Catalan: return "ca_catalan";
                 case LanguageId.Croatian: return "hr_croatian";
                 case LanguageId.Czech: return "cs_czech";
@@ -169,6 +177,94 @@ namespace ENP.UnityExtensions.Runtime
                 case LanguageId.Vietnamese: return "vi_vietnamese";
                 default: throw new ArgumentOutOfRangeException(nameof(id), id, null);
             }
+        }
+
+        // Name of the language in that language itself — what a language picker should show, so a
+        // player finds their own language regardless of which language the UI is currently in.
+        public static string ToNativeName(this LanguageId id)
+        {
+            switch (id)
+            {
+                case LanguageId.Afrikaans: return "Afrikaans";
+                case LanguageId.Amharic: return "አማርኛ";
+                case LanguageId.Bulgarian: return "Български";
+                case LanguageId.Belarusian: return "Беларуская";
+                case LanguageId.Catalan: return "Català";
+                case LanguageId.Croatian: return "Hrvatski";
+                case LanguageId.Czech: return "Čeština";
+                case LanguageId.Danish: return "Dansk";
+                case LanguageId.German: return "Deutsch";
+                case LanguageId.Greek: return "Ελληνικά";
+                case LanguageId.EnglishUS: return "English (US)";
+                case LanguageId.EnglishUK: return "English (UK)";
+                case LanguageId.SpanishSpain: return "Español (España)";
+                case LanguageId.SpanishLatinAmerica: return "Español (Latinoamérica)";
+                case LanguageId.Estonian: return "Eesti";
+                case LanguageId.Finnish: return "Suomi";
+                case LanguageId.Filipino: return "Filipino";
+                case LanguageId.FrenchCanada: return "Français (Canada)";
+                case LanguageId.FrenchFrance: return "Français";
+                case LanguageId.Hebrew: return "עברית";
+                case LanguageId.Hindi: return "हिन्दी";
+                case LanguageId.Hungarian: return "Magyar";
+                case LanguageId.Icelandic: return "Íslenska";
+                case LanguageId.Indonesian: return "Bahasa Indonesia";
+                case LanguageId.Italian: return "Italiano";
+                case LanguageId.Japanese: return "日本語";
+                case LanguageId.Korean: return "한국어";
+                case LanguageId.Lithuanian: return "Lietuvių";
+                case LanguageId.Latvian: return "Latviešu";
+                case LanguageId.Malay: return "Bahasa Melayu";
+                case LanguageId.Dutch: return "Nederlands";
+                case LanguageId.Norwegian: return "Norsk";
+                case LanguageId.Polish: return "Polski";
+                case LanguageId.PortugueseBrazil: return "Português (Brasil)";
+                case LanguageId.PortuguesePortugal: return "Português (Portugal)";
+                case LanguageId.Romanian: return "Română";
+                case LanguageId.Russian: return "Русский";
+                case LanguageId.Slovak: return "Slovenčina";
+                case LanguageId.Slovenian: return "Slovenščina";
+                case LanguageId.Serbian: return "Српски";
+                case LanguageId.Swedish: return "Svenska";
+                case LanguageId.Swahili: return "Kiswahili";
+                case LanguageId.Thai: return "ไทย";
+                case LanguageId.Turkish: return "Türkçe";
+                case LanguageId.Ukrainian: return "Українська";
+                case LanguageId.ChinesePRC: return "简体中文";
+                case LanguageId.ChineseTaiwan: return "繁體中文 (台灣)";
+                case LanguageId.ChineseHongKong: return "繁體中文 (香港)";
+                case LanguageId.Zulu: return "isiZulu";
+                case LanguageId.Vietnamese: return "Tiếng Việt";
+                default: throw new ArgumentOutOfRangeException(nameof(id), id, null);
+            }
+        }
+
+        // "pt" for PortugueseBrazil, "zh" for ChineseTaiwan — the part two regional variants share.
+        public static string ToPrimaryCode(this LanguageId id)
+        {
+            var code = id.ToCode();
+            var dash = code.IndexOf('-');
+            return dash < 0 ? code : code.Substring(0, dash);
+        }
+
+        // Exact inverse of ToCode (case-insensitive). Unlike TryFromLocaleCode it never guesses a
+        // variant, so "pt" is rejected rather than mapped to one of the Portuguese variants.
+        public static bool TryFromCode(string code, out LanguageId id)
+        {
+            if (!string.IsNullOrWhiteSpace(code))
+            {
+                foreach (LanguageId candidate in Enum.GetValues(typeof(LanguageId)))
+                {
+                    if (string.Equals(candidate.ToCode(), code.Trim(), StringComparison.OrdinalIgnoreCase))
+                    {
+                        id = candidate;
+                        return true;
+                    }
+                }
+            }
+
+            id = LanguageId.EnglishUS;
+            return false;
         }
 
         public static bool TryFromLocaleCode(string localeCode, out LanguageId id)
@@ -245,6 +341,7 @@ namespace ENP.UnityExtensions.Runtime
                 case "af": id = LanguageId.Afrikaans; return true;
                 case "am": id = LanguageId.Amharic; return true;
                 case "bg": id = LanguageId.Bulgarian; return true;
+                case "be": id = LanguageId.Belarusian; return true;
                 case "ca": id = LanguageId.Catalan; return true;
                 case "hr": id = LanguageId.Croatian; return true;
                 case "cs": id = LanguageId.Czech; return true;
@@ -253,12 +350,15 @@ namespace ENP.UnityExtensions.Runtime
                 case "el": id = LanguageId.Greek; return true;
                 case "et": id = LanguageId.Estonian; return true;
                 case "fi": id = LanguageId.Finnish; return true;
-                case "fil": id = LanguageId.Filipino; return true;
-                case "he": id = LanguageId.Hebrew; return true;
+                case "fil":
+                case "tl": id = LanguageId.Filipino; return true;
+                case "he":
+                case "iw": id = LanguageId.Hebrew; return true;
                 case "hi": id = LanguageId.Hindi; return true;
                 case "hu": id = LanguageId.Hungarian; return true;
                 case "is": id = LanguageId.Icelandic; return true;
-                case "id": id = LanguageId.Indonesian; return true;
+                case "id":
+                case "in": id = LanguageId.Indonesian; return true;
                 case "it": id = LanguageId.Italian; return true;
                 case "ja": id = LanguageId.Japanese; return true;
                 case "ko": id = LanguageId.Korean; return true;
@@ -266,7 +366,9 @@ namespace ENP.UnityExtensions.Runtime
                 case "lv": id = LanguageId.Latvian; return true;
                 case "ms": id = LanguageId.Malay; return true;
                 case "nl": id = LanguageId.Dutch; return true;
-                case "no": id = LanguageId.Norwegian; return true;
+                case "no":
+                case "nb":
+                case "nn": id = LanguageId.Norwegian; return true;
                 case "pl": id = LanguageId.Polish; return true;
                 case "ro": id = LanguageId.Romanian; return true;
                 case "ru": id = LanguageId.Russian; return true;
