@@ -178,11 +178,13 @@ namespace ENP.UnityExtensions.Runtime
 
         private static void TriggerFallback()
         {
+#if UNITY_ANDROID || UNITY_IOS
             if (SystemInfo.supportsVibration)
             {
                 Handheld.Vibrate();
                 return;
             }
+#endif
 
             Debug.Log("[VibrationController] Вібрація не підтримується на цій платформі.");
         }
