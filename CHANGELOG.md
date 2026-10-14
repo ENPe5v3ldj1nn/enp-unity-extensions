@@ -3,6 +3,8 @@
 ## [Unreleased]
 
 ### Added
+- `AnimatedSlider.SetBackgroundColors(active, deActive)`: swaps the background colors at runtime and repaints
+  the current state, so a themed slider can follow a theme change.
 - `LanguageId.Belarusian` (`be`, folder `be_belarusian`), detected from `be` device locales.
   Appended at the end of the enum so persisted integer values of existing languages stay unchanged.
 - **Plurals**: a JSON value can be an object of CLDR forms (`zero`/`one`/`two`/`few`/`many`/`other`).

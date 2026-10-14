@@ -24,6 +24,7 @@ namespace ENP.UnityExtensions.Runtime
         
         private float _duration = 0.3f;
         private bool _isFast = false;
+        private bool _isActive;
         
         public void Initialize(ReactiveProperty<bool> onClick, UnityAction<bool> onClickOut, float duration = 0.3f, bool isFast = false)
         {
@@ -45,8 +46,20 @@ namespace ENP.UnityExtensions.Runtime
             _isFast = isFast;
         }
         
+        // Replaces the background colors at runtime (a theme change). The current state is repainted
+        // at once, so a slider that is on keeps showing the new active color.
+        public void SetBackgroundColors(Color activeBackground, Color deActiveBackground)
+        {
+            _activeColorBackground = activeBackground;
+            _deActiveColorBackground = deActiveBackground;
+            _background.DOKill();
+            _background.color = _isActive ? _activeColorBackground : _deActiveColorBackground;
+        }
+
         public void SetSlider(bool isActive)
         {
+            _isActive = isActive;
+
             if (isActive)
             {
                 _background.DOColor(_activeColorBackground, _duration);
@@ -64,6 +77,8 @@ namespace ENP.UnityExtensions.Runtime
 
         public void SetSliderFast(bool isActive)
         {
+            _isActive = isActive;
+
             if (isActive)
             {
                 _background.color = _activeColorBackground;
