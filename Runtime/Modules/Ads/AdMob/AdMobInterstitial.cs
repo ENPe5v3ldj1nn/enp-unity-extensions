@@ -30,6 +30,7 @@ namespace ENP.UnityExtensions.Ads
         private string _currentPlacement = "unknown";
         private bool _isRetryScheduled;
         private int _retryVersion;
+        private bool _isThrottleSkipLogged;
 
         public AdMobInterstitial(AdAnalyticsService analytics, AdThrottleService throttler, IFullscreenAdGate fullscreenGate)
         {
@@ -52,6 +53,7 @@ namespace ENP.UnityExtensions.Ads
             _consecutiveLoadFailures = 0;
             _isRetryHalted = false;
             _hasReportedInterstitialShow = false;
+            _isThrottleSkipLogged = false;
             DestroyAd();
             EnsureLoaded();
         }
@@ -166,10 +168,16 @@ namespace ENP.UnityExtensions.Ads
 
             if (!_throttler.IsInterstitialLoadWorthwhile())
             {
-                _analytics.LogLoadSkippedThrottled("interstitial");
+                if (!_isThrottleSkipLogged)
+                {
+                    _isThrottleSkipLogged = true;
+                    _analytics.LogLoadSkippedThrottled("interstitial");
+                }
+
                 return;
             }
 
+            _isThrottleSkipLogged = false;
             LoadInterstitialAd();
         }
 
