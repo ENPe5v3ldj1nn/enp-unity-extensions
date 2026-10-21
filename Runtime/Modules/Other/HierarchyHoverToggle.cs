@@ -6,6 +6,38 @@ using Object = UnityEngine.Object;
 
 namespace ENP.UnityExtensions.Runtime
 {
+#if UNITY_6000_6_OR_NEWER
+    using Unity.Hierarchy.Editor;
+    using UnityEditor.ShortcutManagement;
+
+    internal static class HierarchyHoverToggle
+    {
+        [Shortcut("Hierarchy/Toggle Active State", typeof(HierarchyWindow), KeyCode.A)]
+        private static void ToggleActiveShortcut()
+        {
+            var targets = Selection.gameObjects;
+            if (targets.Length == 0)
+                return;
+
+            ToggleTargets(targets);
+        }
+
+        private static void ToggleTargets(GameObject[] targets)
+        {
+            bool enable = !targets.Any(t => t.activeSelf);
+
+            Undo.RecordObjects(targets.Cast<Object>().ToArray(), "Toggle Active State");
+
+            foreach (var go in targets)
+            {
+                go.SetActive(enable);
+                EditorUtility.SetDirty(go);
+            }
+
+            EditorApplication.RepaintHierarchyWindow();
+        }
+    }
+#else
     [InitializeOnLoad]
     internal static class HierarchyHoverToggle
     {
@@ -13,11 +45,11 @@ namespace ENP.UnityExtensions.Runtime
 
         static HierarchyHoverToggle()
         {
-            EditorApplication.hierarchyWindowItemByEntityIdOnGUI -= OnHierarchyGUI;
-            EditorApplication.hierarchyWindowItemByEntityIdOnGUI += OnHierarchyGUI;
+            EditorApplication.hierarchyWindowItemOnGUI -= OnHierarchyGUI;
+            EditorApplication.hierarchyWindowItemOnGUI += OnHierarchyGUI;
         }
 
-        private static void OnHierarchyGUI(EntityId entityId, Rect selectionRect)
+        private static void OnHierarchyGUI(int instanceId, Rect selectionRect)
         {
             var evt = Event.current;
             if (evt == null) return;
@@ -25,7 +57,7 @@ namespace ENP.UnityExtensions.Runtime
             if (evt.type == EventType.Layout)
                 _hovered = null;
 
-            var go = EditorUtility.EntityIdToObject(entityId) as GameObject;
+            var go = EditorUtility.InstanceIDToObject(instanceId) as GameObject;
             if (!go) return;
 
             if (selectionRect.Contains(evt.mousePosition) &&
@@ -63,5 +95,6 @@ namespace ENP.UnityExtensions.Runtime
             EditorApplication.RepaintHierarchyWindow();
         }
     }
+#endif
 }
 #endif

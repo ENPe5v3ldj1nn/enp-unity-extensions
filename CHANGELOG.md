@@ -48,6 +48,13 @@
 - VContainer registration helpers: `RegisterAnalyticsModule`, `RegisterNullAnalyticsBackend`,
   `RegisterFirebaseAnalyticsBackend`.
 
+### Fixed
+- `HierarchyHoverToggle` (the `A` key toggles the selected objects' active state in the Hierarchy)
+  works again on Unity 6.6+, where the Hierarchy window moved to UI Toolkit and
+  `EditorApplication.hierarchyWindowItem*OnGUI` no longer fires. On 6.6+ it is a shortcut scoped to
+  `Unity.Hierarchy.Editor.HierarchyWindow` acting on the selection (the hover-only behaviour is
+  not available there); older Unity versions keep the hover-based callback.
+
 ## [1.1.0]
 
 ### Changed (BREAKING)
