@@ -604,6 +604,10 @@ namespace ENP.UnityExtensions.Runtime
 
         float ILayoutElement.flexibleHeight => -1;
 
+        float ILayoutElement.maxWidth => -1;
+
+        float ILayoutElement.maxHeight => -1;
+
         float ILayoutElement.preferredWidth
         {
             get

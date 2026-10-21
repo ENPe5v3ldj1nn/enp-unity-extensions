@@ -111,13 +111,13 @@ public class WrapLayoutGroup : LayoutGroup
     {
         base.CalculateLayoutInputHorizontal();
         CalculatePositionsAndSize();
-        SetLayoutInputForAxis(_totalContentWidth, _totalContentWidth, -1, 0);
+        SetLayoutInputForAxis(_totalContentWidth, -1, _totalContentWidth, -1, 0);
     }
 
     public override void CalculateLayoutInputVertical()
     {
         CalculatePositionsAndSize();
-        SetLayoutInputForAxis(_totalContentHeight, _totalContentHeight, -1, 1);
+        SetLayoutInputForAxis(_totalContentHeight, -1, _totalContentHeight, -1, 1);
     }
 
     public override void SetLayoutHorizontal() { }

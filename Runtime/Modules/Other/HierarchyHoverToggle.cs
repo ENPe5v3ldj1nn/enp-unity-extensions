@@ -13,11 +13,11 @@ namespace ENP.UnityExtensions.Runtime
 
         static HierarchyHoverToggle()
         {
-            EditorApplication.hierarchyWindowItemOnGUI -= OnHierarchyGUI;
-            EditorApplication.hierarchyWindowItemOnGUI += OnHierarchyGUI;
+            EditorApplication.hierarchyWindowItemByEntityIdOnGUI -= OnHierarchyGUI;
+            EditorApplication.hierarchyWindowItemByEntityIdOnGUI += OnHierarchyGUI;
         }
 
-        private static void OnHierarchyGUI(int instanceId, Rect selectionRect)
+        private static void OnHierarchyGUI(EntityId entityId, Rect selectionRect)
         {
             var evt = Event.current;
             if (evt == null) return;
@@ -25,7 +25,7 @@ namespace ENP.UnityExtensions.Runtime
             if (evt.type == EventType.Layout)
                 _hovered = null;
 
-            var go = EditorUtility.InstanceIDToObject(instanceId) as GameObject;
+            var go = EditorUtility.EntityIdToObject(entityId) as GameObject;
             if (!go) return;
 
             if (selectionRect.Contains(evt.mousePosition) &&
