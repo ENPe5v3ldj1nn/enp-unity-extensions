@@ -3,9 +3,29 @@
 Install and forget helpers for Unity maintained by **ENPe5v3ldj1nn**.
 
 ## What you get
-- Runtime utilities ready for TextMeshPro.
-- Optional integrations with **DOTween** and **UniRx**.
-- An auto-detector on import that checks whether DOTween/UniRx are present and can offer quick install links.
+Runtime and Editor modules for Unity mobile projects. Modules that depend on an external SDK
+are gated by a scripting define (see [Scripting defines](#scripting-defines)); the rest are
+always compiled.
+
+| Module | What it is |
+|---|---|
+| Language | JSON localization: `LanguageController`, `SetKey` for TMP, plurals, files validator. |
+| Window / UI | Window stack (`AbstractUiController`, `AnimatedWindow`, `[UiWindow]`) and UI components: buttons, sliders, gradients, rounded shapes, scroll, layout, effects. |
+| Popup | `PopupController`, `PopupWindow`. |
+| Ads | AdMob wrapper with UMP consent, ATT and throttling. Needs `ENP_ADMOB`. |
+| Analytics | Vendor-agnostic analytics core with a persisted event queue. |
+| Firebase | Firebase Analytics and Crashlytics backend. Needs `ENP_FIREBASE`. |
+| Storage | `Storage`, `JsonSerializableBase`, `StorageTemplate`. |
+| Pool | `PoolController`, `IPoolService`, `IPoolable`, `PoolConfig`. |
+| Timer | `CountdownTimer`, `CountdownTimerUI`. |
+| Gestures | `SystemGesturesController`, `BackActionBinder`. |
+| Vibration | `VibrationController`. |
+| InAppReview | `InAppReviewController` (Google Play In-App Reviews). |
+| Helpers | Addressables, AppState, Debug (`Deb`), Fonts, FPS, Sprite2D, Other. |
+| Editor | Build Guard, Language Settings, iOS framework linker, Sprite2D / RoundedShape / LiquidEdge tools, TimeScale toolbar. |
+
+Optional integrations with **DOTween** and **UniRx**. An auto-detector on import checks
+whether they are present (see [Auto-detector](#auto-detector)).
 
 ## Dependencies at a glance
 
@@ -77,13 +97,22 @@ This package uses the UPM id:
 "name": "com.enope.unity.extensions"
 ```
 
+## Scripting defines
+
+| Define | Enables | Who sets it |
+|---|---|---|
+| `ENP_ADMOB` | Ads module and its integrations | You, in Project Settings -> Player -> Scripting Define Symbols |
+| `ENP_FIREBASE` | Firebase module and its integrations | You, same place |
+| `ENP_VCONTAINER` | All `*.VContainer` registration assemblies | Automatic, when VContainer (`jp.hadashikick.vcontainer`) is installed |
+| `APP_BUILD_RELEASE` | Production ad unit ids, quiet debug logs | [Build Guard](#build-guard) only, per build. **Never add it to Player Settings.** |
+
 ## Google Play In-App Reviews
 For Android in-app review this package uses the official **Google Play In-App Reviews plugin for Unity** (see [Dependencies at a glance](#dependencies-at-a-glance) for the install link).
 
 You must install this plugin before calling `InAppReviewController` on Android.
 
 ### Requirements
-- **Unity**: 2019.x / 2020.x / newer
+- **Unity**: 2021.3 or newer (see `package.json`)
 - **Android**: min. SDK **21 (Lollipop)** or higher
 
 When you install the plugin, it will automatically bring in:
@@ -244,9 +273,10 @@ dependency) is part of the build.
 1. Import the **Google Mobile Ads Unity plugin** (see [Dependencies at a glance](#dependencies-at-a-glance)).
    It brings EDM4U and resolves the native Android/iOS AdMob SDKs.
 2. Add the scripting define symbol **`ENP_ADMOB`** (Project Settings → Player → Scripting
-   Define Symbols). Add **`APP_BUILD_RELEASE`** as well in your release/production builds —
-   it switches ad units from Google's public test ids to your production ids and silences
-   verbose debug logging (`ConsentService`, `AdAnalyticsService`).
+   Define Symbols). Do **not** add `APP_BUILD_RELEASE` there: [Build Guard](#build-guard)
+   injects it per build when you choose Release. It switches ad units from Google's public
+   test ids to your production ids and silences verbose debug logging (`ConsentService`,
+   `AdAnalyticsService`).
 3. Create an `AdsConfig` asset: **Create → ENP → Ads → Ads Config**. Fill in production ad
    unit ids per platform (interstitial / rewarded / app open) and the UMP/throttling fields;
    test ids are hardcoded and used automatically while `APP_BUILD_RELEASE` is not defined.
@@ -255,7 +285,8 @@ dependency) is part of the build.
    generate them.
 
 ### Registration (VContainer)
-Requires `ENP_VCONTAINER` as well (separate `ENP.UnityExtensions.Ads.VContainer` assembly).
+Requires `ENP_VCONTAINER` as well (defined automatically when VContainer is installed;
+separate `ENP.UnityExtensions.Ads.VContainer` assembly).
 
 ```csharp
 builder.RegisterAdsModule(adsConfig);
@@ -375,16 +406,62 @@ It emits `ad_offer_shown`, `ad_load_failed`, `ad_clicked`, `ad_show_failed`,
 
 ## Build Guard
 
-`Editor/BuildGuard/` intercepts every build (`BuildPlayerWindow.RegisterBuildPlayerHandler`)
-and asks **Release / Development / Cancel** before it runs. It decides two things per build:
-whether the release scripting define symbol (default `APP_BUILD_RELEASE`, configurable via
-`BuildGuardSettings.ReleaseDefineSymbol`) is present, and — through any `IBuildGuardProjectAdapter`
-found in the project (e.g. `ProjectBuildGuardAdapter`) — whether debug logging / DOTween debug
-mode is turned off for that build.
+Release vs Development is decided in one place: a dialog shown when you press Build. Code
+never has to guess from Unity's Development Build checkbox.
 
-Settings live in the per-project `ProjectSettings/BuildGuardSettings.asset`
-(`_askEveryBuild`, `_restoreStateAfterBuild`, `_defaultInteractiveMode`, `_batchModeBuildMode`,
-`_releaseDefineSymbol`, `_lastSelectedMode`).
+`Editor/BuildGuard/` registers `BuildPlayerWindow.RegisterBuildPlayerHandler`. A build started
+from the Build window asks **Release / Development / Cancel**, then:
+
+- **Release** adds the define `APP_BUILD_RELEASE` to that build only
+  (`BuildPlayerOptions.extraScriptingDefines`). **Development** adds nothing.
+- Every `IBuildGuardProjectAdapter` found in the project runs, ordered by `Order`:
+  `Validate`, `Apply`, build, then `Restore`. An adapter needs a public parameterless
+  constructor.
+  - `LanguageFilesBuildGuardAdapter` (built in) validates language files: Release aborts on
+    errors, Development only logs.
+  - A project can add its own, for example one that turns off debug logging and DOTween
+    debug mode in Release.
+
+### Using it in code
+
+```csharp
+#if APP_BUILD_RELEASE
+    // production-only values: ad unit ids, release analytics
+#else
+    // test values
+#endif
+```
+
+Do not use `Debug.isDebugBuild`, `Application.isEditor` or the Development Build checkbox to
+choose between release and test behavior. They do not follow the dialog choice: a build made
+as "Development" in the dialog can still have the checkbox off.
+
+### Never add `APP_BUILD_RELEASE` to Player Settings
+
+A define in Player Settings is always on, so every build would behave as Release whatever you
+pick in the dialog. If it ends up there anyway (hand edit, merge, copied define list),
+`BuildGuardScriptingDefineGuard` removes it on editor load and before each build, and logs a
+warning.
+
+### Settings
+
+Stored per project in `ProjectSettings/BuildGuardSettings.asset`.
+
+| Field | Default | Meaning |
+|---|---|---|
+| `_askEveryBuild` | true | Show the dialog on every build. When false, the last choice is reused silently. |
+| `_restoreStateAfterBuild` | true | Run adapters' `Restore` after the build. |
+| `_defaultInteractiveMode` | Development | Used only when the dialog is off and the settings file does not exist yet. |
+| `_batchModeBuildMode` | Release | Mode used in batch mode, where no dialog can be shown. |
+| `_releaseDefineSymbol` | `APP_BUILD_RELEASE` | The define injected for Release. |
+| `_lastSelectedMode` | Development | Last dialog choice. |
+
+### Limits
+
+- Only builds that go through the Build window handler are covered. A direct
+  `BuildPipeline.BuildPlayer` call does not: no dialog, no define, no adapters, so the build
+  behaves as non-Release.
+- With `_askEveryBuild` off, an old Release choice silently applies to the next build.
 
 ---
 
@@ -424,4 +501,4 @@ so `intensity01` is actually honored instead of triggering a fixed-strength syst
 
 ---
 
-_Last updated: 2026-08-26_
+_Last updated: 2026-11-11_
